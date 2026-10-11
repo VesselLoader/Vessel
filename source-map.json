@@ -1,0 +1,193 @@
+{
+  "document_version": "0.2.0",
+  "generated": "2026-10-09",
+  "method": "git ls-remote --heads and --tags for the six repositories; shallow clones (depth 1, single branch) of the branches marked read; LICENSE files and READMEs read from the clones. Branch heads move, so every value is 'as of the run date'. The GitHub REST API listing of the organization failed on a rate limit; no fact comes from it.",
+  "org": "https://github.com/Sinytra",
+  "repos": {
+    "Connector": {
+      "url": "https://github.com/Sinytra/Connector.git",
+      "licence": "MIT (Copyright (c) 2023 Su5eD)",
+      "tag_count": 72,
+      "branches": {
+        "1.20.1": {
+          "head": "7f68ac02291fde986119a3f5cab85436bed5c350",
+          "head_date": "2026-09-13",
+          "read": true,
+          "versionConnector": "1.0.0-beta.50",
+          "host": "MinecraftForge 1.20.1 (Forge 47.4.6)",
+          "read_scope": "pass A1: locator head, ModConnectorMetadataParser, ModMetadataGenerator (SY3); pass A2: normalized diffs against 1.21.x of the same classes as above; service folder file list"
+        },
+        "1.21.x": {
+          "head": "5a2f668ad492c1586c279a197423f5a1d1a16509",
+          "head_date": "2026-09-26",
+          "read": true,
+          "versionConnector": "2.0.0-beta.18",
+          "host": "NeoForge",
+          "read_scope": "pass A1: discovery and renamer files (SY2); pass A2: normalized diffs against 26.1.x of MixinPatchTransformer, MixinTransformSafeguard, ConnectorRefmapHolder, EnvironmentStripperTransformer, SplitPackageMerger, PackageTracker, ForgeModPackageFilter (read), ModuleLayerMigrator (head read); service folder file list and sizes"
+        },
+        "26.1.x": {
+          "head": "67b3cc58278696ddc8c6ae6515a0de52266258ab",
+          "head_date": "2026-09-01",
+          "read": true,
+          "versionConnector": "3.0.0-beta.6",
+          "host": "NeoForge",
+          "read_scope": "pass A1: loader-side locator, reader, util, transformer pipeline files (see research.md SY1); pass A2: service/coremod/*, ConnectorPrelaunch, ModuleLayerMigrator, SplitPackageMerger, PackageTracker, MixinTransformSafeguard, MixinPatchTransformer, MixinPatches, EnvironmentStripperTransformer, RefmapStorage, ConnectorRefmapHolder (SY15)"
+        },
+        "dev": {
+          "head_prefix": "a6b562095c",
+          "read": false
+        },
+        "master": {
+          "head_prefix": "f2e4253619",
+          "read": false
+        }
+      }
+    },
+    "Adapter": {
+      "url": "https://github.com/Sinytra/Adapter.git",
+      "licence": "MIT (Copyright (c) 2023 Sinytra)",
+      "tag_count": 4,
+      "branches": {
+        "1.20.1": {
+          "head_prefix": "31326ec2f1",
+          "read": false
+        },
+        "1.21.x": {
+          "head_prefix": "38d8594954",
+          "read": false
+        },
+        "26.1.x": {
+          "head": "60fdfcdfc5dc04c5911c2b674a55f6f5bd3beeab",
+          "head_date": "2026-08-14",
+          "read": true,
+          "read_scope": "pass A1: LICENSE and layout; pass A2: settings.gradle.kts, gradle.properties, package/size survey, Patcher, DynamicPatches, PipelineMethodTransformer (SY16)"
+        }
+      }
+    },
+    "ForgifiedFabricLoader": {
+      "url": "https://github.com/Sinytra/ForgifiedFabricLoader.git",
+      "licence": "Apache-2.0",
+      "tag_count": 93,
+      "branches": {
+        "1.19.4": {
+          "head_prefix": "e3578dfe70",
+          "read": false
+        },
+        "1.20.1": {
+          "head": "fa2e368c07f538cc09b127a6f399c67c4147fbd0",
+          "head_date": "2026-07-04",
+          "read": true,
+          "read_scope": "MappingResolverImpl, LICENSE"
+        },
+        "1.20.4": {
+          "head_prefix": "7517663b85",
+          "read": false
+        },
+        "1.20.6": {
+          "head_prefix": "701622cf1a",
+          "read": false
+        },
+        "1.21.x": {
+          "head": "29b610cb7394e5702a6b99b5081218186acc8c6f",
+          "head_date": "2026-07-04",
+          "read": true,
+          "read_scope": "MappingResolverImpl, build.gradle.kts mapping task, LICENSE"
+        },
+        "26.1.x": {
+          "head": "41d95140890c0e333d7b6e69ae33005fe98067e0",
+          "head_date": "2026-10-09",
+          "read": true,
+          "read_scope": "MappingResolverImpl (identity), LICENSE"
+        }
+      }
+    },
+    "ForgifiedFabricAPI": {
+      "url": "https://github.com/Sinytra/ForgifiedFabricAPI.git",
+      "licence": "Apache-2.0",
+      "tag_count": 1376,
+      "branches": {
+        "1.19.4": {
+          "head_prefix": "55138c20e3"
+        },
+        "1.20.1": {
+          "head_prefix": "f5fd869edf"
+        },
+        "1.20.4": {
+          "head_prefix": "f77bd0ed26"
+        },
+        "1.21": {
+          "head_prefix": "2650520041"
+        },
+        "1.21.1": {
+          "head_prefix": "c2cb2ae0db"
+        },
+        "26.1.2": {
+          "head_prefix": "ac8f2d3188"
+        },
+        "26.2.x": {
+          "head": "fb52e7cd925fc0b3e7a9426ce291da28cbfa35d1",
+          "head_date": "2026-10-09",
+          "read": true,
+          "read_scope": "LICENSE and size only"
+        },
+        "master": {
+          "head_prefix": "cae711a673"
+        },
+        "neo/1.20.6": {
+          "head_prefix": "833049b448"
+        },
+        "old/1.20.6": {
+          "head_prefix": "f4695025db"
+        }
+      }
+    },
+    "ConnectorExtras": {
+      "url": "https://github.com/Sinytra/ConnectorExtras.git",
+      "licence": "MIT (Copyright (c) 2023 Su5eD)",
+      "tag_count": 28,
+      "branches": {
+        "1.20.1": {
+          "head_prefix": "5c93103072"
+        },
+        "1.21.x": {
+          "head_prefix": "9e10ee3a81"
+        },
+        "26.1.x": {
+          "head": "0f36aae25d17ef9d07f010e9fbfe24a543c04e60",
+          "head_date": "2026-09-13",
+          "read": true,
+          "read_scope": "LICENSE only"
+        }
+      }
+    },
+    "Launchpad": {
+      "url": "https://github.com/Sinytra/Launchpad.git",
+      "licence": "GPL v3 text in LICENSE; README states GPL v3 with the Classpath Exception v2.0",
+      "tag_count": 26,
+      "branches": {
+        "26.1.x": {
+          "head_prefix": "cacb837dd5"
+        },
+        "26.2.x": {
+          "head": "e3c9899aa888c5e8685a4a709718744b7b52babb",
+          "head_date": "2026-10-09",
+          "read": true,
+          "read_scope": "LICENSE, README licence section, api/Constants.java"
+        },
+        "master": {
+          "head_prefix": "029e026d3c"
+        }
+      }
+    }
+  },
+  "other_org_repositories_seen_second_hand": [
+    "Wiki",
+    "MultiLoader-Template",
+    "ItemAssetExporterMod",
+    "WikiToolkit",
+    "CommunityWikiDocs",
+    ".github",
+    "FAPI-Mojmaps"
+  ],
+  "note_prefix": "'head_prefix' means the first 10 characters from git ls-remote; the branch was not cloned and its date is unknown."
+}

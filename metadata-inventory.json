@@ -1,0 +1,475 @@
+{
+  "document_version": "0.1.0",
+  "generated": "2026-09-30",
+  "status": "PARTIAL. A first inventory of what block metadata means before the flattening. It is a human-table summary, not a version-accurate decode table for any single Minecraft version.",
+  "sources": {
+    "wiki": "minecraft.wiki, \"Java Edition pre-flattening data values\", fetched 2026-09-30, page text cut off after the torches section. Describes the state of Minecraft 1.12.2.",
+    "minecraft_data": "PrismarineJS/minecraft-data commit f5d7d74604d8, data/pc/1.7 and 1.8 blocks.json, `variations` arrays only.",
+    "forge_source": "MinecraftForge branch 1.7.10, head 9274e4fe435c: RotationHelper and Block patches (orientation bits of about 22 vanilla block kinds)."
+  },
+  "version_warning": "Values come from the 1.12.2 state of the game. Several values did not exist in 1.7.10 (for example stone variants, coarse dirt, acacia and dark oak planks, red sandstone, prismarine, banners, observer). The minecraft-data directory named 1.7 contains such later content (stone variants, coarse dirt, prismarine id 168), so it is not a true 1.7.10 table.",
+  "category_counts": {
+    "variant+orientation": 2,
+    "age/level": 13,
+    "variant+flags": 4,
+    "flag": 3,
+    "variant": 16,
+    "orientation": 6,
+    "orientation+flags": 13,
+    "damage": 1,
+    "flags": 2
+  },
+  "blocks_summary": [
+    {
+      "block": "Wood (log) 17/162",
+      "metadata": "0-15",
+      "meaning": "type and axis",
+      "category": "variant+orientation"
+    },
+    {
+      "block": "Fire",
+      "metadata": "0-15",
+      "meaning": "age",
+      "category": "age/level"
+    },
+    {
+      "block": "Leaves 18/161",
+      "metadata": "0-15",
+      "meaning": "type, no-decay flag 0x4, check-decay flag 0x8",
+      "category": "variant+flags"
+    },
+    {
+      "block": "Jukebox",
+      "metadata": "0-1",
+      "meaning": "disc present",
+      "category": "flag"
+    },
+    {
+      "block": "Saplings",
+      "metadata": "0-15",
+      "meaning": "type (3 bits) and ready-to-grow flag 0x8",
+      "category": "variant+flags"
+    },
+    {
+      "block": "Cactus",
+      "metadata": "0-15",
+      "meaning": "age",
+      "category": "age/level"
+    },
+    {
+      "block": "Sugar cane",
+      "metadata": "0-15",
+      "meaning": "age",
+      "category": "age/level"
+    },
+    {
+      "block": "Water and lava",
+      "metadata": "0-15",
+      "meaning": "fluid level (3 bits) and falling flag 0x8",
+      "category": "age/level"
+    },
+    {
+      "block": "Sand",
+      "metadata": "0-1",
+      "meaning": "color",
+      "category": "variant"
+    },
+    {
+      "block": "Farmland",
+      "metadata": "0-8",
+      "meaning": "wetness",
+      "category": "age/level"
+    },
+    {
+      "block": "Crops",
+      "metadata": "0-7",
+      "meaning": "size",
+      "category": "age/level"
+    },
+    {
+      "block": "Nether wart",
+      "metadata": "0-3",
+      "meaning": "size",
+      "category": "age/level"
+    },
+    {
+      "block": "Pumpkin and melon stem",
+      "metadata": "0-7",
+      "meaning": "growth stage",
+      "category": "age/level"
+    },
+    {
+      "block": "Wool, stained clay, stained glass, carpet",
+      "metadata": "0-15",
+      "meaning": "color",
+      "category": "variant"
+    },
+    {
+      "block": "Dyes",
+      "metadata": "0-15",
+      "meaning": "dye color (item damage)",
+      "category": "variant"
+    },
+    {
+      "block": "Fish",
+      "metadata": "0-3",
+      "meaning": "fish type (item damage)",
+      "category": "variant"
+    },
+    {
+      "block": "Command block",
+      "metadata": "0-1",
+      "meaning": "commands",
+      "category": "flag"
+    },
+    {
+      "block": "Torches and redstone torches",
+      "metadata": "0-5",
+      "meaning": "orientation",
+      "category": "orientation"
+    },
+    {
+      "block": "Rails (regular, powered, detector)",
+      "metadata": "0-9",
+      "meaning": "slope, orientation, power",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Stairs",
+      "metadata": "0-7",
+      "meaning": "orientation (and flipped bit)",
+      "category": "orientation"
+    },
+    {
+      "block": "Levers",
+      "metadata": "0-15",
+      "meaning": "orientation and thrown state",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Door",
+      "metadata": "0-15",
+      "meaning": "hinge corner position and swing state",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Buttons",
+      "metadata": "0-15",
+      "meaning": "orientation, pressed",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Sign posts",
+      "metadata": "0-15",
+      "meaning": "orientation",
+      "category": "orientation"
+    },
+    {
+      "block": "Ladders, wall signs, furnaces, chests",
+      "metadata": "2-5",
+      "meaning": "orientation",
+      "category": "orientation"
+    },
+    {
+      "block": "Dispensers, droppers, hoppers",
+      "metadata": "0-15",
+      "meaning": "orientation (and trigger or enabled flag)",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Pumpkins and jack o'lanterns",
+      "metadata": "0-3",
+      "meaning": "orientation",
+      "category": "orientation"
+    },
+    {
+      "block": "Pressure plates",
+      "metadata": "0-1",
+      "meaning": "pressed",
+      "category": "flag"
+    },
+    {
+      "block": "Coal",
+      "metadata": "0-1",
+      "meaning": "type (item damage)",
+      "category": "variant"
+    },
+    {
+      "block": "Tools and armor",
+      "metadata": "varies",
+      "meaning": "damage level (item damage)",
+      "category": "damage"
+    },
+    {
+      "block": "Slabs",
+      "metadata": "0-15",
+      "meaning": "type (bits 0-2) and upper-half bit 0x8",
+      "category": "variant+flags"
+    },
+    {
+      "block": "Snow",
+      "metadata": "0-7",
+      "meaning": "block height",
+      "category": "age/level"
+    },
+    {
+      "block": "Cake",
+      "metadata": "0-5",
+      "meaning": "pieces eaten",
+      "category": "age/level"
+    },
+    {
+      "block": "Bed",
+      "metadata": "0-15",
+      "meaning": "orientation, occupied",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Redstone comparator",
+      "metadata": "0-15",
+      "meaning": "orientation, mode, power",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Redstone repeater",
+      "metadata": "0-15",
+      "meaning": "orientation and delay",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Redstone wire",
+      "metadata": "0-15",
+      "meaning": "power level",
+      "category": "age/level"
+    },
+    {
+      "block": "Daylight sensor",
+      "metadata": "0-15",
+      "meaning": "power level",
+      "category": "age/level"
+    },
+    {
+      "block": "Grass",
+      "metadata": "0-2",
+      "meaning": "appearance (shrub, grass, fern)",
+      "category": "variant"
+    },
+    {
+      "block": "Flowers",
+      "metadata": "0-8",
+      "meaning": "type of flower",
+      "category": "variant"
+    },
+    {
+      "block": "Double plants",
+      "metadata": "0-5 and 8-13",
+      "meaning": "type of plant (8 and up: upper half)",
+      "category": "variant+flags"
+    },
+    {
+      "block": "Trapdoors",
+      "metadata": "0-7",
+      "meaning": "orientation and swung state",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Piston",
+      "metadata": "0-5 and 8-13",
+      "meaning": "orientation and extended state",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Piston extension",
+      "metadata": "0-5 and 8-13",
+      "meaning": "orientation and sticky state",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Stone brick",
+      "metadata": "0-3",
+      "meaning": "stone brick variant (stronghold texture)",
+      "category": "variant"
+    },
+    {
+      "block": "Huge brown and red mushroom",
+      "metadata": "0-10",
+      "meaning": "texture",
+      "category": "variant"
+    },
+    {
+      "block": "Vines",
+      "metadata": "0-15",
+      "meaning": "attached surfaces",
+      "category": "flags"
+    },
+    {
+      "block": "Fence gates",
+      "metadata": "0-7",
+      "meaning": "open or closed, and direction",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Potions",
+      "metadata": "0-65535",
+      "meaning": "potion type (item damage)",
+      "category": "variant"
+    },
+    {
+      "block": "Brewing stand",
+      "metadata": "0-7",
+      "meaning": "slots used",
+      "category": "flags"
+    },
+    {
+      "block": "Cauldron",
+      "metadata": "0-3",
+      "meaning": "amount of water",
+      "category": "age/level"
+    },
+    {
+      "block": "Nether portal",
+      "metadata": "1-2",
+      "meaning": "orientation",
+      "category": "orientation"
+    },
+    {
+      "block": "End portal frame",
+      "metadata": "0-7",
+      "meaning": "orientation, broken or fixed state",
+      "category": "orientation+flags"
+    },
+    {
+      "block": "Cobblestone wall",
+      "metadata": "0-1",
+      "meaning": "cobblestone or moss stone",
+      "category": "variant"
+    },
+    {
+      "block": "Flower pot",
+      "metadata": "0-11",
+      "meaning": "plant inside",
+      "category": "variant"
+    },
+    {
+      "block": "Heads",
+      "metadata": "0-4",
+      "meaning": "type of head",
+      "category": "variant"
+    },
+    {
+      "block": "Anvil",
+      "metadata": "0-2",
+      "meaning": "damage value (wiki summary row; see conflicts)",
+      "category": "variant"
+    },
+    {
+      "block": "Golden apple",
+      "metadata": "0-1",
+      "meaning": "regular or enchanted (item damage)",
+      "category": "variant"
+    },
+    {
+      "block": "Wood planks",
+      "metadata": "0-5",
+      "meaning": "planks type",
+      "category": "variant"
+    },
+    {
+      "block": "Block of quartz",
+      "metadata": "0-4",
+      "meaning": "texture and rotation",
+      "category": "variant+orientation"
+    }
+  ],
+  "detail_read_in_full": {
+    "wood_planks_5": {
+      "0": "oak",
+      "1": "spruce",
+      "2": "birch",
+      "3": "jungle",
+      "4": "acacia",
+      "5": "dark oak"
+    },
+    "stone_1": {
+      "0": "stone",
+      "1": "granite",
+      "2": "polished granite",
+      "3": "diorite",
+      "4": "polished diorite",
+      "5": "andesite",
+      "6": "polished andesite"
+    },
+    "dirt_3": {
+      "0": "dirt",
+      "1": "coarse dirt",
+      "2": "podzol"
+    },
+    "sapling_6": {
+      "bits_0x1_0x2_0x4": "type 0 oak, 1 spruce, 2 birch, 3 jungle, 4 acacia, 5 dark oak",
+      "bit_0x8": "ready to grow"
+    },
+    "water_lava_8_9_10_11": {
+      "bits_0x7": "fluid level, 0 is highest",
+      "bit_0x8": "falling"
+    },
+    "sand_12": {
+      "0": "sand",
+      "1": "red sand"
+    },
+    "log_17": {
+      "bits_0x3": "type 0 oak, 1 spruce, 2 birch, 3 jungle",
+      "bits_0xC": "orientation 0 up/down, 4 east/west, 8 north/south, 12 bark only"
+    },
+    "log2_162": {
+      "bits_0x3": "type 0 acacia, 1 dark oak",
+      "bits_0xC": "same orientation field as block 17"
+    },
+    "leaves_18": {
+      "bits_0x3": "type 0 oak, 1 spruce, 2 birch, 3 jungle",
+      "bit_0x4": "permanent, never decays (overrides bit 0x8 meaning)",
+      "bit_0x8": "check for decay"
+    },
+    "leaves2_161": {
+      "bits_0x3": "type 0 acacia, 1 dark oak",
+      "bit_0x4": "permanent",
+      "bit_0x8": "check for decay"
+    },
+    "colors_wool_35_stained_clay_stained_glass_carpet": {
+      "0": "white",
+      "1": "orange",
+      "2": "magenta",
+      "3": "light blue",
+      "4": "yellow",
+      "5": "lime",
+      "6": "pink",
+      "7": "gray",
+      "8": "light gray",
+      "9": "cyan",
+      "10": "purple",
+      "11": "blue",
+      "12": "brown",
+      "13": "green",
+      "14": "red",
+      "15": "black"
+    }
+  },
+  "conflicts_between_sources": [
+    {
+      "topic": "anvil",
+      "detail": "The wiki summary row says 0-2 and only a damage value. Forge 1.7.10 RotationHelper uses mask 0x1 for anvil orientation, and minecraft-data 1.8 lists orientation values 3 to 14 together with damage. So the wiki summary row omits the orientation bits."
+    },
+    {
+      "topic": "torch",
+      "detail": "The wiki table starts torch values at 1 (0 unused), and Forge uses 6 - meta for the direction. minecraft-data 1.8 labels 0 to 4 for the same states, one lower than the wiki. minecraft-data is off by one against the other two (assuming the usual ForgeDirection ordinal order, which was not read)."
+    },
+    {
+      "topic": "dataset_labelled_1.7",
+      "detail": "minecraft-data data/pc/1.7 contains stone variants, coarse dirt and prismarine (id 168), which belong to later versions."
+    }
+  ],
+  "not_covered": [
+    "Detailed bit tables for blocks after the torches section of the wiki page (rails, stairs, levers, doors, buttons, signs, chests, dispensers, repeaters, comparators, trapdoors, pistons, fence gates, and the rest).",
+    "Which values exist in 1.7.10 for each block.",
+    "Any mod block."
+  ]
+}

@@ -1,0 +1,1238 @@
+{
+  "document_version": "0.1.3",
+  "checked_on": "2026-09-29",
+  "platform": "forge",
+  "source": "https://files.minecraftforge.net/net/minecraftforge/forge/index_26.2.html (official index, fetched in full)",
+  "count": 78,
+  "eras_are_a_vessel_proposal": true,
+  "java_runtime_source": "Forge README (github.com/MinecraftForge/MinecraftForge), S8",
+  "versions": [
+    {
+      "minecraft": "26.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_26.3.html",
+      "era": "E5",
+      "java_runtime": "25",
+      "builds_seen": [
+        {
+          "build": "66.0.6",
+          "date": "2026-09-27",
+          "note": "latest, no recommended build listed",
+          "src": "S6"
+        },
+        {
+          "build": "66.0.8",
+          "date": "2026-09-28",
+          "note": "latest according to the index page excerpt; promotions_slim.json still says 66.0.6 at fetch time (conflict, see research.md section 18.2)",
+          "src": "S51"
+        },
+        {
+          "build": "66.0.5",
+          "date": "2026-09-26",
+          "note": "on index page excerpt; changelog: fix entities not being pushed by fluids",
+          "src": "S51"
+        },
+        {
+          "build": "66.0.4",
+          "date": "2026-09-25",
+          "note": "on index page excerpt; changelog: fix typo in BlockScanUtils patch",
+          "src": "S51"
+        }
+      ],
+      "promotions": {
+        "latest": "66.0.6",
+        "recommended": null,
+        "src": "S50"
+      },
+      "builds_from_changelog": {
+        "66.0.0": "26.3 - Initial update",
+        "66.0.1": "Fix players not drowning propely",
+        "66.0.2": "Fix players dropping items",
+        "66.0.3": "Migrate to fully declarative ForgeGradlePlugin and local build-logic",
+        "66.0.4": "Fix typo in BlockScanUtils patch",
+        "66.0.5": "Fix entities not being pushed by fluids",
+        "src": "S52"
+      },
+      "index_page_latest_seen": "66.0.8"
+    },
+    {
+      "minecraft": "26.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_26.2.html",
+      "era": "E5",
+      "java_runtime": "25",
+      "builds_seen": [
+        {
+          "build": "65.1.3",
+          "date": "2026-08-26",
+          "note": "latest",
+          "src": "S5"
+        },
+        {
+          "build": "65.1.0",
+          "date": "2026-07-27",
+          "note": "recommended (changelog calls it 26.2 RB 1)",
+          "src": "S5,S23"
+        },
+        {
+          "build": "65.0.0",
+          "date": "2026-06-17",
+          "note": "first build",
+          "src": "S5"
+        }
+      ],
+      "promotions": {
+        "latest": "65.1.3",
+        "recommended": "65.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "26.1.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_26.1.2.html",
+      "era": "E5",
+      "java_runtime": "25",
+      "builds_seen": [
+        {
+          "build": "64.1.3",
+          "date": null,
+          "note": "latest",
+          "src": "S4"
+        },
+        {
+          "build": "64.1.0",
+          "date": null,
+          "note": "recommended",
+          "src": "S4"
+        }
+      ],
+      "promotions": {
+        "latest": "64.1.3",
+        "recommended": "64.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "26.1.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_26.1.1.html",
+      "era": "E5",
+      "java_runtime": "25",
+      "builds_seen": [
+        {
+          "build": "63.0.2",
+          "date": "2026-04-08",
+          "note": "latest",
+          "src": "S3"
+        }
+      ],
+      "promotions": {
+        "latest": "63.0.2",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "26.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_26.1.html",
+      "era": "E5",
+      "java_runtime": "25",
+      "builds_seen": [
+        {
+          "build": "62.0.9",
+          "date": "2026-03-29",
+          "note": "latest",
+          "src": "S2"
+        }
+      ],
+      "promotions": {
+        "latest": "62.0.9",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.11",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.11.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [
+        {
+          "build": "61.0.3",
+          "date": "2025-12-14",
+          "note": "latest",
+          "src": "S1"
+        },
+        {
+          "build": "61.0.0",
+          "date": "2025-12-09",
+          "note": "first build",
+          "src": "S1"
+        }
+      ],
+      "promotions": {
+        "latest": "61.2.1",
+        "recommended": "61.2.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.10",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.10.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "60.1.15",
+        "recommended": "60.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.9",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.9.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "59.0.5",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.8",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.8.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "58.1.22",
+        "recommended": "58.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.7",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.7.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "57.0.3",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.6",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.6.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "56.0.9",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.5",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.5.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "55.1.14",
+        "recommended": "55.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.4.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "54.1.18",
+        "recommended": "54.1.14",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.3.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "53.1.12",
+        "recommended": "53.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.1.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "52.1.16",
+        "recommended": "52.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.21",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [
+        {
+          "build": "51.0.33",
+          "date": null,
+          "note": "seen in a maven mirror listing",
+          "src": "S27"
+        }
+      ],
+      "promotions": {
+        "latest": "51.0.33",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.20.6",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.6.html",
+      "era": "E4b",
+      "java_runtime": "21",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "50.2.10",
+        "recommended": "50.2.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.20.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.4.html",
+      "era": "E4b",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "49.0.27",
+          "date": null,
+          "note": "mentioned in a forum post",
+          "src": "S17b"
+        }
+      ],
+      "promotions": {
+        "latest": "49.2.8",
+        "recommended": "49.2.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.20.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.3.html",
+      "era": "E4b",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "49.0.2",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "49.0.2",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.20.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.2.html",
+      "era": "E4b",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "48.1.0",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "48.1.0",
+        "recommended": "48.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.20.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "47.3.1",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "47.4.23",
+        "recommended": "47.4.10",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.20",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "46.0.14",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "46.0.14",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.19.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.19.4.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "45.3.0",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "45.4.5",
+        "recommended": "45.4.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.19.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.19.3.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "44.1.23",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "44.1.23",
+        "recommended": "44.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.19.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.19.2.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "43.4.0",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "43.5.2",
+        "recommended": "43.5.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.19.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.19.1.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "42.0.9",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "42.0.9",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.19",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.19.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "41.1.0",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "41.1.0",
+        "recommended": "41.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.18.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.18.2.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [
+        {
+          "build": "40.2.21",
+          "date": null,
+          "note": "installer link in a gist",
+          "src": "S28"
+        }
+      ],
+      "promotions": {
+        "latest": "40.3.12",
+        "recommended": "40.3.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.18.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.18.1.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "39.1.2",
+        "recommended": "39.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.18",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.18.html",
+      "era": "E4a",
+      "java_runtime": "17",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "38.0.17",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.17.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.17.1.html",
+      "era": "E4a",
+      "java_runtime": "16",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "37.1.1",
+        "recommended": "37.1.1",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.16.5",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.16.5.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "36.2.39",
+          "date": null,
+          "note": "javadoc mirror",
+          "src": "S17b"
+        }
+      ],
+      "promotions": {
+        "latest": "36.2.42",
+        "recommended": "36.2.34",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.16.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.16.4.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "35.1.37",
+        "recommended": "35.1.4",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.16.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.16.3.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "34.1.42",
+        "recommended": "34.1.0",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.16.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.16.2.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "33.0.61",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.16.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.16.1.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "32.0.108",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.15.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.15.2.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "31.2.62",
+        "recommended": "31.2.57",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.15.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.15.1.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "30.0.51",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.15",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.15.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "29.0.4",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.14.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.14.4.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "28.1.1",
+          "date": null,
+          "note": "server startup log",
+          "src": "S26"
+        }
+      ],
+      "promotions": {
+        "latest": "28.2.30",
+        "recommended": "28.2.26",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.14.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.14.3.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "27.0.60",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.14.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.14.2.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "26.0.37",
+          "date": null,
+          "note": "seen in a maven mirror listing",
+          "src": "S27"
+        }
+      ],
+      "promotions": {
+        "latest": "26.0.63",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.13.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.13.2.html",
+      "era": "E3",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "25.0.107",
+          "date": null,
+          "note": "startup log",
+          "src": "S26"
+        },
+        {
+          "build": "25.0.215",
+          "date": null,
+          "note": "startup log",
+          "src": "S26"
+        }
+      ],
+      "promotions": {
+        "latest": "25.0.223",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.12.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.12.2.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "14.23.5.2854",
+          "date": null,
+          "note": "javadoc mirror",
+          "src": "S19b"
+        },
+        {
+          "build": "14.23.5.2859",
+          "date": null,
+          "note": "javadoc mirror",
+          "src": "S19b"
+        }
+      ],
+      "promotions": {
+        "latest": "14.23.5.2864",
+        "recommended": "14.23.5.2859",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.12.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.12.1.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "14.22.1.2485",
+        "recommended": "14.22.1.2478",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.12",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.12.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "14.21.1.2443",
+        "recommended": "14.21.1.2387",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.11.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.11.2.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "13.20.1.2588",
+        "recommended": "13.20.1.2588",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.11",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.11.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "13.19.1.2199",
+        "recommended": "13.19.1.2189",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.10.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.10.2.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "12.18.3.2511",
+        "recommended": "12.18.3.2511",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.10",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.10.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "12.18.0.2000",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.9.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.9.4.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "12.17.0.2051",
+          "date": null,
+          "note": "javadoc mirror",
+          "src": "S17b"
+        }
+      ],
+      "promotions": {
+        "latest": "12.17.0.2317",
+        "recommended": "12.17.0.2317",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.9",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.9.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "12.16.1.1938",
+        "recommended": "12.16.1.1887",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.8.9",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.8.9.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "11.15.0.1703",
+          "date": null,
+          "note": "log line in a gist",
+          "src": "S20"
+        }
+      ],
+      "promotions": {
+        "latest": "11.15.1.2318",
+        "recommended": "11.15.1.2318",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.8.8",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.8.8.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "11.15.0.1655",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.8",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.8.html",
+      "era": "E2",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "11.14.4.1577",
+        "recommended": "11.14.4.1563",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.7.10",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.7.10.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "10.13.4.1614",
+          "date": null,
+          "note": "javadoc mirror",
+          "src": "S19b"
+        }
+      ],
+      "promotions": {
+        "latest": "10.13.4.1614",
+        "recommended": "10.13.4.1614",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.7.10_pre4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.7.10_pre4.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": null,
+        "recommended": null,
+        "src": "S50",
+        "note": "no entry in promotions_slim.json"
+      }
+    },
+    {
+      "minecraft": "1.7.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.7.2.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "10.12.2.1161",
+        "recommended": "10.12.2.1161",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.6.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.6.4.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "9.11.1.1345",
+        "recommended": "9.11.1.1345",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.6.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.6.3.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "9.11.0.878",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.6.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.6.2.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "9.10.1.871",
+        "recommended": "9.10.1.871",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.6.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.6.1.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "8.9.0.775",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.5.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.5.2.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "7.8.1.738",
+        "recommended": "7.8.1.738",
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.5.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.5.1.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "7.7.2.682",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.5",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.5.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "7.7.0.598",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.4.7",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.4.7.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "6.6.2.534",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.4.6",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.4.6.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "6.5.0.489",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.4.5",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.4.5.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "6.4.2.448",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.4.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.4.4.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "6.3.0.378",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.4.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.4.3.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "6.2.1.358",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.4.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.4.2.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "6.0.1.355",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.4.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.4.1.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "6.0.0.329",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.4.0",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.4.0.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [],
+      "promotions": {
+        "latest": "5.0.0.326",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.3.2",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.3.2.html",
+      "era": "E1b",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "4.1.2.260",
+          "date": null,
+          "note": "startup log; the FTB wiki lists 4.3.5.318 for 1.3.2",
+          "src": "S20"
+        }
+      ],
+      "promotions": {
+        "latest": "4.3.5.318",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.2.5",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.2.5.html",
+      "era": "E1a",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "3.4.9.171",
+          "date": null,
+          "note": "FTB wiki (community)",
+          "src": "S20"
+        }
+      ],
+      "promotions": {
+        "latest": "3.4.9.171",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.2.4",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.2.4.html",
+      "era": "E1a",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "2.0.0.68",
+          "date": null,
+          "note": "FTB wiki (community)",
+          "src": "S20"
+        }
+      ],
+      "promotions": {
+        "latest": "2.0.0.68",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.2.3",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.2.3.html",
+      "era": "E1a",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "1.4.1.64",
+          "date": null,
+          "note": "FTB wiki (community)",
+          "src": "S20"
+        }
+      ],
+      "promotions": {
+        "latest": "1.4.1.64",
+        "recommended": null,
+        "src": "S50"
+      }
+    },
+    {
+      "minecraft": "1.1",
+      "index_url": "https://files.minecraftforge.net/net/minecraftforge/forge/index_1.1.html",
+      "era": "E1a",
+      "java_runtime": "8",
+      "builds_seen": [
+        {
+          "build": "1.3.4.29",
+          "date": null,
+          "note": "FTB wiki (community)",
+          "src": "S20"
+        }
+      ],
+      "promotions": {
+        "latest": "1.3.4.29",
+        "recommended": null,
+        "src": "S50"
+      }
+    }
+  ],
+  "promotions_source": {
+    "id": "S50",
+    "url": "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json",
+    "fetched": "2026-09-29",
+    "entries": 117,
+    "versions_covered": 77,
+    "versions_with_recommended": 40,
+    "versions_latest_only": 37
+  }
+}

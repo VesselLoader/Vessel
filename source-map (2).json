@@ -1,0 +1,931 @@
+{
+  "document_version": "0.1.10",
+  "generated": "2026-09-30",
+  "repo": "https://github.com/MinecraftForge/MinecraftForge.git",
+  "method": "git ls-remote --heads and --tags; raw file reads per branch; shallow clones (depth 1) of branches 1.7.10 and 26.3. Branch heads move, so every value is \"as of the run date\".",
+  "branches": [
+    {
+      "name": "1.10.x",
+      "head": "e4caf46cb954ea86fe338cd256402cd84f824586"
+    },
+    {
+      "name": "1.11.x",
+      "head": "23410ad4d4d485927b39c56b33f479ea00628c44"
+    },
+    {
+      "name": "1.12.x",
+      "head": "3effde4f1fc9d14d6ed1dbf6bebc39c2b18780e1"
+    },
+    {
+      "name": "1.13.x",
+      "head": "a1eb26aee265cc07b49e47ddd72f0548468c6a95"
+    },
+    {
+      "name": "1.14.x",
+      "head": "2bfa53b05a1482255844807e52875d6c03dc48d0"
+    },
+    {
+      "name": "1.15.x",
+      "head": "5e392f60120fc0330133ec78835454858e4b7732"
+    },
+    {
+      "name": "1.16.x",
+      "head": "b3426008d3c3a256fcfaf9d780682c45ab1d1fdb"
+    },
+    {
+      "name": "1.17.x",
+      "head": "2106a3ced9d9d73b7484282d31c0ac213bb1dc03"
+    },
+    {
+      "name": "1.18.x",
+      "head": "9c5d527d71553d297d6ad684211929f66f596ae1"
+    },
+    {
+      "name": "1.19.2",
+      "head": "66e4ae51423e2dde5edd5ffea4a13dfab4621192"
+    },
+    {
+      "name": "1.19.x",
+      "head": "db2634b31d4ad02c76e362a2c33d92a6257f6a2f"
+    },
+    {
+      "name": "1.20.1",
+      "head": "3c3f496015632ab84560be77a57cc57ac42c49e1"
+    },
+    {
+      "name": "1.20.4",
+      "head": "631b756d5b9b28eed2047379caad8c112c586086"
+    },
+    {
+      "name": "1.20.x",
+      "head": "71d814ffa64fce31b5bf4bebf04915f299a69ae8"
+    },
+    {
+      "name": "1.21.1",
+      "head": "a11d1936c53f1f93787f239ff42cb8e93a1d037a"
+    },
+    {
+      "name": "1.21.10",
+      "head": "057fc3a309082551ece3c39141062eb4fb417ea3"
+    },
+    {
+      "name": "1.21.11",
+      "head": "1dab50ca003abc59e4115a329bcb46f76c105e15"
+    },
+    {
+      "name": "1.21.3",
+      "head": "fba9c66164e2b39049ea949d025b472dee8fc0dc"
+    },
+    {
+      "name": "1.21.4",
+      "head": "885eba73ba19c9ce9890baa691793c6049b17c8f"
+    },
+    {
+      "name": "1.21.5",
+      "head": "7a37f17c89ccc119bf7620f512a04bfb3c4f8f66"
+    },
+    {
+      "name": "1.21.8",
+      "head": "23856b57a987f91acb311790e0f36dfd45cb783d"
+    },
+    {
+      "name": "1.6",
+      "head": "ba4637f5a3fbcf99224c5b29023c906037b701f4"
+    },
+    {
+      "name": "1.7.10",
+      "head": "9274e4fe435cb415099a8216c1b42235f185443e"
+    },
+    {
+      "name": "1.8",
+      "head": "ab39b7e4e00c007b8b7e45e74a4a54a832662972"
+    },
+    {
+      "name": "1.8.8",
+      "head": "c3eed2f0da0c1cd1e1d584cb1680f4d1747463ee"
+    },
+    {
+      "name": "1.8.9",
+      "head": "d06e0ad71b8471923cc809dde58251de8299a143"
+    },
+    {
+      "name": "1.9",
+      "head": "3fb47104fab4b2e3181fa0696a76f34b39a7f974"
+    },
+    {
+      "name": "1.9.0",
+      "head": "86baf7462fed55c820ceca851829997a9b437ca9"
+    },
+    {
+      "name": "1.9.4",
+      "head": "4e1e8f52e0afcd43000eb4d1744580dc274d6eba"
+    },
+    {
+      "name": "26.1",
+      "head": "38ebbf189ccb21f6727f08ea8656b2e6e89c237c"
+    },
+    {
+      "name": "26.1.1",
+      "head": "5e421e8b8b081ae17cd7efc6b700ec85fd920196"
+    },
+    {
+      "name": "26.1.2",
+      "head": "d5d1e3157dbe0050256dc1d221e63be85e32ba6b"
+    },
+    {
+      "name": "26.2",
+      "head": "41dfdc8f8b0488acbd339d78adc0b03a9f53e0a0"
+    },
+    {
+      "name": "26.3",
+      "head": "932c6e96491fdb4bcffb74364dd904922cf613dc"
+    },
+    {
+      "name": "failtests",
+      "head": "80621de9ea5f89b217cca8e6dca43d95cc1c27f1"
+    },
+    {
+      "name": "mc172",
+      "head": "e08c63b57bc51bb9f4fda335457a61c8d561aea1"
+    },
+    {
+      "name": "noci-1.10.2-mezz",
+      "head": "ec93fcbc4c67534861b34840f3c048f3a4961451"
+    },
+    {
+      "name": "noci-1.11.x",
+      "head": "4e6a7740750f4ef98b4f24e2b51da340b3d32b37"
+    },
+    {
+      "name": "noci-1.12.x",
+      "head": "92bb77bc6b5fc40fb9e27277a67d524bcf2da3a4"
+    },
+    {
+      "name": "noci-1.12.x-regrewrite",
+      "head": "c98b6fa8bba16ede142e08b1c1290ad621fb499c"
+    },
+    {
+      "name": "noci-1.14.4",
+      "head": "9c817dbc25822941cbe60bd1f3d2f62e19c6e00f"
+    },
+    {
+      "name": "noci-omnibus/tags",
+      "head": "f58b8c81a2060753a4694a99c6abf3356017a480"
+    },
+    {
+      "name": "noci-omnibus/typos",
+      "head": "adb4a1953f02d32bc08fba0fefa6d092b56dd21b"
+    },
+    {
+      "name": "v164-pregradle",
+      "head": "2f7ad51a025c5af5fca489489c34e7f30ecb15c2"
+    }
+  ],
+  "tag_count": 131,
+  "tags": [
+    "1.0.0",
+    "1.0.1",
+    "1.0.3",
+    "1.0.4",
+    "1.2.1",
+    "1.2.2",
+    "1.2.3",
+    "1.2.3@183",
+    "1.2.4",
+    "1.2.5",
+    "1.2.5@213",
+    "1.3.0",
+    "1.3.1",
+    "1.3.2",
+    "23.5",
+    "24.0",
+    "25.0",
+    "26.0",
+    "27.0",
+    "28.0",
+    "28.1",
+    "28.2",
+    "29.0",
+    "30.0",
+    "31.0",
+    "31.1",
+    "31.2",
+    "32.0",
+    "33.0",
+    "34.0",
+    "34.1",
+    "35.0",
+    "35.1",
+    "36.0",
+    "36.1",
+    "36.2",
+    "37.0",
+    "37.1",
+    "38.0",
+    "39.0",
+    "39.1",
+    "40.0",
+    "40.1",
+    "40.2",
+    "40.3",
+    "41.0",
+    "41.1",
+    "42.0",
+    "43.0",
+    "43.1",
+    "43.2",
+    "43.3",
+    "43.4",
+    "43.5",
+    "44.0",
+    "44.1",
+    "45.0",
+    "45.1",
+    "45.2",
+    "45.3",
+    "45.4",
+    "46.0",
+    "47.0",
+    "47.1",
+    "47.2",
+    "47.3",
+    "47.4",
+    "47.999",
+    "48.0",
+    "48.1",
+    "49.0",
+    "49.1",
+    "49.2",
+    "50.0",
+    "50.1",
+    "50.2",
+    "51.0",
+    "52.0",
+    "52.1",
+    "53.0",
+    "53.1",
+    "54.0",
+    "54.1",
+    "55.0",
+    "55.1",
+    "56.0",
+    "57.0",
+    "58.0",
+    "58.1",
+    "59.0",
+    "60.0",
+    "60.1",
+    "61.0",
+    "61.1",
+    "61.2",
+    "62.0",
+    "63.0",
+    "64.0",
+    "64.1",
+    "65.0",
+    "65.1",
+    "66.0",
+    "rm",
+    "v11.0.0",
+    "v2.9",
+    "v3.0",
+    "v3.1",
+    "v4.0",
+    "v4.1",
+    "v4.2",
+    "v4.3",
+    "v4.4",
+    "v4.5",
+    "v4.6",
+    "v4.7",
+    "v4.99",
+    "v5.0",
+    "v5.1",
+    "v5.2",
+    "v6.0",
+    "v6.1",
+    "v6.2",
+    "v6.3",
+    "v6.4",
+    "v6.99",
+    "v7.10",
+    "v7.2",
+    "v7.9",
+    "v7.99",
+    "v8.99",
+    "v99.99"
+  ],
+  "eventbus_version_at_branch_head": {
+    "1.19.2": "6.0.3",
+    "1.20.1": "6.2.33",
+    "1.20.4": "6.2.33",
+    "1.21.1": "6.2.33",
+    "1.21.3": "6.2.33",
+    "1.21.4": "6.2.27",
+    "1.21.5": "6.2.32",
+    "1.21.8": "7.0.1",
+    "1.21.10": "7.0.1",
+    "1.21.11": "7.0.5",
+    "26.1": "7.0.1",
+    "26.2": "7.0.5",
+    "26.3": "7.0.6"
+  },
+  "eventbus_note": "Value declared in the build files at the head of each branch on the run date, not necessarily at the first build of that Minecraft version. Branches 1.6 to 1.19.x other than those listed were not probed.",
+  "clones_read": {
+    "1.7.10": {
+      "head": "9274e4fe435cb415099a8216c1b42235f185443e",
+      "date": "2017-06-07",
+      "subject": "Fix log4j configuration"
+    },
+    "26.3": {
+      "head": "932c6e96491fdb4bcffb74364dd904922cf613dc",
+      "date": "2026-09-28",
+      "subject": "Fix checkLicense tasks with projectInfo task"
+    },
+    "26.3_pass19": {
+      "head": "939fb13d3b96664d6b5057e128bb05395417063b",
+      "date": "2026-09-30",
+      "subject": "Fix MDK including wrong resources. Fixes #10892",
+      "note": "Second shallow clone of branch 26.3, taken in pass 19 (2026-10-01). The head moved after the clone of pass 18 (932c6e96491f...), so section 33 of research.md is stated as of this head. The `branches` list above still shows the head of the run date 2026-09-30 and was not refreshed."
+    }
+  },
+  "registry_probe_2026-09-30": {
+    "what": "For each branch head: does ForgeRegistries.java contain CONDITION_SERIALIZERS and INGREDIENT_SERIALIZERS, and does common/crafting/CraftingHelper.java exist (HTTP 200 = exists)?",
+    "result": {
+      "1.19.2": {
+        "condition_registry": false,
+        "ingredient_registry": false,
+        "CraftingHelper_file": true
+      },
+      "1.20.1": {
+        "condition_registry": false,
+        "ingredient_registry": false,
+        "CraftingHelper_file": true
+      },
+      "1.20.4": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": true
+      },
+      "1.21.1": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "1.21.3": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "1.21.4": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "1.21.5": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "1.21.8": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "1.21.10": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "1.21.11": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "26.1": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "26.2": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      },
+      "26.3": {
+        "condition_registry": true,
+        "ingredient_registry": true,
+        "CraftingHelper_file": false
+      }
+    }
+  },
+  "conditional_format_probe_2026-09-30": {
+    "what": "Per branch head: value of ICondition.DEFAULT_FIELD, number of mentions of \"forge:conditional\" in ForgeHooks.java, and whether ConditionCodec.java exists. Only these two files were probed.",
+    "result": {
+      "1.19.2": {
+        "default_field": null,
+        "forge_conditional_mentions_in_ForgeHooks": 0,
+        "ConditionCodec_file": false
+      },
+      "1.20.1": {
+        "default_field": null,
+        "forge_conditional_mentions_in_ForgeHooks": 0,
+        "ConditionCodec_file": false
+      },
+      "1.20.4": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 0,
+        "ConditionCodec_file": true
+      },
+      "1.21.1": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 0,
+        "ConditionCodec_file": true
+      },
+      "1.21.3": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      },
+      "1.21.4": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      },
+      "1.21.5": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      },
+      "1.21.8": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      },
+      "1.21.10": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      },
+      "1.21.11": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      },
+      "26.1": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      },
+      "26.2": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      },
+      "26.3": {
+        "default_field": "forge:condition",
+        "forge_conditional_mentions_in_ForgeHooks": 1,
+        "ConditionCodec_file": true
+      }
+    }
+  },
+  "pass20_clones": {
+    "note": "Shallow clones of 20 branch heads taken on 2026-10-02 and 2026-10-03 for pass 20 (section 34 of research.md). A head is the last commit on that day, not the first build of the Minecraft version. Several Forge versions have no branch of their own (for example 1.20.2, 1.20.3, 1.21.6, 1.21.7). Branch 26.3 is the same head as in `clones_read.26.3_pass19`.",
+    "heads": {
+      "1.7.10": {
+        "head": "9274e4fe435cb415099a8216c1b42235f185443e",
+        "date": "2017-06-07",
+        "subject": "Fix log4j configuration"
+      },
+      "1.8.9": {
+        "head": "d06e0ad71b8471923cc809dde58251de8299a143",
+        "date": "2017-06-07",
+        "subject": "Fix log4j configuration"
+      },
+      "1.10.x": {
+        "head": "e4caf46cb954ea86fe338cd256402cd84f824586",
+        "date": "2017-10-07",
+        "subject": "Fix performance regression in FastTESR rendering"
+      },
+      "1.11.x": {
+        "head": "23410ad4d4d485927b39c56b33f479ea00628c44",
+        "date": "2018-01-09",
+        "subject": "[1.11] Fix dormant chunk cache allowing entity data to be overwritten (#4672)"
+      },
+      "1.12.x": {
+        "head": "3effde4f1fc9d14d6ed1dbf6bebc39c2b18780e1",
+        "date": "2025-12-03",
+        "subject": "Enable promotion from actions"
+      },
+      "1.16.x": {
+        "head": "b3426008d3c3a256fcfaf9d780682c45ab1d1fdb",
+        "date": "2025-08-11",
+        "subject": "Fix ForgeDev run configs, and bump ForgeGradle (#10613)"
+      },
+      "1.18.x": {
+        "head": "9c5d527d71553d297d6ad684211929f66f596ae1",
+        "date": "2025-12-02",
+        "subject": "Migrate to Github Actions"
+      },
+      "1.19.x": {
+        "head": "db2634b31d4ad02c76e362a2c33d92a6257f6a2f",
+        "date": "2026-08-26",
+        "subject": "Bump SRGUtils to fix build"
+      },
+      "1.20.1": {
+        "head": "3c3f496015632ab84560be77a57cc57ac42c49e1",
+        "date": "2026-08-19",
+        "subject": "Fix BlockElements not properly saving forge_data when writing to json (#10877)"
+      },
+      "1.20.4": {
+        "head": "631b756d5b9b28eed2047379caad8c112c586086",
+        "date": "2026-08-04",
+        "subject": "Update equality check for RegistryObject to include RegistryObject#key. (#10863)"
+      },
+      "1.21.1": {
+        "head": "a11d1936c53f1f93787f239ff42cb8e93a1d037a",
+        "date": "2026-07-21",
+        "subject": "Update equality check for RegistryObject to include RegistryObject#key. (#10857)"
+      },
+      "1.21.3": {
+        "head": "fba9c66164e2b39049ea949d025b472dee8fc0dc",
+        "date": "2026-08-04",
+        "subject": "Update equality check for RegistryObject to include RegistryObject#key. (#10864)"
+      },
+      "1.21.4": {
+        "head": "885eba73ba19c9ce9890baa691793c6049b17c8f",
+        "date": "2026-08-04",
+        "subject": "Update equality check for RegistryObject to include RegistryObject#key. (#10865)"
+      },
+      "1.21.5": {
+        "head": "7a37f17c89ccc119bf7620f512a04bfb3c4f8f66",
+        "date": "2026-09-23",
+        "subject": "Use vanilla's entrypoint for GameTest servers (#10884)"
+      },
+      "1.21.8": {
+        "head": "23856b57a987f91acb311790e0f36dfd45cb783d",
+        "date": "2026-08-15",
+        "subject": "Fix IForgeBlockStateModel.getModelData not being called correct for `#getParticleIcon` (#10818) (#10874)"
+      },
+      "1.21.10": {
+        "head": "057fc3a309082551ece3c39141062eb4fb417ea3",
+        "date": "2026-08-15",
+        "subject": "Fix IForgeBlockStateModel.getModelData not being called correct for `#getParticleIcon` (#10818) (#10873)"
+      },
+      "1.21.11": {
+        "head": "1dab50ca003abc59e4115a329bcb46f76c105e15",
+        "date": "2026-08-13",
+        "subject": "Fix mod packets being processed after vanilla packets when received in the same tick."
+      },
+      "26.1": {
+        "head": "38ebbf189ccb21f6727f08ea8656b2e6e89c237c",
+        "date": "2026-03-29",
+        "subject": "Fix arrows not being used correctly."
+      },
+      "26.2": {
+        "head": "41dfdc8f8b0488acbd339d78adc0b03a9f53e0a0",
+        "date": "2026-08-26",
+        "subject": "Fixed getToolModifiedState for AXE_SCRAPE (#10880)"
+      },
+      "26.3": {
+        "head": "939fb13d3b96664d6b5057e128bb05395417063b",
+        "date": "2026-09-30",
+        "subject": "Fix MDK including wrong resources. Fixes #10892"
+      }
+    }
+  },
+  "pass21_clones": {
+    "note": "Clones of 2026-10-03 and 2026-10-04 for pass 21 (section 35 of research.md). The Forge branch heads of pass 20 were reused. Tag commits are the commit the tag points to; only date, subject and top-level names were read, and tag dates do not follow release order.",
+    "bukkit": {
+      "repo": "Bukkit/Bukkit",
+      "branch": "master",
+      "head": "f210234e59275330f83b994e199c76f6abd41ee7",
+      "author_date": "2013-07-07",
+      "commit_date": "2014-08-17",
+      "pom_version": "1.7.10-R0.1-SNAPSHOT"
+    },
+    "forge_branches": {
+      "1.6": {
+        "head": "ba4637f5a3fbcf99224c5b29023c906037b701f4",
+        "date": "2013-07-01",
+        "subject": "Update src distro installer script. Source distro works now!"
+      },
+      "v164-pregradle": {
+        "head": "2f7ad51a025c5af5fca489489c34e7f30ecb15c2",
+        "date": "2013-12-18",
+        "subject": "Fix the ghost tile entity issue @ the client. Closes #884 Fix stairs using fungible blocks Fix fluid draining"
+      },
+      "mc172": {
+        "head": "e08c63b57bc51bb9f4fda335457a61c8d561aea1",
+        "date": "2014-07-02",
+        "subject": "Merge pull request #1184 from bspkrs/patch-2"
+      }
+    },
+    "forge_tags": {
+      "1.0.0": {
+        "head": "03267f3a9d7c0da889448376bb2b62e099ed0579",
+        "date": "2011-07-31",
+        "subject": "tagged 1.0.0"
+      },
+      "1.0.4": {
+        "head": "d00953b22007f744b4f95223ff0c93add10ca84d",
+        "date": "2011-08-06",
+        "subject": "tagged 1.0.4"
+      },
+      "1.2.1": {
+        "head": "2a67e147dc5cb98bd802126fb76551262c86b409",
+        "date": "2011-12-10",
+        "subject": "tagged 1.2.1"
+      },
+      "1.2.5": {
+        "head": "adb6b330b9726fbd90f1f83e0aa769299d062c7d",
+        "date": "2012-01-14",
+        "subject": "tagged 1.2.5"
+      },
+      "1.2.5@213": {
+        "head": "8b1d213f2021a0ffb552237c879f69b4e0f522c5",
+        "date": "2012-01-13",
+        "subject": "Fixed an unroll from the MCL merge.  Updated MCP mappings."
+      },
+      "1.3.2": {
+        "head": "9ca1255fc4b5805147a52dd9e5ab7f348b3c51c0",
+        "date": "2012-01-29",
+        "subject": "tagged 1.3.2"
+      },
+      "v7.2": {
+        "head": "b852e302851cfaf77e1db6f86408e8d049703656",
+        "date": "2013-12-12",
+        "subject": "First functional release under reobfuscation."
+      },
+      "v7.99": {
+        "head": "dca8a4a5507e037a4a108c89b06e8e737bfda7a7",
+        "date": "2015-05-13",
+        "subject": "Merged FML @ 1.7.10"
+      },
+      "v99.99": {
+        "head": "cb6f92e3c72ec85ff9fbd3b1a659ea7c1d97bb65",
+        "date": "2015-05-11",
+        "subject": "Merged FML"
+      },
+      "23.5": {
+        "head": "863ab2ca184cf2e2dfa134d07bfc20d6a9a6a4e8",
+        "date": "2019-09-03",
+        "subject": "Fix CME when removing ticket managers (#5861)"
+      },
+      "25.0": {
+        "head": "ca72710937a88ffbcccb9f748ae1890ea9887514",
+        "date": "2019-02-14",
+        "subject": "Initial 1.13.2 update. Major thing to note is that Dimensions have been completely revamped. DimensionType is "
+      },
+      "26.0": {
+        "head": "d97f47141ee45285377407d9362207d97150fb3e",
+        "date": "2019-06-07",
+        "subject": "Fix travis build"
+      },
+      "28.2": {
+        "head": "220cb1fd816cea5931dc46b491a7c47a9f1795e5",
+        "date": "2020-02-03",
+        "subject": "Update binpatcher version to decrease installer download size."
+      },
+      "36.2": {
+        "head": "064ae6961b7875adc6f114f97f7ad0dc7a0b059c",
+        "date": "2021-07-21",
+        "subject": "New 1.16.5 RB."
+      },
+      "37.1": {
+        "head": "be0a6819ac6a651da33a2659abb5347eb735aff4",
+        "date": "2021-11-30",
+        "subject": "Bump version for final RB of 1.17's lifecycle. Move on to 1.18!"
+      }
+    }
+  },
+  "pass22_clones": {
+    "note": "Clone of 2026-10-04 for pass 22 (section 36 of research.md). The head is the same as in passes 19 to 21; only patches and packages for entities, commands, tick events and permissions were read.",
+    "heads": {
+      "26.3": {
+        "head": "939fb13d3b96664d6b5057e128bb05395417063b",
+        "date": "2026-09-30",
+        "subject": "Fix MDK including wrong resources. Fixes #10892"
+      }
+    }
+  },
+  "pass23_clones": {
+    "note": "Clones of 2026-10-05 for pass 23 (section 37 of research.md). The Forge 26.3 head is unchanged from pass 22; the three docs repositories and MCPConfig were cloned shallow (depth 1) and read as markdown or JSON files.",
+    "repos": {
+      "MinecraftForge/Documentation": {
+        "branch": "1.21.x",
+        "head": "ac05e12aae903703cb8a9908a153623ce476a509",
+        "date": "2025-08-16",
+        "subject": "Add documentation of ForgeLayeredDraw and associated concepts."
+      },
+      "neoforged/documentation": {
+        "branch": "main",
+        "head": "89528c36e",
+        "date": "2026-10-01",
+        "subject": "Reload listeners (#368)"
+      },
+      "FabricMC/fabric-docs": {
+        "branch": "main",
+        "head": "f17bf08e377fc572169fee8df71bbef95628ed2d",
+        "date": "2026-09-30",
+        "subject": "Fixup method renames in block-models.md (#745)"
+      },
+      "MinecraftForge/MCPConfig": {
+        "branch": "master",
+        "head": "751a4f362ef15ec19d3616416e18853fee68968e",
+        "date": "2026-09-18",
+        "subject": "26.3 - Fix some decompiler artifacts"
+      }
+    },
+    "branches_listed": {
+      "MinecraftForge/Documentation": [
+        "1.12.x",
+        "1.13.x",
+        "1.14.x",
+        "1.15.x",
+        "1.16.x",
+        "1.17.x",
+        "1.18.x",
+        "1.19.2",
+        "1.19.x",
+        "1.20.1",
+        "1.20.x",
+        "1.21.x",
+        "FG/5.x",
+        "FG/6.x"
+      ],
+      "neoforged/documentation": [
+        "main"
+      ],
+      "FabricMC/fabric-docs": [
+        "l10n/main",
+        "main"
+      ],
+      "MinecraftForge/MCPConfig": [
+        "1.14",
+        "1.14-renames",
+        "master",
+        "zip"
+      ]
+    }
+  },
+  "pass24_clones": {
+    "note": "Clones and blobless fetches of 2026-10-06 for pass 24 (section 38 of research.md). Tags were fetched with a blob-less partial clone (git fetch --depth 1 --filter=blob:none) and read by path.",
+    "forge_branches": {
+      "1.7.10": "9274e4fe435cb415099a8216c1b42235f185443e",
+      "1.8.9": "d06e0ad71b8471923cc809dde58251de8299a143",
+      "1.12.x": "3effde4f1fc9d14d6ed1dbf6bebc39c2b18780e1",
+      "1.16.x": "b3426008d3c3a256fcfaf9d780682c45ab1d1fdb",
+      "1.20.1": "0ec923d7307eb15bef70d6916329642b733a21ed",
+      "1.21.1": "a11d1936c53f1f93787f239ff42cb8e93a1d037a"
+    },
+    "fml_branches": {
+      "1.4": "e6f57e5d94a17aad45e9c5b6aa0a9bd6edc6fe10",
+      "1.5.1": "aaf02ea2ac938d8cbaafdd2f59985c0604d648d7",
+      "1.6.4": "f1b3381e61fac1a0ae90f521223c6bc613eb4888",
+      "1.7.10": "a099592d3d1418245e3af65eda195da244287188",
+      "1.8": "d4ded9d6e218ac097990e836676bbe22b47e5966"
+    },
+    "fml_tags_read": [
+      "v2.0",
+      "v2.1",
+      "v2.2",
+      "v2.9",
+      "v3.0",
+      "v3.1",
+      "v4.0",
+      "v4.1",
+      "v4.2",
+      "v4.3",
+      "v4.4",
+      "v4.5",
+      "v4.6",
+      "v4.7",
+      "v4.99",
+      "v5.0",
+      "v5.1",
+      "v5.2",
+      "v6.0",
+      "v6.1",
+      "v6.2",
+      "v6.3",
+      "v6.4",
+      "v6.99",
+      "v7.10",
+      "v7.2",
+      "v7.9",
+      "v8.0"
+    ],
+    "forge_old_tags_cloned": {
+      "1.0.0": "03267f3a9d7c0da889448376bb2b62e099ed0579",
+      "1.2.5": "adb6b330b9726fbd90f1f83e0aa769299d062c7d",
+      "1.3.2": "9ca1255fc4b5805147a52dd9e5ab7f348b3c51c0"
+    },
+    "forge_tag_minecraft_versions_from_conf_version_cfg": {
+      "1.2.2 to 1.2.5@213": "client 1.0.0, server 1.0.1, MCP 5.0",
+      "1.3.0 to 1.3.2": "client 1.1, server 1.1, MCP 5.6",
+      "1.0.0, 1.0.1, 1.0.3, 1.0.4, 1.2.1": "no version.cfg"
+    },
+    "fml_tag_minecraft_versions_read": {
+      "v2.0": "1.2.5",
+      "v2.9": "1.2.5",
+      "v3.0": "1.3.1",
+      "v4.5": "1.4.5",
+      "v4.6": "1.4.6",
+      "v4.7": "1.4.7",
+      "v4.99": "s13w02b",
+      "v5.0": "1.5",
+      "v5.1": "1.5.1",
+      "v5.2": "1.5.2",
+      "v6.0": "1.6",
+      "v6.1": "1.6.1",
+      "v6.2": "1.6.2",
+      "v6.3": "1.6.3",
+      "v6.4": "1.6.4"
+    },
+    "launchwrapper": {
+      "repo": "Mojang/LegacyLauncher",
+      "branch": "master",
+      "head": "a4801b70f8a0148c6e6279ec2e91527e8019e1c8",
+      "date": "2016-12-20"
+    },
+    "docs_1.12.x": {
+      "repo": "MinecraftForge/Documentation",
+      "branch": "1.12.x",
+      "head": "b080c8753d7ba6f69b159de57181fe0f4a1cb124",
+      "date": "2024-01-23"
+    }
+  },
+  "pass25_clones": {
+    "note": "Checks of 2026-10-07 for pass 25 (section 39 of research.md). The Forge docs repository was cloned blob-less with all branches to read file history; the docs trees of pass 23 were reused.",
+    "docs_repo_history": {
+      "repo": "MinecraftForge/Documentation",
+      "branches": 15,
+      "commits": 502,
+      "modelextensions_index_md_commits": 0,
+      "folder_added_in": "23ba528 (2023-05-15)"
+    },
+    "raw_404_for_modelextensions_index_md": [
+      "1.21.x",
+      "1.20.x",
+      "1.20.1",
+      "1.19.x",
+      "1.19.2",
+      "1.18.x",
+      "1.17.x",
+      "1.16.x"
+    ],
+    "forge_branches_checked_for_conditional_recipe": [
+      "1.20.1",
+      "1.20.4",
+      "1.21.1",
+      "1.21.3",
+      "1.21.4",
+      "1.21.5",
+      "1.21.8",
+      "1.21.10",
+      "1.21.11",
+      "26.1",
+      "26.2"
+    ],
+    "forge_branches_without_1.21.6": true,
+    "minecraft_wiki_items_model_definition": {
+      "oldid": "3779697",
+      "last_edited": "2026-09-16"
+    }
+  },
+  "pass26_history": {
+    "note": "Facts of 2026-10-08 for pass 26 (section 40 of research.md), from a blob-less clone of the Forge repository with all branches.",
+    "repo": "MinecraftForge/MinecraftForge",
+    "commits": 11821,
+    "remote_branches": 45,
+    "first_commit": "2011-07-12",
+    "version_cfg_commits": 38,
+    "minecraft_conf_commits": {
+      "1.1": "2012-01-15",
+      "1.2.3": "2012-03-04",
+      "1.2.4": "2012-03-27 (with ModLoaderMP 1.2.4)",
+      "1.2.5": "2012-04-06",
+      "1.3.2": "2012-08-14",
+      "1.4": "2012-10-19",
+      "1.5": "2013-03-08",
+      "1.6": "2013-06-29",
+      "1.7.9": "2014-05-17",
+      "1.7.10": "2014-06-26"
+    },
+    "fml_first_in_forge": {
+      "newfmlmod_work": "2012-07-14",
+      "fml_source_zip_in_tree": "2012-08-09 (fml-src-2.9.117.213.zip)",
+      "fml_submodule": "2013-03-03"
+    },
+    "coremod_file_present_through_branch": "1.21.10",
+    "coremod_file_absent_from_branch": "1.21.11",
+    "mixinextras_dependency_first_branch": "1.21.10",
+    "maven_metadata_fetch": {
+      "date": "2026-10-08",
+      "newest_entry": "1.21.8-58.0.3",
+      "latest_field": "1.20.1-47.4.26",
+      "note": "older snapshot; cut after 1.10.2-12.18.3.2281"
+    }
+  }
+}

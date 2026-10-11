@@ -1,125 +1,23 @@
-<!-- README version: 0.1.0 | last updated: 2026-10-11 | matches MASTER-SPEC-STATUS v1.0.50 | rule: update after every completed pass -->
-<div align="center">
+# docs/original: the original specification
 
-# VESSEL
+**Document version:** 0.1.0
+**Date:** 2026-10-09
 
-**Virtualized Ecosystem Shared Server & Engine Loader**
+This folder keeps the original **Universal Server-Side Mod Loader (USML) Full Master Engineering Specification v3** (625 numbered points, written when the project was still called USML) as a reference. It is the text Shiroz pasted into the chat on 2026-10-09; at the start of the project it had also been supplied only as pasted text, so no source file exists. It is saved as `USML-FULL-MASTER-ENGINEERING-SPECIFICATION-v3.md`.
 
-One server for the mods and plugins of every major Minecraft ecosystem.
+## How to treat it
 
-![status: research phase](https://img.shields.io/badge/status-research%20phase-blue)
-![code: none yet](https://img.shields.io/badge/runnable%20code-none%20yet-lightgrey)
-![license: not chosen](https://img.shields.io/badge/license-not%20chosen-lightgrey)
+- It is **not rewritten**. Decisions made since then live in section 2 of `MASTER-SPEC-STATUS.md` and override the points they name; everything in v3 that section 2 does not mention still stands as written.
+- The language is Vietnamese and English as received. The rule that project docs are written in English applies to the docs this project produces, not to this archived original.
+- The point numbers (#0 to #625) are the ones the status file, the identity file and the research files cite.
 
-</div>
+## Checks run when it was saved (script, 2026-10-09)
 
-> **Status: research and design.** There is no release, no installer and no runnable code yet. Everything below describes the goal and the plan, not a working product.
+- 626 numbered headings, 0 to 625, in order, none missing, none duplicated; 9,444 lines, 116,104 bytes; the file decodes as valid UTF-8; the code fences are balanced (1,448 fence lines).
+- The 23 phases of point #614 match the 23 phase names in section 3 of the status file.
+- Every v3 point number cited in section 2 of the status file (#2, #4, #10, #13, #65 to #66, #142 to #150, #207 to #208, #252 to #253, #257 to #258, #414, #487 to #491, #545, #550, #601 to #602, #614) points at a heading of the topic the status file says it does.
 
-## What is VESSEL
+## Honest limits
 
-VESSEL is a planned server-side loader. It reads mods and plugins written for different loaders, converts what they do into one shared intermediate representation (IR), and runs that on a single server. Players join with a vanilla Java client or a Bedrock client; the server builds the resource packs and add-ons they need.
-
-It is **not** a translator from one loader's API to another. The aim is to separate what a mod or plugin *means* from the loader it was written for, then compile that meaning for the target.
-
-## Goals
-
-- **One runtime, many sources.** Forge, NeoForge, Fabric and Quilt mods, and Bukkit, Spigot, Paper, Folia, Canvas and Purpur plugins, in the same server.
-- **The server is the source of truth.** Gameplay, physics and state live on the server; the client only presents.
-- **No hard-coded Minecraft versions.** Support is meant to cover every version of every supported loader, driven by a version registry.
-- **Data stays where it belongs.** Binaries, configuration, persistent data, caches and generated files are kept apart, and a mod that writes files by relative path keeps working.
-- **Nothing fails silently.** What cannot be converted is reported with its reason, and the rest of the mod keeps running.
-
-## How it is meant to work
-
-```mermaid
-flowchart LR
-    A["Mods and plugins<br/>Forge, NeoForge, Fabric, Quilt<br/>Bukkit, Spigot, Paper, Folia, Canvas, Purpur"] --> B["Analysis<br/>metadata, bytecode, resources"]
-    B --> C{"Universal IR"}
-    C --> D["Server runtime"]
-    C --> E["Pack compilers<br/>Java and Bedrock"]
-    D --> F["Java players"]
-    E --> F
-    D --> G["Bedrock players<br/>via Geyser"]
-    E --> G
-```
-
-The exact shape of the runtime is part of the design work still under way.
-
-## Project status
-
-This section is rewritten after every completed pass of work.
-
-| Area | State |
-|---|---|
-| Specification | The original 625-point specification is in [`docs/original/`](docs/original/); 36 design decisions are recorded in [`MASTER-SPEC-STATUS.md`](MASTER-SPEC-STATUS.md). Two draft specifications (distribution and loader architecture, website) are in [`docs/drafts/`](docs/drafts/) and are not final. |
-| Forge research | Research table complete: 37 of 37 rows done (one with a documented limit, two accepted through a scope decision). The research gate is **not signed off** yet. See [`docs/upstream/forge/research.md`](docs/upstream/forge/research.md). |
-| Reference study of Sinytra Connector | In progress: 2 of 26 rows done, 8 partly done (23.1% by the project's counting rule). Connector runs Fabric mods on Forge and NeoForge; it is studied for ideas, and none of its code is used here. See [`docs/upstream/sinytra/`](docs/upstream/sinytra/). |
-| Research of other loaders | Not started (Fabric, NeoForge, Quilt, the Bukkit family, Bedrock and Geyser). |
-| Implementation | Not started. No adapter, runtime, installer or tests exist. |
-| **Whole plan** | **About 6.3%** of the 23-phase plan below, almost all of it research and design. |
-
-<details>
-<summary>The 23-phase plan and progress per phase</summary>
-
-| Phase | Name | Status | Estimate |
-|---|---|---|---|
-| 1 | Core + Version Registry | PARTIAL | 15% |
-| 2 | Universal Module Metadata | PARTIAL | 5% |
-| 3 | Virtual Filesystem | PARTIAL | 10% |
-| 4 | Paper/Bukkit Plugin Adapter | NOT STARTED | 0% |
-| 5 | Plugin Data/Config Compatibility | NOT STARTED | 0% |
-| 6 | Fabric Adapter | PARTIAL | 5% |
-| 7 | Forge Adapter | DONE (research part) | 100% |
-| 8 | NeoForge Adapter | NOT STARTED | 2% |
-| 9 | Quilt Adapter | NOT STARTED | 0% |
-| 10 | Folia Scheduler/Threading | NOT STARTED | 0% |
-| 11 | Canvas/Purpur | NOT STARTED | 0% |
-| 12 | UIR Core | NOT STARTED | 0% |
-| 13 | Block/Item/Entity abstraction | NOT STARTED | 0% |
-| 14 | Resource Pack Compiler | PARTIAL | 3% |
-| 15 | Datapack Compiler | NOT STARTED | 0% |
-| 16 | Display/Model/Animation backend | NOT STARTED | 0% |
-| 17 | Physics | NOT STARTED | 0% |
-| 18 | Dynamic Scene/Contraptions | NOT STARTED | 0% |
-| 19 | Bytecode conversion | NOT STARTED | 0% |
-| 20 | Mixin/Transformer semantic conversion | PARTIAL | 5% |
-| 21 | Geyser/Bedrock | NOT STARTED | 0% |
-| 22 | Advanced migration | NOT STARTED | 0% |
-| 23 | Full compatibility test matrix | NOT STARTED | 0% |
-
-The estimates cover research and design only. A phase marked "DONE (research part)" means its research is finished; nothing for that phase has been implemented.
-
-</details>
-
-## Planned support
-
-| Kind | Planned |
-|---|---|
-| Sources | Forge, NeoForge, Fabric, Quilt mods; Bukkit, Spigot, Paper, Folia, Canvas, Purpur plugins; Java resource and data packs; Bedrock resource packs, behavior packs and add-ons |
-| Server targets | Paper, Folia, Canvas, Purpur, Spigot, Bukkit (from the original specification; subject to the design work) |
-| Players | Java (vanilla client, with generated packs) and Bedrock through Geyser |
-
-All of this is a plan. Nothing in the table is implemented.
-
-## Documentation
-
-- [`MASTER-SPEC-STATUS.md`](MASTER-SPEC-STATUS.md): current state, every recorded decision, the progress tables.
-- [`LOG.md`](LOG.md): a dated log of every change to the documentation.
-- [`docs/architecture/`](docs/architecture/): module identity and collision rules, the startup build stage.
-- [`docs/upstream/`](docs/upstream/): research on the loaders and on Sinytra Connector.
-
-## Contributing
-
-Code contributions are not accepted yet, because there is no code. Issues with questions or corrections to the documentation are welcome once the repository is public.
-
-## Credits and prior art
-
-VESSEL builds on the public work of MinecraftForge, NeoForged, FabricMC, QuiltMC, PaperMC, GeyserMC and the Sinytra projects, whose documentation and source were read as research. Those projects own their code and names.
-
-## License
-
-Not chosen yet. It will be decided before the first release. Until a license file is added, no permission to reuse the text or code of this repository is granted.
-
-## Disclaimer
-
-VESSEL is not affiliated with or endorsed by Mojang Studios, Microsoft or any project named above. Minecraft is a trademark of Mojang Studios.
+- The file is a **transcription of pasted text, not a byte-for-byte copy** of an original file (none exists), so line-end spaces may differ from what Shiroz pasted. A few code fences have the language tag and the first line on the same line (for example "```text mods/Create.jar"); this is kept as pasted.
+- While saving, three occurrences of the word "Ví dụ" (points #30, #32 and #43) came out with a damaged character and were repaired by script; no other encoding problem was found (the 80 distinct non-ASCII characters are Vietnamese letters, box-drawing characters, arrows, quotation marks, a dash, a multiplication sign and two emoji).

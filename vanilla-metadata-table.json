@@ -1,0 +1,995 @@
+{
+  "document_version": "0.1.3",
+  "generated": "2026-09-30",
+  "status": "PARTIAL. First data-driven table for the vanilla part of the pre-1.8 metadata layer (decision 25, option B). It is a design seed, not a finished decode table. v0.1.1 (pass 21) added the kinds cocoa, end_portal_frame, vine, powered_and_detector_rail and huge_mushroom and the mode and power bits of the comparator.",
+  "confidence_levels": {
+    "corroborated": "at least two independent sources agree on the field, and at least one is code from the 1.6 to 1.7 era (Forge 1.7.10 source, or the Bukkit API snapshot listed in sources)",
+    "single_source": "one source only (often the 1.12.2 wiki). Usable only for versions where the block existed, and VESSEL logs a yellow warning when it uses such a field",
+    "convention_unresolved": "the structure (mask and number of values) is corroborated, but the compass names differ between sources. VESSEL treats the field as opaque for conversion until resolved",
+    "conflict": "sources disagree on the content. Opaque",
+    "unknown": "no source read. Opaque, same rule as mod blocks"
+  },
+  "rule_for_third_party_decompiled_caches": "Option C is reference only. A value that came from such a cache is used only if an independent source (Forge source, the Bukkit API, the wiki, or Shiroz's own decompile) proves it. Otherwise it is recorded as unverified and never used by VESSEL at runtime. No value in this file came from such a cache.",
+  "sources": {
+    "forge_1.7.10_source": "MinecraftForge branch 1.7.10, head 9274e4fe435c, RotationHelper and Block patches",
+    "bukkit_api_2013": "Bukkit/Bukkit master, head f210234e59275330f83b994e199c76f6abd41ee7 (commit dated 2013-07-07, pom version 1.7.10-R0.1-SNAPSHOT), package org.bukkit.material; licence GPL v3. Used for facts only, no code copied",
+    "wiki_1.12.2": "minecraft.wiki pre-flattening data values (1.12.2 state), fetched 2026-09-30, cut off after the torches section",
+    "minecraft_data_1.7_and_1.8": "PrismarineJS/minecraft-data commit f5d7d74604d8, `variations` arrays",
+    "forge_1.6.4_and_1.7.2_source": "MinecraftForge branches v164-pregradle (head 2f7ad51a025c, 2013-12-18) and mc172 (head e08c63b57bc5, 2014-07-02): RotationHelper compared with the 1.7.10 file by script (10 maps and 18 masks, 0 differences). Branch 1.6 (head ba4637f5a3fb, 2013-07-01) has only a 47-line RotationHelper for chests, pistons, droppers and dispensers",
+    "spigot_api_javadoc": "Spigot and Paper API Javadoc, org.bukkit.material.types.MushroomBlockTexture (a later API than the 2014 Bukkit snapshot; evidence class B/C, not 1.6 to 1.7 era code). Only the Javadoc text was read",
+    "wiki_mushroom_block_mirror": "Text of the minecraft.wiki Mushroom Block data values as shown on gamepedia file pages (search extracts, 2026-10-03). The row for value 5 is missing in the extract. Evidence class C",
+    "third_party_notes": "Community files that agree or differ but have no stated origin (Skript aliases for cocoa, Minecraft-Overviewer renderer commits for vines and mushroom blocks). Evidence class C. Never counted as a second source"
+  },
+  "confidence_count": {
+    "corroborated": 33,
+    "single_source": 15,
+    "convention_unresolved": 3,
+    "conflict": 2,
+    "unknown": 2
+  },
+  "kinds": [
+    {
+      "kind": "bed",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "0": "south",
+            "1": "west",
+            "2": "north",
+            "3": "east"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "head_of_bed",
+          "mask": "0x8",
+          "values": {
+            "1": "head half"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ],
+          "note": "wiki summary also mentions an occupied bit, not read"
+        }
+      ]
+    },
+    {
+      "kind": "door",
+      "fields": [
+        {
+          "field": "facing_lower_half",
+          "mask": "0x3",
+          "values": {
+            "0": "west",
+            "1": "north",
+            "2": "east",
+            "3": "south"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "open",
+          "mask": "0x4",
+          "values": {
+            "1": "open"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "top_half",
+          "mask": "0x8",
+          "values": {
+            "1": "upper half"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "hinge_corner_on_upper_half",
+          "mask": "0x3",
+          "values": {
+            "0x3": "north-west",
+            "0x1": "south-east",
+            "0x2": "south-west",
+            "other": "north-east"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "bukkit_api_2013"
+          ],
+          "note": "Bukkit labels; wiki summary only says hinge corner position; Forge says the upper half is never rotated"
+        }
+      ]
+    },
+    {
+      "kind": "fence_gate",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "0": "south",
+            "1": "west",
+            "2": "north",
+            "3": "east"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "open",
+          "mask": "0x4",
+          "values": {
+            "1": "open"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "tripwire_hook",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "0": "south (implied)",
+            "1": "west",
+            "2": "north",
+            "3": "east"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013"
+          ],
+          "note": "value 0 is implied by the code shape, not printed"
+        },
+        {
+          "field": "connected",
+          "mask": "0x4",
+          "values": {
+            "1": "connected"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "bukkit_api_2013"
+          ]
+        },
+        {
+          "field": "activated",
+          "mask": "0x8",
+          "values": {
+            "1": "activated"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "bukkit_api_2013"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "repeater",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "0": "north",
+            "1": "east",
+            "2": "south",
+            "3": "west"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "delay",
+          "mask": "0xC",
+          "values": {
+            "value": "(data >> 2) + 1, so 1 to 4"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "comparator",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "0": "north",
+            "1": "east",
+            "2": "south",
+            "3": "west"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "forge_1.7.10_source"
+          ],
+          "note": "Forge mask 0x3 with the repeater map; the mode and power bits are not read"
+        },
+        {
+          "field": "mode_and_power",
+          "mask": "0xC",
+          "values": {
+            "value": "not read"
+          },
+          "confidence": "unknown",
+          "sources": [],
+          "note": "the Bukkit 2014 snapshot has no comparator class and no other source was read for bits 0x4 and 0x8"
+        }
+      ],
+      "note": "v0.1.1: the mode and power bits were looked for in Bukkit and not found; still unknown"
+    },
+    {
+      "kind": "stairs",
+      "fields": [
+        {
+          "field": "facing_of_ascent",
+          "mask": "0x3",
+          "values": {
+            "0": "east",
+            "1": "west",
+            "2": "south",
+            "3": "north"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ],
+          "note": "Forge formula 5 - meta gives the same four directions if the ForgeDirection order is down, up, north, south, west, east"
+        },
+        {
+          "field": "flipped",
+          "mask": "0x4",
+          "values": {
+            "1": "upside down"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "torch_and_redstone_torch",
+      "fields": [
+        {
+          "field": "attachment",
+          "mask": "0x7",
+          "values": {
+            "0": "unused",
+            "1": "stands on a block to its west (points east)",
+            "2": "east side (points west)",
+            "3": "north side (points south)",
+            "4": "south side (points north)",
+            "5": "stands on the floor (points up)"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ],
+          "note": "conflict: minecraft-data labels 0 to 4; the three code and wiki sources start at 1"
+        }
+      ]
+    },
+    {
+      "kind": "lever",
+      "fields": [
+        {
+          "field": "attachment",
+          "mask": "0x7",
+          "values": {
+            "1": "west side",
+            "2": "east side",
+            "3": "north side",
+            "4": "south side",
+            "5 or 6": "floor (two values)",
+            "0 or 7": "ceiling (two values)"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ],
+          "note": "same pairs of values in Forge (5 and 6, 0 and 7) and Bukkit; naming of the two floor and two ceiling values is axis-dependent"
+        },
+        {
+          "field": "powered",
+          "mask": "0x8",
+          "values": {
+            "1": "thrown"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "button",
+      "fields": [
+        {
+          "field": "attachment",
+          "mask": "0x7",
+          "values": {
+            "1": "west side",
+            "2": "east side",
+            "3": "north side",
+            "4": "south side"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "pressed",
+          "mask": "0x8",
+          "values": {
+            "1": "pressed"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "ladder_and_wall_sign",
+      "fields": [
+        {
+          "field": "attachment",
+          "mask": "0x7",
+          "values": {
+            "2": "south side (faces north)",
+            "3": "north side (faces south)",
+            "4": "east side (faces west)",
+            "5": "west side (faces east)"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ],
+          "note": "Bukkit gives the attached face; Forge uses direct direction numbers; same semantics"
+        }
+      ]
+    },
+    {
+      "kind": "chest_furnace_ender_chest",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x7",
+          "values": {
+            "2": "north",
+            "3": "south",
+            "4": "west",
+            "5": "east"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "dispenser_dropper_hopper",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x7",
+          "values": {
+            "0": "down",
+            "1": "up",
+            "2": "north",
+            "3": "south",
+            "4": "west",
+            "5": "east"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "wiki_1.12.2"
+          ],
+          "note": "Bukkit covers only 2 to 5 for dispenser containers; 0 and 1 come from the Forge mask and the wiki range 0-15"
+        }
+      ]
+    },
+    {
+      "kind": "piston_base",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x7",
+          "values": {
+            "0": "down (implied)",
+            "1": "up",
+            "2": "north",
+            "3": "south",
+            "4": "west",
+            "5": "east"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "extended_or_powered",
+          "mask": "0x8",
+          "values": {
+            "1": "extended"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "rails",
+      "fields": [
+        {
+          "field": "shape",
+          "mask": "0xF",
+          "values": {
+            "0": "north-south flat",
+            "1": "east-west flat",
+            "2": "ascending east",
+            "3": "ascending west",
+            "4": "ascending north",
+            "5": "ascending south",
+            "6 to 9": "four corner shapes"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ],
+          "note": "corner naming differs between Forge (west, north, east, south) and Bukkit (NW, NE, SE, SW) for values 6 to 9; the set of values is the same"
+        }
+      ]
+    },
+    {
+      "kind": "standing_sign",
+      "fields": [
+        {
+          "field": "rotation",
+          "mask": "0xF",
+          "values": {
+            "0 to 15": "16 compass steps, 0 is south"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ],
+          "note": "Bukkit shows 16 cases with 0 south and 1 south-south-west"
+        }
+      ]
+    },
+    {
+      "kind": "pumpkin_and_jack_o_lantern",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "forge": {
+              "0": "south",
+              "1": "west",
+              "2": "north",
+              "3": "east"
+            },
+            "bukkit": {
+              "0": "north",
+              "1": "east",
+              "2": "south",
+              "3": "west"
+            }
+          },
+          "confidence": "convention_unresolved",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ],
+          "note": "both give four values in the low two bits rotating clockwise, but Forge and Bukkit differ by 180 degrees in the compass names; which one is \"face direction\" is not established"
+        }
+      ]
+    },
+    {
+      "kind": "trapdoor",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "bukkit": "0 north, 1 south, 2 west, 3 east (as written in the setter)",
+            "forge": "opposite of the direction for value + 2"
+          },
+          "confidence": "convention_unresolved",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013"
+          ]
+        },
+        {
+          "field": "open",
+          "mask": "0x4",
+          "values": {
+            "1": "open"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "upper_half",
+          "mask": "0x8",
+          "values": {
+            "1": "upper half"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "bukkit_api_2013"
+          ],
+          "note": "conflict: the wiki summary row says 0-7, which leaves this bit out"
+        }
+      ]
+    },
+    {
+      "kind": "skull",
+      "fields": [
+        {
+          "field": "attachment",
+          "mask": "0x7",
+          "values": {
+            "bukkit": "1 floor, 2 north, 3 south, 4 east, 5 west",
+            "forge_direct_numbers": "4 west, 5 east"
+          },
+          "confidence": "conflict",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013"
+          ],
+          "note": "east and west differ between the two sources, and Bukkit itself uses 4 for west on chests and 4 for east on skulls; keep opaque until resolved"
+        }
+      ]
+    },
+    {
+      "kind": "anvil",
+      "fields": [
+        {
+          "field": "orientation_and_damage",
+          "mask": "mixed",
+          "values": {
+            "forge": "mask 0x1 (0 south, 1 east)",
+            "minecraft_data_1_8": "values 0 to 14 mixing damage and orientation",
+            "wiki_summary": "0-2 damage only"
+          },
+          "confidence": "conflict",
+          "sources": [
+            "forge_1.7.10_source",
+            "wiki_1.12.2"
+          ],
+          "note": "three different descriptions; opaque until resolved"
+        }
+      ]
+    },
+    {
+      "kind": "wood_log_17_162",
+      "fields": [
+        {
+          "field": "type",
+          "mask": "0x3",
+          "values": {
+            "17": "0 oak, 1 spruce, 2 birch, 3 jungle",
+            "162": "0 acacia, 1 dark oak"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "wiki_1.12.2"
+          ],
+          "note": "wiki 1.12.2; minecraft-data 1.7 and 1.8 agree on log 17"
+        },
+        {
+          "field": "axis",
+          "mask": "0xC",
+          "values": {
+            "0": "up/down",
+            "4": "east/west",
+            "8": "north/south",
+            "12": "bark only"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "wiki_1.12.2"
+          ],
+          "note": "Forge log mask 0xC with 0 up, 4 east, 8 south"
+        }
+      ]
+    },
+    {
+      "kind": "leaves_18_161",
+      "fields": [
+        {
+          "field": "type",
+          "mask": "0x3",
+          "values": {
+            "18": "0 oak, 1 spruce, 2 birch, 3 jungle",
+            "161": "0 acacia, 1 dark oak"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "no_decay",
+          "mask": "0x4",
+          "values": {
+            "1": "permanent"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "wiki_1.12.2"
+          ]
+        },
+        {
+          "field": "check_decay",
+          "mask": "0x8",
+          "values": {
+            "1": "check for decay"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "wiki_1.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "wool_stained_clay_glass_carpet",
+      "fields": [
+        {
+          "field": "color",
+          "mask": "0xF",
+          "values": {
+            "0": "white",
+            "1": "orange",
+            "2": "magenta",
+            "3": "light blue",
+            "4": "yellow",
+            "5": "lime",
+            "6": "pink",
+            "7": "gray",
+            "8": "light gray",
+            "9": "cyan",
+            "10": "purple",
+            "11": "blue",
+            "12": "brown",
+            "13": "green",
+            "14": "red",
+            "15": "black"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "wiki_1.12.2",
+            "minecraft_data_1.7_and_1.8"
+          ],
+          "note": "minecraft-data lists the same 16 for wool and carpet"
+        }
+      ]
+    },
+    {
+      "kind": "slab",
+      "fields": [
+        {
+          "field": "type",
+          "mask": "0x7",
+          "values": {
+            "stone slab 0 to 7": "stone, sandstone, wooden (stone), cobblestone, bricks, stone brick, nether brick, quartz"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "wiki_1.12.2",
+            "minecraft_data_1.7_and_1.8"
+          ]
+        },
+        {
+          "field": "upper_half",
+          "mask": "0x8",
+          "values": {
+            "1": "upper half"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "wiki_1.12.2",
+            "minecraft_data_1.7_and_1.8"
+          ],
+          "note": "Forge isSideSolid also uses 0x8 for the upper half of slabs"
+        }
+      ]
+    },
+    {
+      "kind": "cocoa",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "0": "south",
+            "1": "west",
+            "2": "north",
+            "3": "east"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013"
+          ],
+          "note": "Forge puts cocoa in the same rotation group as beds (the BED map); Bukkit CocoaPlant#getFacing gives the same numbers and says the attached face is the opposite one. A community alias table (Skript) names 0 north, 1 east, 2 south, 3 west, which is the opposite face of each value and fits the attached-face reading, but it is not counted"
+        },
+        {
+          "field": "growth_size",
+          "mask": "0xC",
+          "values": {
+            "0": "small",
+            "4": "medium",
+            "8": "large"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "bukkit_api_2013"
+          ],
+          "note": "Bukkit CocoaPlant masks 0xC. A community alias table lists damage 0 to 3 small, 4 to 7 medium, 8 to 11 large, which is consistent, but a table with no stated origin is not counted as a second source"
+        }
+      ]
+    },
+    {
+      "kind": "end_portal_frame",
+      "fields": [
+        {
+          "field": "facing",
+          "mask": "0x3",
+          "values": {
+            "0": "south",
+            "1": "west",
+            "2": "north",
+            "3": "east"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "forge_1.7.10_source"
+          ],
+          "note": "Forge puts the end portal frame in the BED rotation group (mask 0x3). Bukkit 2014 has no class for it"
+        },
+        {
+          "field": "eye_inserted",
+          "mask": "0x4",
+          "values": {
+            "value": "not read"
+          },
+          "confidence": "unknown",
+          "sources": [],
+          "note": "no source read for the eye bit; Forge leaves the bits outside 0x3 untouched, which does not say what they mean"
+        }
+      ]
+    },
+    {
+      "kind": "vine",
+      "fields": [
+        {
+          "field": "bit_structure",
+          "mask": "0xF",
+          "values": {
+            "value": "four independent side flag bits 0x1, 0x2, 0x4, 0x8; 0 means no side flag"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013"
+          ],
+          "note": "Forge rotates a vine with (meta << 1) | ((meta & 0x8) >> 3), which is only valid for four cyclic flag bits; Bukkit Vine has the same four bits"
+        },
+        {
+          "field": "face_names",
+          "mask": "0xF",
+          "values": {
+            "0x1": "south",
+            "0x2": "west",
+            "0x4": "north",
+            "0x8": "east"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "bukkit_api_2013"
+          ],
+          "note": "Forge confirms only the cyclic order 0x1 to 0x2 to 0x4 to 0x8, not the names. The Minecraft-Overviewer renderer (a community project whose commit cites the old wiki) uses the same names; not counted"
+        }
+      ]
+    },
+    {
+      "kind": "powered_and_detector_rail",
+      "fields": [
+        {
+          "field": "shape",
+          "mask": "0x7",
+          "values": {
+            "0": "north-south flat",
+            "1": "east-west flat",
+            "2": "ascending east",
+            "3": "ascending west",
+            "4": "ascending north",
+            "5": "ascending south"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013"
+          ],
+          "note": "Forge rotates powered and detector rails with mask 0x7 (flat shapes 0 and 1, ascending shapes through the same map as rails); Bukkit ExtendedRails uses data & 0x7 and has no curved shapes"
+        },
+        {
+          "field": "powered_rail_powered",
+          "mask": "0x8",
+          "values": {
+            "1": "powered"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "bukkit_api_2013"
+          ],
+          "note": "Bukkit PoweredRail#isPowered. Forge leaves 0x8 untouched"
+        },
+        {
+          "field": "detector_rail_pressed",
+          "mask": "0x8",
+          "values": {
+            "1": "pressed"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "bukkit_api_2013"
+          ],
+          "note": "Bukkit DetectorRail#isPressed. The activator rail (1.5) has no Bukkit class and was not read"
+        }
+      ]
+    },
+    {
+      "kind": "huge_mushroom",
+      "fields": [
+        {
+          "field": "stem_four_sides",
+          "mask": "0xF",
+          "values": {
+            "10": "stem texture on the four sides, pores on top and bottom"
+          },
+          "confidence": "corroborated",
+          "sources": [
+            "bukkit_api_2013",
+            "wiki_mushroom_block_mirror",
+            "spigot_api_javadoc"
+          ],
+          "note": "Bukkit Mushroom uses 10 as the stem value"
+        },
+        {
+          "field": "uniform_textures",
+          "mask": "0xF",
+          "values": {
+            "11 to 13": "pores on all six faces",
+            "14": "cap texture on all six faces",
+            "15": "stem texture on all six faces"
+          },
+          "confidence": "single_source",
+          "sources": [
+            "wiki_mushroom_block_mirror",
+            "spigot_api_javadoc"
+          ],
+          "note": "two sources agree, but the later Spigot API is not 1.6 to 1.7 era code and the Bukkit 2014 helper does not know 14 and 15, so the rule for corroborated is not met. Value 0 (pores) and 5 (cap on top only) are implied by the Spigot list but 5 is missing in the wiki extract"
+        },
+        {
+          "field": "cap_faces",
+          "mask": "0xF",
+          "values": {
+            "wiki_forge_spigot": "1 top+west+north, 2 top+north, 3 top+north+east, 4 top+west, 5 top only, 6 top+east, 7 top+south+west, 8 top+south, 9 top+east+south",
+            "bukkit_2014_helper": "1 west+south, 2 west, 3 west+north, 4 south, 5 top only, 6 north, 7 east+south, 8 east, 9 east+north (derived from Mushroom#isFacePainted)"
+          },
+          "confidence": "convention_unresolved",
+          "sources": [
+            "forge_1.7.10_source",
+            "bukkit_api_2013",
+            "wiki_mushroom_block_mirror",
+            "spigot_api_javadoc"
+          ],
+          "note": "Forge (sides 2 north, 4 west, 6 east, 8 south; corners 1, 3, 9, 7 in clockwise order), the wiki text and the Spigot Javadoc agree with each other; the Bukkit 2014 helper class gives the same structure turned by 90 degrees (north to west to south to east). Not settled by a vote: kept opaque until a decompile or another independent source settles it"
+        }
+      ]
+    },
+    {
+      "kind": "other_vanilla_kinds",
+      "fields": [],
+      "note": "All other kinds of metadata-inventory.json (age or level counters, variants, flags) are summary-only: the wiki says what the value means, no code source was read. Treat as unknown or opaque unless a later pass promotes them."
+    }
+  ],
+  "known_source_problems": [
+    "The Bukkit snapshot has head f210234e59 with author date 2013-07-07 but commit date 2014-08-17, and a pom version of 1.7.10. [Examined in v0.1.1 and corrected in v0.1.2, 2026-10-03: its Material enum contains DOUBLE_PLANT, LOG_2, STAINED_GLASS and PACKED_ICE. In the Forge sources, double plant, log2 and stained glass appear in the heads of the mc172 and 1.7.10 branches but not in the 1.6.4 head (v164-pregradle). SLIME_BLOCK and BANNER exist neither in this Material enum nor in the Forge 1.7.10 tree. So the snapshot is not older than the 1.7.2 era; that it is exactly 1.7.10 is not shown. Why the author date is older than the commit date (a rebase or a cherry-pick) was not checked.]",
+    "Some Bukkit classes report the attached face while Forge reports facing; where both are semantically the same the entry says so.",
+    "The ForgeDirection ordinal order (down, up, north, south, west, east) was not read in Forge; the chest, dispenser and piston rows agree with Bukkit under that assumption, which supports it.",
+    "Forge before 1.6.4 has no usable table: branch 1.6 (2013-07-01) only rotates chests, pistons, droppers and dispensers; the 1.6.4 (v164-pregradle), 1.7.2 and 1.7.10 tables are identical. Nothing for 1.4 and 1.5 was read.",
+    "The wiki Pre-flattening page is still cut off after the torches section when fetched; for the six kinds of v0.1.1 only the mushroom data values could be read (through mirrors). Cocoa, end portal frame, vine, comparator and rails have no wiki row in this version."
+  ],
+  "updated": "2026-10-03"
+}
