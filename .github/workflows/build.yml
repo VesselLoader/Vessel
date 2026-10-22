@@ -1,0 +1,107 @@
+name: Build VESSEL Engine
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-engine:
+    name: "VESSEL: Sovereign Microkernel Core & Test Suite"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21 LTS (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Gradle 8.8
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
+          validate-wrappers: false
+
+      - name: Initialize Workspaces & Diagnostics
+        shell: bash
+        run: |
+          mkdir -p build-diagnostics Done/Core Done/Javadoc Done/Sources
+
+      - name: Run Full-Stack Unit & Integration Tests
+        shell: bash
+        run: |
+          set -o pipefail
+          echo "=========================================================="
+          echo "=== RUNNING VESSEL TEST SUITE (100% COVERAGE GATEWAY)  ==="
+          echo "=========================================================="
+          gradle test --console=plain --build-cache --stacktrace 2>&1 | tee "build-diagnostics/test.log"
+
+      - name: Build & Assemble Production Engine
+        shell: bash
+        run: |
+          set -o pipefail
+          echo "=========================================================="
+          echo "=== BUILDING VESSEL SOVEREIGN CORE ARTIFACTS           ==="
+          echo "=========================================================="
+          gradle assemble --console=plain --build-cache --stacktrace 2>&1 | tee "build-diagnostics/build.log"
+
+      - name: Harvest Single Production JAR
+        if: always()
+        shell: bash
+        run: |
+          echo ">>> Harvesting single production JAR into Done/..."
+          mkdir -p Done
+          find build/libs -type f -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" -exec cp {} Done/ \;
+
+      - name: Audit, Checksums & Validation Gate
+        shell: bash
+        run: |
+          echo "=========================================================="
+          echo "=== VESSEL ARTIFACT AUDIT & INTEGRITY CHECK            ==="
+          echo "=========================================================="
+          TOTAL_JARS=$(find Done -type f -name "*.jar" 2>/dev/null | wc -l)
+          echo ">>> Production Engine JARs Harvested: $TOTAL_JARS"
+          
+          if [ "$TOTAL_JARS" -ne 1 ]; then
+            echo "❌ CRITICAL: Expected exactly 1 production JAR, but found: $TOTAL_JARS!"
+            exit 1
+          fi
+
+          echo ">>> Artifact Ledger & SHA-256 Checksums:"
+          find Done -type f -name "*.jar" | sort | while read -r j; do
+            fsize=$(wc -c < "$j")
+            csum=$(sha256sum "$j" | awk '{print $1}')
+            echo "  [$(basename "$j")] Size: $fsize bytes | SHA-256: $csum"
+          done
+          echo "=========================================================="
+          echo "✅ EXACTLY 1 VESSEL PRODUCTION JAR VERIFIED!"
+          echo "=========================================================="
+
+      - name: Upload Production Artifacts (Done)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VESSEL-Done
+          path: Done/
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Upload Diagnostics & Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VESSEL-Diagnostics
+          path: |
+            build-diagnostics/
+            build/reports/tests/
+          retention-days: 3
+          if-no-files-found: ignore

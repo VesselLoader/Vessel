@@ -1,0 +1,40 @@
+# Gradle & Build artifacts
+.gradle/
+build/
+out/
+bin/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE & Environment configurations
+VESSEL-docs/
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Ddesktop.ini
+
+# Temporary files & Scratch
+scratch/
+trash/
+Temp/
+Ddone/
+build-diagnostics/
+artifacts/
+*.tmp
+*.log
+
+# Sensitive environment configuration
+*.local.properties
+.env
