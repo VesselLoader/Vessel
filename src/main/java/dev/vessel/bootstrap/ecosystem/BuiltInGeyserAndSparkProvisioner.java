@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class BuiltInGeyserAndSparkProvisioner {
 

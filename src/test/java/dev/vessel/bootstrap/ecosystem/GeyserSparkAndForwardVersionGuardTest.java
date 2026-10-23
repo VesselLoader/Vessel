@@ -32,7 +32,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 class GeyserSparkAndForwardVersionGuardTest {
 
@@ -129,6 +129,37 @@ class GeyserSparkAndForwardVersionGuardTest {
         assertTrue(creditsContent.contains("Lucko (lucko)"));
         assertTrue(creditsContent.contains("https://geysermc.org"));
         assertTrue(creditsContent.contains("https://spark.lucko.me"));
+        assertTrue(creditsContent.contains("Sodium / Embeddium"));
+        assertTrue(creditsContent.contains("Lithium / Radium"));
+        assertTrue(creditsContent.contains("FerriteCore"));
+        assertTrue(creditsContent.contains("ModernFix"));
+        assertTrue(creditsContent.contains("C2ME"));
+        assertTrue(creditsContent.contains("Krypton"));
+        assertTrue(creditsContent.contains("LazyDFU"));
+        assertTrue(creditsContent.contains("FastSuite"));
+        assertTrue(creditsContent.contains("Ksyxis"));
+        assertTrue(creditsContent.contains("PaperMC & Folia"));
+        assertTrue(creditsContent.contains("Valkyrien Skies"));
+        assertTrue(creditsContent.contains("Minecraft Dedicated Server"));
+    }
+
+    @Test
+    void testAllOptimizationProjectsCreditsAttributions() {
+        ThirdPartyCreditsAndAttributionRegistry registry = new ThirdPartyCreditsAndAttributionRegistry();
+        assertTrue(registry.getSodiumAttributionNotice().contains("Sodium / Embeddium"));
+        assertTrue(registry.getLithiumAttributionNotice().contains("Lithium / Radium"));
+        assertTrue(registry.getFerriteCoreAttributionNotice().contains("FerriteCore"));
+        assertTrue(registry.getModernFixAttributionNotice().contains("ModernFix"));
+        assertTrue(registry.getC2meAttributionNotice().contains("C2ME"));
+        assertTrue(registry.getKryptonAttributionNotice().contains("Krypton"));
+        assertTrue(registry.getLazyDfuAttributionNotice().contains("LazyDFU"));
+        assertTrue(registry.getFastSuiteAttributionNotice().contains("FastSuite"));
+        assertTrue(registry.getKsyxisAttributionNotice().contains("Ksyxis"));
+        assertTrue(registry.getPaperFoliaAttributionNotice().contains("PaperMC & Folia"));
+        assertTrue(registry.getValkyrienSkiesAttributionNotice().contains("Valkyrien Skies"));
+        assertTrue(registry.getFloodgateAttributionNotice("2.2.7-b69").contains("Floodgate"));
+        assertTrue(registry.getGeyserAttributionNotice("2.6.1-b756").contains("GeyserMC"));
+        assertTrue(registry.getSparkAttributionNotice("1.10.119").contains("spark"));
     }
 
     private static void createFabricModJarWithMcRequirement(
