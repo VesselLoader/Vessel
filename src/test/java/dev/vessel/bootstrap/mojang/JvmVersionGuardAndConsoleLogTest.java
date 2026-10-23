@@ -2,6 +2,8 @@ package dev.vessel.bootstrap.mojang;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import dev.vessel.bootstrap.ecosystem.BuiltInGeyserAndSparkProvisioner;
+import dev.vessel.bootstrap.ecosystem.BuiltInGeyserBedrockBridgeService;
 import dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream;
 import dev.vessel.bootstrap.target.VesselServerLauncher;
 import dev.vessel.bootstrap.target.VesselStartupConsoleLogger;
@@ -37,11 +39,14 @@ import org.objectweb.asm.Opcodes;
  *   <li>Dynamic multi-version server launching across legacy monolithic server JARs (e.g., 1.12.2
  *       {@code net.minecraft.server.MinecraftServer} and 1.16.5 {@code net.minecraft.server.Main})
  *       and modern 1.18+ bundler JARs, while keeping the Tier-1 {@code URLClassLoader} alive.</li>
+ *   <li>Built-in GeyserMC, Floodgate, and spark ecosystem provisioning, Bedrock UDP 19132 bridge
+ *       configuration, and live console interception of {@code /geyser}, {@code /floodgate}, and
+ *       {@code /spark} commands.</li>
  * </ol>
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.3
+ * @version 1.0.4
  */
 public final class JvmVersionGuardAndConsoleLogTest {
 
@@ -237,6 +242,50 @@ public final class JvmVersionGuardAndConsoleLogTest {
         assertThat(System.getProperty("java.net.preferIPv4Stack")).isEqualTo("true");
         assertThat(System.getProperty("java.net.preferIPv6Addresses")).isEqualTo("false");
         assertThat(launcher.getActivatedEntrypointsCount()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldProvisionGeyserFloodgateAndSparkAndExecuteEcosystemConsoleCommands() throws Exception {
+        Path serverRoot = tempDir.resolve("geyser-floodgate-spark-server");
+        VesselServerLauncher launcher = new VesselServerLauncher(serverRoot);
+        launcher.executeBootSequence(new String[]{"--nogui"});
+
+        BuiltInGeyserAndSparkProvisioner provisioner = new BuiltInGeyserAndSparkProvisioner();
+        assertThat(provisioner.parseGeyserVersionFromJson("[{\"version_number\":\"2.12.0-b1269\"}]"))
+                .isEqualTo("2.12.0-b1269");
+        assertThat(provisioner.parseFloodgateVersionFromJson("[{\"version_number\":\"2.2.7-b69\"}]"))
+                .isEqualTo("2.2.7-b69");
+        assertThat(provisioner.parseSparkVersionFromJson("[{\"version_number\":\"1.10.187\"}]"))
+                .isEqualTo("1.10.187");
+
+        BuiltInGeyserBedrockBridgeService bridgeService = new BuiltInGeyserBedrockBridgeService();
+        Path geyserConfig = bridgeService.scaffoldGeyserRuntimeConfig(serverRoot, 25565, 19132);
+        assertThat(Files.isRegularFile(geyserConfig)).isTrue();
+        String configYaml = Files.readString(geyserConfig, StandardCharsets.UTF_8);
+        assertThat(configYaml).contains("port: 19132");
+        assertThat(configYaml).contains("auth-type: offline");
+
+        String simulatedSession = String.join(
+                "\n",
+                "/geyser version",
+                "/floodgate version",
+                "/spark tps",
+                "stop") + "\n";
+
+        ByteArrayInputStream rawIn = new ByteArrayInputStream(
+                simulatedSession.getBytes(StandardCharsets.UTF_8));
+        try (VesselConsoleCommandInterceptorStream interceptor =
+                        new VesselConsoleCommandInterceptorStream(rawIn, launcher);
+                BufferedReader vanillaReader = new BufferedReader(
+                        new InputStreamReader(interceptor, StandardCharsets.UTF_8))) {
+            assertThat(vanillaReader.readLine()).isEqualTo("stop");
+            assertThat(vanillaReader.readLine()).isNull();
+        }
+
+        List<String> logs = launcher.getLastBootConsoleLogs();
+        assertThat(logs).anyMatch(l -> l.contains("[GeyserMC/VESSEL] Geyser version"));
+        assertThat(logs).anyMatch(l -> l.contains("[Floodgate/VESSEL] Floodgate version"));
+        assertThat(logs).anyMatch(l -> l.contains("[spark/VESSEL] TPS from last"));
     }
 
     private static byte[] createInnerServerJarWithClassVersion(

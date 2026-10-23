@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class ThirdPartyCreditsAndAttributionRegistry {
 
@@ -24,6 +24,11 @@ public final class ThirdPartyCreditsAndAttributionRegistry {
     public static final String GEYSER_AUTHORS = "GeyserMC Team & Contributors";
     public static final String GEYSER_LICENSE = "MIT License";
     public static final String GEYSER_UPSTREAM_URL = "https://geysermc.org / https://github.com/GeyserMC/Geyser";
+
+    public static final String FLOODGATE_PROJECT_NAME = "Floodgate (Bedrock Xbox Live Auth Bridge)";
+    public static final String FLOODGATE_AUTHORS = "GeyserMC Team & Contributors";
+    public static final String FLOODGATE_LICENSE = "MIT License";
+    public static final String FLOODGATE_UPSTREAM_URL = "https://geysermc.org / https://github.com/GeyserMC/Floodgate";
 
     public static final String SPARK_PROJECT_NAME = "spark (Performance Profiler)";
     public static final String SPARK_AUTHORS = "Lucko (lucko) & Contributors";
@@ -74,8 +79,21 @@ public final class ThirdPartyCreditsAndAttributionRegistry {
     }
 
     /**
-     * Generates the complete {@code CREDITS.md} markdown document crediting GeyserMC, Spark, and
-     * Mojang Studios.
+     * Returns the formatted attribution line for Floodgate.
+     *
+     * @param activeFloodgateVersion active Floodgate release version string
+     * @return attribution notice string
+     */
+    public String getFloodgateAttributionNotice(String activeFloodgateVersion) {
+        Objects.requireNonNull(activeFloodgateVersion, "activeFloodgateVersion must not be null");
+        return FLOODGATE_PROJECT_NAME + " v" + activeFloodgateVersion
+                + " - Copyright (c) 2019-2026 " + FLOODGATE_AUTHORS
+                + " (" + FLOODGATE_LICENSE + ") - " + FLOODGATE_UPSTREAM_URL;
+    }
+
+    /**
+     * Generates the complete {@code CREDITS.md} markdown document crediting GeyserMC, Floodgate,
+     * Spark, and Mojang Studios.
      *
      * @param geyserVersion    active Geyser version
      * @param sparkVersion     active Spark version
@@ -86,23 +104,47 @@ public final class ThirdPartyCreditsAndAttributionRegistry {
             String geyserVersion,
             String sparkVersion,
             String minecraftVersion) {
+        return buildFullCreditsMarkdown(
+                geyserVersion,
+                BuiltInGeyserAndSparkProvisioner.DEFAULT_LATEST_FLOODGATE_VERSION,
+                sparkVersion,
+                minecraftVersion);
+    }
+
+    /**
+     * Generates the complete {@code CREDITS.md} markdown document crediting GeyserMC, Floodgate,
+     * Spark, and Mojang Studios.
+     *
+     * @param geyserVersion    active Geyser version
+     * @param floodgateVersion active Floodgate version
+     * @param sparkVersion     active Spark version
+     * @param minecraftVersion active Minecraft release version
+     * @return markdown content string
+     */
+    public String buildFullCreditsMarkdown(
+            String geyserVersion,
+            String floodgateVersion,
+            String sparkVersion,
+            String minecraftVersion) {
         Objects.requireNonNull(geyserVersion, "geyserVersion must not be null");
+        Objects.requireNonNull(floodgateVersion, "floodgateVersion must not be null");
         Objects.requireNonNull(sparkVersion, "sparkVersion must not be null");
         Objects.requireNonNull(minecraftVersion, "minecraftVersion must not be null");
 
         return """
                 # VESSEL Third-Party Open-Source Credits & Attributions
 
-                VESSEL integrates and auto-provisions the latest official releases of **GeyserMC** and **spark** to provide out-of-the-box Bedrock Edition crossplay and low-overhead server performance profiling on **Minecraft %s**. Full credit and gratitude belong to their respective authors and contributors:
+                VESSEL integrates and auto-provisions the latest official releases of **GeyserMC**, **Floodgate**, and **spark** via Modrinth & GeyserMC APIs to provide out-of-the-box Bedrock Edition crossplay and low-overhead server performance profiling on **Minecraft %s**. Full credit and gratitude belong to their respective authors and contributors:
 
                 ---
 
                 ## 1. GeyserMC (`Geyser` & `Floodgate`)
-                - **Integrated Version:** `%s` (Auto-updated to latest release on every VESSEL update)
+                - **Integrated Geyser Version:** `%s` (Auto-updated to latest release on every VESSEL update)
+                - **Integrated Floodgate Version:** `%s` (Auto-updated to latest release on every VESSEL update)
                 - **Authors:** %s
                 - **License:** %s
-                - **Official Website & Repository:** %s
-                - **Role in VESSEL:** Enables seamless Minecraft: Bedrock Edition client connections to VESSEL Java Edition servers with protocol translation, Xbox Live / Floodgate authentication, and automatic custom block/item resource pack mapping.
+                - **Official Website & Repositories:** %s | %s
+                - **Role in VESSEL:** Enables seamless Minecraft: Bedrock Edition client connections (UDP 19132) to VESSEL Java Edition servers with protocol translation, Xbox Live / Floodgate authentication, and automatic custom block/item resource pack mapping.
 
                 ---
 
@@ -121,9 +163,11 @@ public final class ThirdPartyCreditsAndAttributionRegistry {
                 """.stripIndent().formatted(
                 minecraftVersion,
                 geyserVersion,
+                floodgateVersion,
                 GEYSER_AUTHORS,
                 GEYSER_LICENSE,
                 GEYSER_UPSTREAM_URL,
+                FLOODGATE_UPSTREAM_URL,
                 sparkVersion,
                 SPARK_AUTHORS,
                 SPARK_LICENSE,
@@ -145,9 +189,34 @@ public final class ThirdPartyCreditsAndAttributionRegistry {
             String geyserVersion,
             String sparkVersion,
             String minecraftVersion) {
+        return writeCreditsFileToServerRoot(
+                serverRoot,
+                geyserVersion,
+                BuiltInGeyserAndSparkProvisioner.DEFAULT_LATEST_FLOODGATE_VERSION,
+                sparkVersion,
+                minecraftVersion);
+    }
+
+    /**
+     * Writes or updates {@code CREDITS.md} inside the specified server root directory.
+     *
+     * @param serverRoot       server root directory
+     * @param geyserVersion    active Geyser version
+     * @param floodgateVersion active Floodgate version
+     * @param sparkVersion     active Spark version
+     * @param minecraftVersion active Minecraft release version
+     * @return path to the written {@code CREDITS.md} file
+     */
+    public Path writeCreditsFileToServerRoot(
+            Path serverRoot,
+            String geyserVersion,
+            String floodgateVersion,
+            String sparkVersion,
+            String minecraftVersion) {
         Objects.requireNonNull(serverRoot, "serverRoot must not be null");
         Path creditsFile = serverRoot.resolve(CREDITS_FILE_NAME);
-        String markdown = buildFullCreditsMarkdown(geyserVersion, sparkVersion, minecraftVersion);
+        String markdown = buildFullCreditsMarkdown(
+                geyserVersion, floodgateVersion, sparkVersion, minecraftVersion);
         try {
             Files.createDirectories(serverRoot);
             Files.writeString(creditsFile, markdown, StandardCharsets.UTF_8);

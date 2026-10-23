@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class ServerEulaAndPropertiesBootstrap {
 
@@ -80,8 +80,9 @@ public final class ServerEulaAndPropertiesBootstrap {
         Map<String, String> defaults = new LinkedHashMap<>();
         defaults.put("server-port", String.valueOf(safePort));
         defaults.put("query.port", String.valueOf(safePort));
-        defaults.put("online-mode", "true");
-        defaults.put("motd", "A VESSEL Sovereign Hybrid Server (Bukkit + Fabric + Forge + NeoForge)");
+        defaults.put("online-mode", "false");
+        defaults.put("enforce-secure-profile", "false");
+        defaults.put("motd", "A VESSEL Sovereign Hybrid Server (Java & Bedrock Crossplay)");
         defaults.put("max-players", "100");
         defaults.put("view-distance", "10");
         defaults.put("simulation-distance", "10");

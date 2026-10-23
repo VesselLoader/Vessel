@@ -17,7 +17,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselConsoleCommandInterceptorStream extends InputStream {
 
@@ -67,10 +67,16 @@ public final class VesselConsoleCommandInterceptorStream extends InputStream {
         if ("cls".equals(trimmed) || "clear".equals(trimmed)) {
             return true;
         }
-        if ("vessel".equals(trimmed) || "/vessel".equals(trimmed)) {
-            return true;
-        }
-        return trimmed.startsWith("vessel ") || trimmed.startsWith("/vessel ");
+        String withoutSlash = trimmed.startsWith("/") ? trimmed.substring(1).trim() : trimmed;
+        return matchesCommandRoot(withoutSlash, "vessel")
+                || matchesCommandRoot(withoutSlash, "geyser")
+                || matchesCommandRoot(withoutSlash, "floodgate")
+                || matchesCommandRoot(withoutSlash, "fwhitelist")
+                || matchesCommandRoot(withoutSlash, "spark");
+    }
+
+    private static boolean matchesCommandRoot(String normalizedLine, String commandRoot) {
+        return commandRoot.equals(normalizedLine) || normalizedLine.startsWith(commandRoot + " ");
     }
 
     @Override

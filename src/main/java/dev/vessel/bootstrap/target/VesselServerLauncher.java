@@ -1,6 +1,7 @@
 package dev.vessel.bootstrap.target;
 
 import dev.vessel.bootstrap.ecosystem.BuiltInGeyserAndSparkProvisioner;
+import dev.vessel.bootstrap.ecosystem.BuiltInGeyserBedrockBridgeService;
 import dev.vessel.bootstrap.mojang.JvmVersionCompatibilityGuard;
 import dev.vessel.bootstrap.mojang.MojangBundlerExtractor;
 import dev.vessel.bootstrap.mojang.MojangServerJarDownloader;
@@ -31,14 +32,15 @@ import java.util.Objects;
  * VESSEL boot sequence in a single continuous pass (zero restart required on first run), emitting
  * structured installer/runtime/debug console logs, verifying host JVM compatibility against both
  * VESSEL's minimum requirement (Java 21 LTS) and the target Minecraft server's bytecode version,
- * provisioning built-in Geyser &amp; Spark with full credits, upgrading lower-version mods and
- * plugins in memory, activating all entrypoints, intercepting live {@code /vessel} console
- * commands, and dynamically launching any Minecraft server release (from legacy monolithic
- * 1.12.2 / 1.16.5 JARs to modern 1.18–1.21.11 / 26.3+ bundler JARs).
+ * provisioning built-in GeyserMC, Floodgate &amp; spark with full credits, upgrading lower-version
+ * mods and plugins in memory, activating all entrypoints, intercepting live {@code /vessel},
+ * {@code /geyser}, {@code /floodgate}, and {@code /spark} console commands, and dynamically
+ * launching any Minecraft server release (from legacy monolithic 1.12.2 / 1.16.5 JARs to modern
+ * 1.18–1.21.11 / 26.3+ bundler JARs).
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.10
+ * @version 1.0.11
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -54,6 +56,7 @@ public final class VesselServerLauncher {
     private volatile URLClassLoader activeTierOneClassLoader;
     private volatile VesselStartupConsoleLogger activeConsoleLogger;
     private volatile VesselCustomFlagsProfile activeCustomFlags;
+    private volatile BuiltInGeyserBedrockBridgeService activeGeyserBridgeService;
     private volatile List<String> lastBootConsoleLogs = List.of();
     private volatile String activeVesselVersionCode =
             VesselBuildVersionCode.CURRENT_EMBEDDED_VERSION_CODE;
@@ -187,7 +190,7 @@ public final class VesselServerLauncher {
         }
         System.setProperty("vessel.active.mc.version", resolvedActiveMcVersion);
 
-        // Step 4–10: Bootstrap EULA/server.properties, provision Geyser & Spark + CREDITS.md, scan mods/ & plugins/
+        // Step 4–10: Bootstrap EULA/server.properties, provision GeyserMC, Floodgate & spark + CREDITS.md, scan mods/ & plugins/
         ServerEulaAndPropertiesBootstrap eulaBootstrap = new ServerEulaAndPropertiesBootstrap();
         int serverPort = Integer.parseInt(flagsParser.getFlagValueOrDefault("port", "25565"));
         eulaBootstrap.ensureEulaAccepted(
@@ -196,19 +199,35 @@ public final class VesselServerLauncher {
         eulaBootstrap.ensureServerProperties(serverRoot, serverPort);
         if (isFirstRunInstall) {
             consoleLogger.logInstaller("Generated eula.txt (eula=true) and server.properties (server-port=" + serverPort + ")");
-            consoleLogger.logInstaller("Provisioning built-in GeyserMC (Bedrock Bridge) & spark (Profiler) into cache/ecosystem/...");
+            consoleLogger.logInstaller("Provisioning built-in GeyserMC (Bedrock Bridge), Floodgate & spark (Profiler) into cache/ecosystem/...");
         }
+
+        boolean isOnlineManifest = manifestUrl.startsWith("http://") || manifestUrl.startsWith("https://");
+        String geyserApiEndpoint = flagsParser.getFlagValueOrDefault(
+                "vessel-geyser-api-url",
+                isOnlineManifest ? BuiltInGeyserAndSparkProvisioner.GEYSER_MODRINTH_API_URL : "offline://geyser");
+        String floodgateApiEndpoint = flagsParser.getFlagValueOrDefault(
+                "vessel-floodgate-api-url",
+                isOnlineManifest ? BuiltInGeyserAndSparkProvisioner.FLOODGATE_MODRINTH_API_URL : "offline://floodgate");
+        String sparkApiEndpoint = flagsParser.getFlagValueOrDefault(
+                "vessel-spark-api-url",
+                isOnlineManifest ? BuiltInGeyserAndSparkProvisioner.SPARK_LATEST_API_URL : "offline://spark");
 
         BuiltInGeyserAndSparkProvisioner ecosystemProvisioner =
                 new BuiltInGeyserAndSparkProvisioner();
         ecosystemProvisioner.provisionAndSyncLatestEcosystem(
                 serverRoot,
                 resolvedActiveMcVersion,
-                "offline://geyser",
-                "offline://spark");
+                geyserApiEndpoint,
+                floodgateApiEndpoint,
+                sparkApiEndpoint);
+        System.setProperty("vessel.active.geyser.version", ecosystemProvisioner.getActiveGeyserVersion());
+        System.setProperty("vessel.active.floodgate.version", ecosystemProvisioner.getActiveFloodgateVersion());
+        System.setProperty("vessel.active.spark.version", ecosystemProvisioner.getActiveSparkVersion());
         consoleLogger.logInfo("Built-in Ecosystem ready: GeyserMC ("
                 + ecosystemProvisioner.getActiveGeyserVersion()
-                + ") & spark (" + ecosystemProvisioner.getActiveSparkVersion()
+                + ") + Floodgate (" + ecosystemProvisioner.getActiveFloodgateVersion()
+                + ") + spark (" + ecosystemProvisioner.getActiveSparkVersion()
                 + ") | Credits written to CREDITS.md");
 
         buildOrchestrator.purgeInterruptedPartialBuilds(cacheDir.resolve("builds"));
@@ -330,11 +349,26 @@ public final class VesselServerLauncher {
                     return 1;
                 }
 
+                BuiltInGeyserBedrockBridgeService geyserBridge = new BuiltInGeyserBedrockBridgeService();
+                activeGeyserBridgeService = geyserBridge;
+                boolean bedrockBridgeStarted = geyserBridge.startGeyserBridgeIfAvailable(
+                        serverRoot,
+                        serverPort,
+                        BuiltInGeyserBedrockBridgeService.DEFAULT_BEDROCK_UDP_PORT);
+                if (bedrockBridgeStarted) {
+                    consoleLogger.logInfo("GeyserMC Bedrock Edition RakNet Bridge started: UDP 0.0.0.0:"
+                            + BuiltInGeyserBedrockBridgeService.DEFAULT_BEDROCK_UDP_PORT
+                            + " -> TCP 127.0.0.1:" + serverPort + " (Floodgate auth ready)");
+                } else {
+                    consoleLogger.logDebug("GeyserMC runtime config scaffolded at cache/ecosystem/geyser-runtime/config.yml (UDP 19132 -> TCP "
+                            + serverPort + ")");
+                }
+
                 consoleLogger.logInfo("JVM compatibility verified (Java " + runningJavaVer
                         + " >= required Java "
                         + Math.max(JvmVersionCompatibilityGuard.VESSEL_MINIMUM_JAVA_VERSION, requiredJavaVer)
                         + "). Handing off to Minecraft DedicatedServer (" + mainClassName + ")...");
-                consoleLogger.logInfo("Sovereign Console Commands active: type 'vessel' or '/vessel <version|status|tps|mods|plugins|top|profile|heap|chunks|entities|pregen|reload|dump>' at any time.");
+                consoleLogger.logInfo("Sovereign Console Commands active: type 'vessel', 'geyser', 'floodgate', or 'spark' at any time.");
                 installConsoleCommandInterceptor();
                 TierOneVanillaGameLauncher vanillaLauncher = new TierOneVanillaGameLauncher();
                 // Keep activeTierOneClassLoader open for the entire lifetime of the server process
@@ -501,6 +535,7 @@ public final class VesselServerLauncher {
 
         String withoutSlash = trimmed.startsWith("/") ? trimmed.substring(1).trim() : trimmed;
         String[] tokens = withoutSlash.split("\\s+");
+        String rootCmd = tokens[0].toLowerCase(Locale.ROOT);
         String[] subArgs;
         if (tokens.length <= 1) {
             subArgs = new String[0];
@@ -510,18 +545,55 @@ public final class VesselServerLauncher {
         }
 
         VesselRootCommand rootCommand = new VesselRootCommand();
-        List<VesselModuleIdentifier> moduleList = new ArrayList<>(discoveredModules.values());
-        boolean ultraOpt = activeCustomFlags != null && activeCustomFlags.isUltraOptimizationEnabled();
-        boolean deepDbg = activeCustomFlags != null && activeCustomFlags.isDeepDebugEnabled();
+        String geyserVer = System.getProperty(
+                "vessel.active.geyser.version",
+                BuiltInGeyserAndSparkProvisioner.DEFAULT_LATEST_GEYSER_VERSION);
+        String floodgateVer = System.getProperty(
+                "vessel.active.floodgate.version",
+                BuiltInGeyserAndSparkProvisioner.DEFAULT_LATEST_FLOODGATE_VERSION);
+        String sparkVer = System.getProperty(
+                "vessel.active.spark.version",
+                BuiltInGeyserAndSparkProvisioner.DEFAULT_LATEST_SPARK_VERSION);
 
-        List<String> outputLines = rootCommand.executeLiveConsoleCommand(
-                subArgs,
-                activeVesselVersionCode,
-                resolvedActiveMcVersion,
-                moduleList,
-                activatedEntrypointsCount,
-                ultraOpt,
-                deepDbg);
+        List<String> outputLines;
+        if ("geyser".equals(rootCmd)) {
+            BuiltInGeyserBedrockBridgeService bridge = activeGeyserBridgeService;
+            if (bridge != null) {
+                bridge.dispatchCommandToBridgeProcess(withoutSlash);
+            }
+            outputLines = rootCommand.executeGeyserConsoleCommand(
+                    subArgs,
+                    geyserVer,
+                    floodgateVer,
+                    BuiltInGeyserBedrockBridgeService.DEFAULT_BEDROCK_UDP_PORT,
+                    bridge != null ? bridge.getActiveJavaTargetPort() : 25565,
+                    bridge != null && bridge.isBridgeRunning());
+        } else if ("floodgate".equals(rootCmd) || "fwhitelist".equals(rootCmd)) {
+            String[] effectiveArgs = "fwhitelist".equals(rootCmd)
+                    ? new String[]{"whitelist", subArgs.length > 0 ? subArgs[0] : "status"}
+                    : subArgs;
+            outputLines = rootCommand.executeFloodgateConsoleCommand(
+                    effectiveArgs,
+                    floodgateVer,
+                    geyserVer);
+        } else if ("spark".equals(rootCmd)) {
+            outputLines = rootCommand.executeSparkConsoleCommand(
+                    subArgs,
+                    sparkVer,
+                    resolvedActiveMcVersion);
+        } else {
+            List<VesselModuleIdentifier> moduleList = new ArrayList<>(discoveredModules.values());
+            boolean ultraOpt = activeCustomFlags != null && activeCustomFlags.isUltraOptimizationEnabled();
+            boolean deepDbg = activeCustomFlags != null && activeCustomFlags.isDeepDebugEnabled();
+            outputLines = rootCommand.executeLiveConsoleCommand(
+                    subArgs,
+                    activeVesselVersionCode,
+                    resolvedActiveMcVersion,
+                    moduleList,
+                    activatedEntrypointsCount,
+                    ultraOpt,
+                    deepDbg);
+        }
         for (String line : outputLines) {
             logger.logInfo(line);
         }
