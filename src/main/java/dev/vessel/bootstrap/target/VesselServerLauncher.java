@@ -12,13 +12,17 @@ import dev.vessel.bootstrap.mojang.TierOneVanillaGameLauncher;
 import dev.vessel.bootstrap.mojang.VesselCustomFlagsProfile;
 import dev.vessel.bootstrap.updater.StagedKernelPatchManager;
 import dev.vessel.bootstrap.updater.VesselBuildVersionCode;
+import dev.vessel.command.VesselRootCommand;
 import dev.vessel.kernel.identity.SourceLoaderKind;
 import dev.vessel.kernel.identity.VesselModuleIdentifier;
+import java.io.InputStream;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,12 +32,13 @@ import java.util.Objects;
  * structured installer/runtime/debug console logs, verifying host JVM compatibility against both
  * VESSEL's minimum requirement (Java 21 LTS) and the target Minecraft server's bytecode version,
  * provisioning built-in Geyser &amp; Spark with full credits, upgrading lower-version mods and
- * plugins in memory, activating all entrypoints, and dynamically launching any Minecraft server
- * release (from legacy monolithic 1.12.2 / 1.16.5 JARs to modern 1.18–1.21.11 / 26.3+ bundler JARs).
+ * plugins in memory, activating all entrypoints, intercepting live {@code /vessel} console
+ * commands, and dynamically launching any Minecraft server release (from legacy monolithic
+ * 1.12.2 / 1.16.5 JARs to modern 1.18–1.21.11 / 26.3+ bundler JARs).
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.8
+ * @version 1.0.9
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -47,6 +52,8 @@ public final class VesselServerLauncher {
     private volatile boolean stagedPatchAppliedOnBoot;
     private volatile boolean jvmVersionMismatchHalted;
     private volatile URLClassLoader activeTierOneClassLoader;
+    private volatile VesselStartupConsoleLogger activeConsoleLogger;
+    private volatile VesselCustomFlagsProfile activeCustomFlags;
     private volatile List<String> lastBootConsoleLogs = List.of();
     private volatile String activeVesselVersionCode =
             VesselBuildVersionCode.CURRENT_EMBEDDED_VERSION_CODE;
@@ -108,8 +115,10 @@ public final class VesselServerLauncher {
         VesselCliFlagsParser flagsParser = new VesselCliFlagsParser();
         flagsParser.parseArguments(args);
         VesselCustomFlagsProfile customFlags = flagsParser.getCustomFlagsProfile();
+        activeCustomFlags = customFlags;
         VesselStartupConsoleLogger consoleLogger =
                 VesselStartupConsoleLogger.fromFlagsProfile(customFlags);
+        activeConsoleLogger = consoleLogger;
         JvmVersionCompatibilityGuard jvmGuard = new JvmVersionCompatibilityGuard();
         int runningJavaVer = jvmGuard.detectRunningJavaFeatureVersion();
         boolean isFirstRunInstall = !Files.isRegularFile(
@@ -170,6 +179,7 @@ public final class VesselServerLauncher {
             resolvedActiveMcVersion = manifestResolver.resolveLatestReleaseVersion(manifestJson);
             consoleLogger.logInfo("Resolved latest official Minecraft release: " + resolvedActiveMcVersion);
         }
+        System.setProperty("vessel.active.mc.version", resolvedActiveMcVersion);
 
         // Step 4–10: Bootstrap EULA/server.properties, provision Geyser & Spark + CREDITS.md, scan mods/ & plugins/
         ServerEulaAndPropertiesBootstrap eulaBootstrap = new ServerEulaAndPropertiesBootstrap();
@@ -318,6 +328,8 @@ public final class VesselServerLauncher {
                         + " >= required Java "
                         + Math.max(JvmVersionCompatibilityGuard.VESSEL_MINIMUM_JAVA_VERSION, requiredJavaVer)
                         + "). Handing off to Minecraft DedicatedServer (" + mainClassName + ")...");
+                consoleLogger.logInfo("Sovereign Console Commands active: type 'vessel' or '/vessel <version|status|tps|mods|plugins|top|profile|heap|chunks|entities|pregen|reload|dump>' at any time.");
+                installConsoleCommandInterceptor();
                 TierOneVanillaGameLauncher vanillaLauncher = new TierOneVanillaGameLauncher();
                 // Keep activeTierOneClassLoader open for the entire lifetime of the server process
                 // so the background Minecraft "Server thread" never loses access to its JARs.
@@ -436,5 +448,78 @@ public final class VesselServerLauncher {
      */
     public String getActiveVesselVersionCode() {
         return activeVesselVersionCode;
+    }
+
+    /**
+     * Installs {@link VesselConsoleCommandInterceptorStream} onto {@link System#in} so that
+     * {@code /vessel} and {@code vessel} commands typed in the server console are handled by
+     * VESSEL directly while standard Minecraft commands pass through to Brigadier.
+     */
+    public void installConsoleCommandInterceptor() {
+        InputStream currentIn = System.in;
+        if (currentIn instanceof VesselConsoleCommandInterceptorStream existingInterceptor) {
+            currentIn = existingInterceptor.getDelegateStream();
+        }
+        if (currentIn != null) {
+            System.setIn(new VesselConsoleCommandInterceptorStream(currentIn, this));
+        }
+    }
+
+    /**
+     * Executes a raw console command line intercepted from {@link System#in} (such as
+     * {@code /vessel}, {@code vessel mods}, {@code /vessel mod}, {@code /vessel top}, or
+     * {@code cls}) and logs the output to the server console.
+     *
+     * @param rawCommandLine raw console command line
+     * @return list of response lines emitted to the console
+     */
+    public List<String> executeVesselConsoleCommand(String rawCommandLine) {
+        VesselStartupConsoleLogger logger = activeConsoleLogger;
+        if (logger == null) {
+            logger = new VesselStartupConsoleLogger(false);
+            activeConsoleLogger = logger;
+        }
+        if (rawCommandLine == null || rawCommandLine.isBlank()) {
+            return List.of();
+        }
+        String trimmed = rawCommandLine.trim();
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        if ("cls".equals(lower) || "clear".equals(lower)) {
+            System.out.print("\033[H\033[2J");
+            System.out.flush();
+            String msg = "Console screen cleared (type 'vessel help' for VESSEL commands or 'help' for Minecraft commands).";
+            logger.logInfo(msg);
+            lastBootConsoleLogs = logger.getRecordedLines();
+            return List.of(msg);
+        }
+
+        String withoutSlash = trimmed.startsWith("/") ? trimmed.substring(1).trim() : trimmed;
+        String[] tokens = withoutSlash.split("\\s+");
+        String[] subArgs;
+        if (tokens.length <= 1) {
+            subArgs = new String[0];
+        } else {
+            subArgs = new String[tokens.length - 1];
+            System.arraycopy(tokens, 1, subArgs, 0, subArgs.length);
+        }
+
+        VesselRootCommand rootCommand = new VesselRootCommand();
+        List<VesselModuleIdentifier> moduleList = new ArrayList<>(discoveredModules.values());
+        boolean ultraOpt = activeCustomFlags != null && activeCustomFlags.isUltraOptimizationEnabled();
+        boolean deepDbg = activeCustomFlags != null && activeCustomFlags.isDeepDebugEnabled();
+
+        List<String> outputLines = rootCommand.executeLiveConsoleCommand(
+                subArgs,
+                activeVesselVersionCode,
+                resolvedActiveMcVersion,
+                moduleList,
+                activatedEntrypointsCount,
+                ultraOpt,
+                deepDbg);
+        for (String line : outputLines) {
+            logger.logInfo(line);
+        }
+        lastBootConsoleLogs = logger.getRecordedLines();
+        return outputLines;
     }
 }

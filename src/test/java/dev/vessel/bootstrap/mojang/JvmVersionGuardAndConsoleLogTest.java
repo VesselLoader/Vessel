@@ -2,9 +2,13 @@ package dev.vessel.bootstrap.mojang;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream;
 import dev.vessel.bootstrap.target.VesselServerLauncher;
 import dev.vessel.bootstrap.target.VesselStartupConsoleLogger;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +41,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class JvmVersionGuardAndConsoleLogTest {
 
@@ -153,6 +157,45 @@ public final class JvmVersionGuardAndConsoleLogTest {
                 launcher.getActiveTierOneClassLoader());
         assertThat(stillLoadable.getName()).isEqualTo("net.minecraft.server.MinecraftServer");
         launcher.getActiveTierOneClassLoader().close();
+    }
+
+    @Test
+    void shouldInterceptLiveConsoleVesselCommandsAndPassThroughVanillaCommands() throws Exception {
+        Path serverRoot = tempDir.resolve("console-interceptor-server");
+        VesselServerLauncher launcher = new VesselServerLauncher(serverRoot);
+        launcher.executeBootSequence(new String[]{"--vessel-ultra-optimize", "--nogui"});
+
+        String simulatedConsoleSession = String.join(
+                "\n",
+                "/vessel",
+                "/vessel mod",
+                "cls",
+                "say hi",
+                "/vessel top",
+                "/vessel mods",
+                "stop") + "\n";
+
+        ByteArrayInputStream rawIn = new ByteArrayInputStream(
+                simulatedConsoleSession.getBytes(StandardCharsets.UTF_8));
+        try (VesselConsoleCommandInterceptorStream interceptor =
+                        new VesselConsoleCommandInterceptorStream(rawIn, launcher);
+                BufferedReader vanillaReader = new BufferedReader(
+                        new InputStreamReader(interceptor, StandardCharsets.UTF_8))) {
+            // Vanilla reader must ONLY receive "say hi" and "stop", while /vessel*, cls are handled by VESSEL
+            String firstVanillaCmd = vanillaReader.readLine();
+            String secondVanillaCmd = vanillaReader.readLine();
+            String eofLine = vanillaReader.readLine();
+
+            assertThat(firstVanillaCmd).isEqualTo("say hi");
+            assertThat(secondVanillaCmd).isEqualTo("stop");
+            assertThat(eofLine).isNull();
+        }
+
+        List<String> logs = launcher.getLastBootConsoleLogs();
+        assertThat(logs).anyMatch(l -> l.contains("VESSEL Sovereign Command Suite"));
+        assertThat(logs).anyMatch(l -> l.contains("[VESSEL/MODS] Loaded Mods"));
+        assertThat(logs).anyMatch(l -> l.contains("[VESSEL/TOP] Per-Tick Module CPU Profiler"));
+        assertThat(logs).anyMatch(l -> l.contains("Console screen cleared"));
     }
 
     private static byte[] createInnerServerJarWithClassVersion(

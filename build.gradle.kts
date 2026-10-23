@@ -1,6 +1,6 @@
 // ==============================================================================
 // VESSEL — Build Gradle (Kotlin DSL)
-// Version: 1.0.2
+// Version: 1.0.3
 // Description: Core build configuration for VESSEL Microkernel Engine.
 // Architecture: Sovereign Standalone Server (Java 21 LTS Toolchain).
 // ==============================================================================
@@ -90,6 +90,7 @@ tasks.jar {
             "Agent-Class" to "dev.vessel.bootstrap.target.VesselInstrumentationAgent",
             "Can-Redefine-Classes" to "true",
             "Can-Retransform-Classes" to "true",
+            "Enable-Native-Access" to "ALL-UNNAMED",
             "Specification-Title" to "VESSEL Sovereign Microkernel Core",
             "Specification-Version" to project.version,
             "Specification-Vendor" to "VesselLoader Team",
