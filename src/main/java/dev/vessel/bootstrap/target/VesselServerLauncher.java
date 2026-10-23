@@ -42,7 +42,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.14
+ * @version 1.0.15
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -286,7 +286,10 @@ public final class VesselServerLauncher {
 
         VesselResourcePackDeliveryService packService = new VesselResourcePackDeliveryService();
         activeResourcePackService = packService;
-        String packUrl = packService.startDeliveryServerAndConfigureProperties(serverRoot, serverPort);
+        String packUrl = packService.startDeliveryServerAndConfigureProperties(
+                serverRoot,
+                serverPort,
+                resolvedActiveMcVersion);
         if (!packUrl.isBlank()) {
             consoleLogger.logInfo("Universal Presentation HTTP Server active on " + packUrl
                     + " (SHA-1: " + packService.getActivePackSha1() + ")");

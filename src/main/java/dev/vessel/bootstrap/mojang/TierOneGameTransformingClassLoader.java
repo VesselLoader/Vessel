@@ -13,7 +13,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class TierOneGameTransformingClassLoader extends URLClassLoader {
 
@@ -45,8 +45,8 @@ public final class TierOneGameTransformingClassLoader extends URLClassLoader {
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         Objects.requireNonNull(name, "name must not be null");
 
-        if (VesselServerBrandTransformer.TARGET_CLASS_NAME.equals(name)) {
-            String resPath = VesselServerBrandTransformer.TARGET_INTERNAL_NAME + ".class";
+        if (VesselServerBrandTransformer.isServerClass(name)) {
+            String resPath = name.replace('.', '/') + ".class";
             try (InputStream in = getResourceAsStream(resPath)) {
                 if (in != null) {
                     byte[] raw = in.readAllBytes();
@@ -59,8 +59,8 @@ public final class TierOneGameTransformingClassLoader extends URLClassLoader {
             }
         }
 
-        if (VesselCommandsTransformer.TARGET_CLASS_NAME.equals(name)) {
-            String resPath = VesselCommandsTransformer.TARGET_INTERNAL_NAME + ".class";
+        if (VesselCommandsTransformer.isCommandsClass(name)) {
+            String resPath = name.replace('.', '/') + ".class";
             try (InputStream in = getResourceAsStream(resPath)) {
                 if (in != null) {
                     byte[] raw = in.readAllBytes();

@@ -26,7 +26,7 @@ import java.util.zip.ZipOutputStream;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class VesselUniversalResourcePackCompiler {
 
@@ -42,12 +42,14 @@ public final class VesselUniversalResourcePackCompiler {
             0x42, 0x60, (byte) 0x82
     };
 
+    private final VesselPackFormatResolver packFormatResolver = new VesselPackFormatResolver();
+
     public VesselUniversalResourcePackCompiler() {
     }
 
     /**
      * Compiles all assets found across {@code mods/} and {@code plugins/} into {@code packZip} and
-     * returns the SHA-1 hex hash of the resulting resource pack archive.
+     * returns the SHA-1 hex hash of the resulting resource pack archive, targeting modern 1.21.4 / 26.3.
      *
      * @param serverRoot the root server directory
      * @param packZip    the target path for {@code vessel-pack.zip}
@@ -55,24 +57,34 @@ public final class VesselUniversalResourcePackCompiler {
      * @throws IOException on I/O or archive writing errors
      */
     public String compileResourcePack(Path serverRoot, Path packZip) throws IOException {
+        return compileResourcePack(serverRoot, packZip, "1.21.4");
+    }
+
+    /**
+     * Compiles all assets found across {@code mods/} and {@code plugins/} into {@code packZip} with
+     * the canonical {@code pack_format} computed for the running Minecraft version.
+     *
+     * @param serverRoot the root server directory
+     * @param packZip    the target path for {@code vessel-pack.zip}
+     * @param mcVersion  active Minecraft version (e.g. {@code "1.12.2"}, {@code "1.20.1"}, {@code "26.3"})
+     * @return 40-character lowercase hexadecimal SHA-1 string
+     * @throws IOException on I/O or archive writing errors
+     */
+    public String compileResourcePack(Path serverRoot, Path packZip, String mcVersion) throws IOException {
         Objects.requireNonNull(serverRoot, "serverRoot must not be null");
         Objects.requireNonNull(packZip, "packZip must not be null");
 
         Files.createDirectories(packZip.getParent());
         Set<String> packagedEntries = new HashSet<>();
+        int packFormat = packFormatResolver.resolvePackFormat(mcVersion);
 
         try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(packZip)))) {
-            // 1. pack.mcmeta with pack_format 46 (Minecraft 1.21.4 / 26.3)
+            // 1. pack.mcmeta with dynamic pack_format for the detected Minecraft version
             ZipEntry mcmetaEntry = new ZipEntry("pack.mcmeta");
             zos.putNextEntry(mcmetaEntry);
-            String mcmeta = """
-                    {
-                      "pack": {
-                        "pack_format": 46,
-                        "description": "VESSEL Sovereign Universal Mod Presentation Pack"
-                      }
-                    }
-                    """;
+            String mcmeta = "{\n  \"pack\": {\n    \"pack_format\": "
+                    + packFormat
+                    + ",\n    \"description\": \"VESSEL Sovereign Universal Mod Presentation Pack\"\n  }\n}\n";
             zos.write(mcmeta.getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
             packagedEntries.add("pack.mcmeta");

@@ -14,9 +14,15 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.3
+ * @version 1.0.4
  */
 public final class ServerEulaAndPropertiesBootstrap {
+
+    private final dev.vessel.bootstrap.target.VesselServerPropertiesPackConfigurator packConfigurator =
+            new dev.vessel.bootstrap.target.VesselServerPropertiesPackConfigurator();
+
+    public ServerEulaAndPropertiesBootstrap() {
+    }
 
     /**
      * Ensures {@code eula.txt} exists in {@code serverRoot} and checks or writes EULA acceptance.
@@ -66,13 +72,26 @@ public final class ServerEulaAndPropertiesBootstrap {
 
     /**
      * Ensures {@code server.properties} exists in {@code serverRoot} with canonical defaults and
-     * returns the parsed key-value property map.
+     * returns the parsed key-value property map for Minecraft 1.21.4 / 26.3.
      *
      * @param serverRoot  the server root directory
      * @param defaultPort the default TCP server port (e.g., {@code 25565})
      * @return an unmodifiable map of server properties
      */
     public Map<String, String> ensureServerProperties(Path serverRoot, int defaultPort) {
+        return ensureServerProperties(serverRoot, defaultPort, "1.21.4");
+    }
+
+    /**
+     * Ensures {@code server.properties} exists in {@code serverRoot} with era-aware defaults and
+     * returns the parsed key-value property map.
+     *
+     * @param serverRoot  the server root directory
+     * @param defaultPort the default TCP server port (e.g., {@code 25565})
+     * @param mcVersion   the running Minecraft version string
+     * @return an unmodifiable map of server properties
+     */
+    public Map<String, String> ensureServerProperties(Path serverRoot, int defaultPort, String mcVersion) {
         Objects.requireNonNull(serverRoot, "serverRoot must not be null");
         Path propsPath = serverRoot.resolve("server.properties");
         int safePort = (defaultPort > 0 && defaultPort <= 65535) ? defaultPort : 25565;
@@ -95,8 +114,12 @@ public final class ServerEulaAndPropertiesBootstrap {
         defaults.put("sync-chunk-writes", "false");
         // Disable Vanilla 60s Watchdog freeze-kill during heavy modded chunk generation on low-end CPUs
         defaults.put("max-tick-time", "-1");
-        defaults.put("resource-pack-prompt", "{\"text\":\"VESSEL Sovereign Universal Mod Presentation Pack\"}");
-        defaults.put("resource-pack-id", "fcce4567-99de-3e01-949b-9799d6489542");
+        if (packConfigurator.isSupportedPrompt(mcVersion)) {
+            defaults.put("resource-pack-prompt", "{\"text\":\"VESSEL Sovereign Universal Mod Presentation Pack\"}");
+        }
+        if (packConfigurator.isSupportedPackId(mcVersion)) {
+            defaults.put("resource-pack-id", "fcce4567-99de-3e01-949b-9799d6489542");
+        }
 
         try {
             Files.createDirectories(serverRoot);

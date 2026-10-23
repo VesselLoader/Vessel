@@ -14,13 +14,14 @@ import java.util.Set;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class VesselBrigadierRegistrationTask implements Runnable {
 
     private final ClassLoader tierOneClassLoader;
     private final VesselServerLauncher launcher;
     private final VesselBrigadierCommandBridge bridge;
+    private final VesselLegacyCommandBridge legacyBridge = new VesselLegacyCommandBridge();
 
     public VesselBrigadierRegistrationTask(
             ClassLoader tierOneClassLoader,
@@ -44,6 +45,9 @@ public final class VesselBrigadierRegistrationTask implements Runnable {
                     serverInstance = VesselServerBridgeRegistry.getActiveCommands();
                 }
                 if (serverInstance == null) {
+                    serverInstance = VesselServerBridgeRegistry.getActiveLegacyCommandManager();
+                }
+                if (serverInstance == null) {
                     Class<?> serverClass = Class.forName(
                             "net.minecraft.server.MinecraftServer",
                             false,
@@ -52,14 +56,21 @@ public final class VesselBrigadierRegistrationTask implements Runnable {
                 }
 
                 if (serverInstance != null && !registered) {
-                    // 1. Inject all mod items (Create, etc.) into BuiltInRegistries.ITEM
+                    // 1. Inject all mod items into native item registry across all eras
                     itemBridge.injectAllModItemsIntoRegistry(tierOneClassLoader, launcher.getServerRoot());
 
-                    // 2. Register all commands into Brigadier dispatcher
-                    boolean ok = bridge.registerIntoBrigadier(serverInstance, tierOneClassLoader, launcher);
-                    if (ok) {
-                        registered = true;
-                        VesselServerBridgeRegistry.sendCommandsToAllPlayers();
+                    // 2. Register all commands: check for legacy pre-1.13 era vs modern Brigadier era
+                    if (legacyBridge.isLegacyEra(tierOneClassLoader)) {
+                        registered = legacyBridge.registerIntoLegacyCommandManager(
+                                serverInstance,
+                                tierOneClassLoader,
+                                launcher);
+                    } else {
+                        boolean ok = bridge.registerIntoBrigadier(serverInstance, tierOneClassLoader, launcher);
+                        if (ok) {
+                            registered = true;
+                            VesselServerBridgeRegistry.sendCommandsToAllPlayers();
+                        }
                     }
                 }
 

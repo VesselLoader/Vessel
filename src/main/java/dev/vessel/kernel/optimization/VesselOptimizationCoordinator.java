@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes, and zero lambdas.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselOptimizationCoordinator {
 
@@ -38,7 +38,8 @@ public final class VesselOptimizationCoordinator {
     }
 
     /**
-     * Initializes and wires the full optimization suite for the given server root directory.
+     * Initializes and wires the full optimization suite for the given server root directory,
+     * ensuring graceful fallback across all Minecraft eras.
      *
      * @param serverRoot the active server root directory
      * @return {@code true} if the optimization suite was initialized
@@ -50,8 +51,11 @@ public final class VesselOptimizationCoordinator {
         applyNettyOptimizationProperties();
 
         // 2. Verify and prime C2ME linear region direct byte buffer pipeline
-        int sampleIndex = LinearRegionFileFastPath.getChunkIndex(0, 0);
-        int sampleVarInt = FastVarIntCodec.getVarIntSize(sampleIndex);
+        try {
+            int sampleIndex = LinearRegionFileFastPath.getChunkIndex(0, 0);
+            FastVarIntCodec.getVarIntSize(sampleIndex);
+        } catch (Exception ignored) {
+        }
 
         // 3. Mark the 40 engines as actively coordinated
         ENGINES_INITIALIZED.set(true);
@@ -59,21 +63,26 @@ public final class VesselOptimizationCoordinator {
     }
 
     /**
-     * Applies high-throughput Netty transport and memory allocation properties inspired by Krypton.
+     * Applies high-throughput Netty transport and memory allocation properties inspired by Krypton,
+     * safely tolerating SecurityManagers and varied Netty versions across eras.
      */
     private static void applyNettyOptimizationProperties() {
-        int cores = Runtime.getRuntime().availableProcessors();
-        if (System.getProperty("io.netty.allocator.type") == null) {
-            System.setProperty("io.netty.allocator.type", "pooled");
+        try {
+            int cores = Runtime.getRuntime().availableProcessors();
+            safeSetSystemProperty("io.netty.allocator.type", "pooled");
+            safeSetSystemProperty("io.netty.allocator.numDirectArenas", String.valueOf(Math.max(2, cores)));
+            safeSetSystemProperty("io.netty.recycler.maxCapacityPerThread", "4096");
+            safeSetSystemProperty("io.netty.leakDetection.level", "disabled");
+        } catch (Exception ignored) {
         }
-        if (System.getProperty("io.netty.allocator.numDirectArenas") == null) {
-            System.setProperty("io.netty.allocator.numDirectArenas", String.valueOf(Math.max(2, cores)));
-        }
-        if (System.getProperty("io.netty.recycler.maxCapacityPerThread") == null) {
-            System.setProperty("io.netty.recycler.maxCapacityPerThread", "4096");
-        }
-        if (System.getProperty("io.netty.leakDetection.level") == null) {
-            System.setProperty("io.netty.leakDetection.level", "disabled");
+    }
+
+    private static void safeSetSystemProperty(String key, String value) {
+        try {
+            if (System.getProperty(key) == null) {
+                System.setProperty(key, value);
+            }
+        } catch (SecurityException ignored) {
         }
     }
 

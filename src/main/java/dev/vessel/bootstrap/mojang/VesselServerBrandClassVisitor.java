@@ -11,7 +11,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselServerBrandClassVisitor extends ClassVisitor {
 
@@ -28,12 +28,15 @@ public final class VesselServerBrandClassVisitor extends ClassVisitor {
             String descriptor,
             String signature,
             String[] exceptions) {
-        if ("getServerModName".equals(name) && "()Ljava/lang/String;".equals(descriptor)) {
-            brandMethodFound = true;
-            MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
-            return new VesselServerBrandMethodVisitor(mv);
+        MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+        if ("()Ljava/lang/String;".equals(descriptor)) {
+            if ("getServerModName".equals(name) || "func_71249_w".equals(name) || "b".equals(name)) {
+                brandMethodFound = true;
+                return new VesselServerBrandMethodVisitor(mv);
+            }
+            return new VesselServerBrandLdcMethodVisitor(mv);
         }
-        return super.visitMethod(access, name, descriptor, signature, exceptions);
+        return mv;
     }
 
     @Override

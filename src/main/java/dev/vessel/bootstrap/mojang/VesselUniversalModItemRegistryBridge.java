@@ -20,20 +20,24 @@ import java.util.jar.JarFile;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class VesselUniversalModItemRegistryBridge {
+
+    private final VesselItemIdentifierParser identifierParser = new VesselItemIdentifierParser();
+    private final VesselItemInstanceFactory instanceFactory = new VesselItemInstanceFactory();
+    private final VesselItemRegistryInjector registryInjector = new VesselItemRegistryInjector();
 
     public VesselUniversalModItemRegistryBridge() {
     }
 
     /**
      * Scans {@code mods/} in {@code serverRoot} for item declarations and registers them into
-     * Minecraft's {@code BuiltInRegistries.ITEM}.
+     * Minecraft's native item registry across all eras (1.7.10 – 26.3+).
      *
      * @param tierOneClassLoader active Tier-1 Minecraft classloader
      * @param serverRoot         root directory of the running server
-     * @return number of mod items successfully registered into BuiltInRegistries.ITEM
+     * @return number of mod items successfully registered
      */
     public int injectAllModItemsIntoRegistry(ClassLoader tierOneClassLoader, Path serverRoot) {
         Objects.requireNonNull(tierOneClassLoader, "tierOneClassLoader must not be null");
@@ -50,99 +54,28 @@ public final class VesselUniversalModItemRegistryBridge {
         }
 
         try {
-            Class<?> registriesClass = Class.forName(
-                    "net.minecraft.core.registries.BuiltInRegistries",
-                    true,
-                    tierOneClassLoader);
-            Field itemRegistryField = registriesClass.getField("ITEM");
-            Object itemRegistry = itemRegistryField.get(null);
-            if (itemRegistry == null) {
-                return 0;
-            }
-
-            Class<?> identifierClass = Class.forName(
-                    "net.minecraft.resources.Identifier",
-                    true,
-                    tierOneClassLoader);
-            Method parseIdentifierMethod = identifierClass.getMethod("parse", String.class);
-
-            Class<?> resourceKeyClass = Class.forName(
-                    "net.minecraft.resources.ResourceKey",
-                    true,
-                    tierOneClassLoader);
-            Class<?> registriesKeyClass = Class.forName(
-                    "net.minecraft.core.registries.Registries",
-                    true,
-                    tierOneClassLoader);
-            Field registriesItemField = registriesKeyClass.getField("ITEM");
-            Object registriesItemKey = registriesItemField.get(null);
-
-            Method createResourceKeyMethod = resourceKeyClass.getMethod(
-                    "create",
-                    resourceKeyClass,
-                    identifierClass);
-
-            Class<?> itemClass = Class.forName(
-                    "net.minecraft.world.item.Item",
-                    true,
-                    tierOneClassLoader);
-            Class<?> itemPropertiesClass = Class.forName(
-                    "net.minecraft.world.item.Item$Properties",
-                    true,
-                    tierOneClassLoader);
-            Constructor<?> itemPropsConstructor = itemPropertiesClass.getDeclaredConstructor();
-            itemPropsConstructor.setAccessible(true);
-            Method setIdMethod = null;
-            try {
-                setIdMethod = itemPropertiesClass.getMethod("setId", resourceKeyClass);
-            } catch (NoSuchMethodException ignored) {
-            }
-
-            Constructor<?> itemConstructor = itemClass.getDeclaredConstructor(itemPropertiesClass);
-            itemConstructor.setAccessible(true);
-
-            Class<?> registryInterface = Class.forName(
-                    "net.minecraft.core.Registry",
-                    true,
-                    tierOneClassLoader);
-            Method containsKeyMethod = registryInterface.getMethod("containsKey", identifierClass);
-            Method registerMethod = registryInterface.getMethod(
-                    "register",
-                    registryInterface,
-                    identifierClass,
-                    Object.class);
-
-            // Temporarily unfreeze MappedRegistry to allow dynamic mod item injection
-            Field frozenField = findFieldInHierarchy(itemRegistry.getClass(), "frozen");
-            if (frozenField != null) {
-                frozenField.setAccessible(true);
-                frozenField.set(itemRegistry, false);
-            }
-
+            Object itemRegistry = registryInjector.resolveItemRegistry(tierOneClassLoader);
             int registeredCount = 0;
             for (String itemStr : itemIdentifiers) {
                 try {
-                    Object idObj = parseIdentifierMethod.invoke(null, itemStr);
-                    boolean alreadyPresent = (boolean) containsKeyMethod.invoke(itemRegistry, idObj);
-                    if (!alreadyPresent) {
-                        Object propsInstance = itemPropsConstructor.newInstance();
-                        if (setIdMethod != null && registriesItemKey != null) {
-                            Object itemKey = createResourceKeyMethod.invoke(null, registriesItemKey, idObj);
-                            setIdMethod.invoke(propsInstance, itemKey);
+                    Object idObj = identifierParser.parseIdentifier(tierOneClassLoader, itemStr);
+                    if (idObj != null && !registryInjector.isAlreadyRegistered(itemRegistry, idObj, itemStr)) {
+                        Object itemInstance = instanceFactory.createItemInstance(tierOneClassLoader, idObj, itemStr);
+                        if (itemInstance != null) {
+                            boolean ok = registryInjector.injectItem(
+                                    tierOneClassLoader,
+                                    itemRegistry,
+                                    idObj,
+                                    itemStr,
+                                    itemInstance);
+                            if (ok) {
+                                registeredCount++;
+                            }
                         }
-                        Object newItemInstance = itemConstructor.newInstance(propsInstance);
-                        registerMethod.invoke(null, itemRegistry, idObj, newItemInstance);
-                        registeredCount++;
                     }
                 } catch (Exception ignored) {
                 }
             }
-
-            // Refreeze MappedRegistry
-            if (frozenField != null) {
-                frozenField.set(itemRegistry, true);
-            }
-
             return registeredCount;
         } catch (Exception ignored) {
             return 0;
@@ -180,17 +113,5 @@ public final class VesselUniversalModItemRegistryBridge {
             }
         }
         return result;
-    }
-
-    private static Field findFieldInHierarchy(Class<?> clazz, String fieldName) {
-        Class<?> current = clazz;
-        while (current != null && current != Object.class) {
-            try {
-                return current.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-                current = current.getSuperclass();
-            }
-        }
-        return null;
     }
 }

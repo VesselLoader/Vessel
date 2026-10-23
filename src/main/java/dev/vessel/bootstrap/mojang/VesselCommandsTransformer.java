@@ -10,7 +10,7 @@ import org.objectweb.asm.ClassWriter;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselCommandsTransformer {
 
@@ -18,6 +18,23 @@ public final class VesselCommandsTransformer {
     public static final String TARGET_CLASS_NAME = "net.minecraft.commands.Commands";
 
     public VesselCommandsTransformer() {
+    }
+
+    /**
+     * Checks if the given class name matches any Minecraft commands dispatcher or manager class across eras.
+     *
+     * @param className class name with dots or slashes
+     * @return {@code true} if this class represents a commands dispatcher or manager
+     */
+    public static boolean isCommandsClass(String className) {
+        if (className == null) {
+            return false;
+        }
+        String norm = className.replace('/', '.');
+        return "net.minecraft.commands.Commands".equals(norm)
+                || "net.minecraft.command.Commands".equals(norm)
+                || "net.minecraft.command.ServerCommandManager".equals(norm)
+                || "net.minecraft.command.CommandHandler".equals(norm);
     }
 
     /**

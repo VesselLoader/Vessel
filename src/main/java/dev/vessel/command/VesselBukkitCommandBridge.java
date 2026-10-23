@@ -1,5 +1,6 @@
 package dev.vessel.command;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
@@ -12,7 +13,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class VesselBukkitCommandBridge {
 
@@ -207,6 +208,9 @@ public final class VesselBukkitCommandBridge {
 
     private static double[] extractCoordinates(Object entity) {
         double[] coords = new double[]{0.0, 64.0, 0.0};
+        if (entity == null) {
+            return coords;
+        }
         try {
             Method getX = entity.getClass().getMethod("getX");
             Method getY = entity.getClass().getMethod("getY");
@@ -214,6 +218,23 @@ public final class VesselBukkitCommandBridge {
             coords[0] = ((Number) getX.invoke(entity)).doubleValue();
             coords[1] = ((Number) getY.invoke(entity)).doubleValue();
             coords[2] = ((Number) getZ.invoke(entity)).doubleValue();
+            return coords;
+        } catch (Exception ignored) {
+        }
+
+        // Fallback to legacy fields (1.7.10 – 1.12.2: posX, posY, posZ)
+        try {
+            Field fx = findField(entity.getClass(), "posX");
+            Field fy = findField(entity.getClass(), "posY");
+            Field fz = findField(entity.getClass(), "posZ");
+            if (fx != null && fy != null && fz != null) {
+                fx.setAccessible(true);
+                fy.setAccessible(true);
+                fz.setAccessible(true);
+                coords[0] = ((Number) fx.get(entity)).doubleValue();
+                coords[1] = ((Number) fy.get(entity)).doubleValue();
+                coords[2] = ((Number) fz.get(entity)).doubleValue();
+            }
         } catch (Exception ignored) {
         }
         return coords;
@@ -221,50 +242,207 @@ public final class VesselBukkitCommandBridge {
 
     private static float[] extractRotations(Object entity) {
         float[] rots = new float[]{0.0f, 0.0f};
+        if (entity == null) {
+            return rots;
+        }
         try {
             Method getYRot = entity.getClass().getMethod("getYRot");
             Method getXRot = entity.getClass().getMethod("getXRot");
             rots[0] = ((Number) getYRot.invoke(entity)).floatValue();
             rots[1] = ((Number) getXRot.invoke(entity)).floatValue();
+            return rots;
+        } catch (Exception ignored) {
+        }
+
+        // Fallback to legacy fields (1.7.10 – 1.12.2: rotationYaw, rotationPitch)
+        try {
+            Field fy = findField(entity.getClass(), "rotationYaw");
+            Field fp = findField(entity.getClass(), "rotationPitch");
+            if (fy != null && fp != null) {
+                fy.setAccessible(true);
+                fp.setAccessible(true);
+                rots[0] = ((Number) fy.get(entity)).floatValue();
+                rots[1] = ((Number) fp.get(entity)).floatValue();
+            }
         } catch (Exception ignored) {
         }
         return rots;
     }
 
-    private static String extractDimension(Object entity) {
-        try {
-            Method levelMethod = entity.getClass().getMethod("level");
-            Object level = levelMethod.invoke(entity);
-            if (level != null) {
-                Method dimMethod = level.getClass().getMethod("dimension");
-                Object dim = dimMethod.invoke(level);
+    public static String extractDimension(Object entity) {
+        if (entity == null) {
+            return "minecraft:overworld";
+        }
+
+        // 1. Try world/level object from entity
+        Object levelOrWorld = null;
+        for (Method m : entity.getClass().getMethods()) {
+            if (m.getParameterCount() == 0
+                    && ("level".equals(m.getName()) || "getLevel".equals(m.getName())
+                    || "getWorld".equals(m.getName()) || "getCommandSenderWorld".equals(m.getName()))) {
+                try {
+                    levelOrWorld = m.invoke(entity);
+                    if (levelOrWorld != null) {
+                        break;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        if (levelOrWorld == null) {
+            try {
+                Field f = findField(entity.getClass(), "worldObj");
+                if (f == null) {
+                    f = findField(entity.getClass(), "world");
+                }
+                if (f != null) {
+                    f.setAccessible(true);
+                    levelOrWorld = f.get(entity);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (levelOrWorld != null) {
+            // Era 1 & 2: level.dimension() -> ResourceKey (1.20.5+ identifier() or 1.16–1.20.4 location())
+            try {
+                Method dimMethod = levelOrWorld.getClass().getMethod("dimension");
+                Object dim = dimMethod.invoke(levelOrWorld);
                 if (dim != null) {
-                    Method locMethod = null;
                     try {
-                        locMethod = dim.getClass().getMethod("identifier");
-                    } catch (NoSuchMethodException e) {
+                        Method idMethod = dim.getClass().getMethod("identifier");
+                        Object res = idMethod.invoke(dim);
+                        if (res != null) {
+                            return res.toString();
+                        }
+                    } catch (NoSuchMethodException ignored) {
+                    }
+                    try {
+                        Method locMethod = dim.getClass().getMethod("location");
+                        Object res = locMethod.invoke(dim);
+                        if (res != null) {
+                            return res.toString();
+                        }
+                    } catch (NoSuchMethodException ignored) {
+                    }
+                    return dim.toString();
+                }
+            } catch (Exception ignored) {
+            }
+
+            // Era 3: 1.13 – 1.15.2 level.getDimension() -> DimensionType / ResourceLocation
+            try {
+                Method dimTypeMethod = levelOrWorld.getClass().getMethod("getDimension");
+                Object dimType = dimTypeMethod.invoke(levelOrWorld);
+                if (dimType != null) {
+                    try {
+                        Method getKeyMethod = dimType.getClass().getMethod("getKey");
+                        Object key = getKeyMethod.invoke(dimType);
+                        if (key != null) {
+                            return key.toString();
+                        }
+                    } catch (NoSuchMethodException ignored) {
+                    }
+                    try {
+                        Method getTypeMethod = dimType.getClass().getMethod("getType");
+                        Object type = getTypeMethod.invoke(dimType);
+                        if (type != null) {
+                            return type.toString();
+                        }
+                    } catch (NoSuchMethodException ignored) {
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+
+            // Era 4: 1.7.10 – 1.12.2 world.provider.getDimension() or world.provider.dimensionId
+            try {
+                Field providerField = findField(levelOrWorld.getClass(), "provider");
+                if (providerField != null) {
+                    providerField.setAccessible(true);
+                    Object provider = providerField.get(levelOrWorld);
+                    if (provider != null) {
                         try {
-                            locMethod = dim.getClass().getMethod("location");
+                            Method getDim = provider.getClass().getMethod("getDimension");
+                            Object id = getDim.invoke(provider);
+                            if (id instanceof Number n) {
+                                return mapIntegerDimensionToString(n.intValue());
+                            }
                         } catch (NoSuchMethodException ignored) {
                         }
-                    }
-                    if (locMethod != null) {
-                        Object loc = locMethod.invoke(dim);
-                        if (loc != null) {
-                            return loc.toString();
+                        Field dimIdField = findField(provider.getClass(), "dimensionId");
+                        if (dimIdField != null) {
+                            dimIdField.setAccessible(true);
+                            Object id = dimIdField.get(provider);
+                            if (id instanceof Number n) {
+                                return mapIntegerDimensionToString(n.intValue());
+                            }
                         }
                     }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Direct check on entity.dimension field (public int dimension in 1.7.10 – 1.12.2)
+        try {
+            Field dimField = findField(entity.getClass(), "dimension");
+            if (dimField != null) {
+                dimField.setAccessible(true);
+                Object val = dimField.get(entity);
+                if (val instanceof Number n) {
+                    return mapIntegerDimensionToString(n.intValue());
                 }
             }
         } catch (Exception ignored) {
         }
+
         return "minecraft:overworld";
     }
 
+    public static String mapIntegerDimensionToString(int dimId) {
+        if (dimId == 0) {
+            return "minecraft:overworld";
+        }
+        if (dimId == -1) {
+            return "minecraft:the_nether";
+        }
+        if (dimId == 1) {
+            return "minecraft:the_end";
+        }
+        return "minecraft:dimension_" + dimId;
+    }
+
     private static void teleportEntity(Object entity, double x, double y, double z) {
+        if (entity == null) {
+            return;
+        }
+        // 1. Try teleportTo(double, double, double)
         try {
             for (Method m : entity.getClass().getMethods()) {
                 if ("teleportTo".equals(m.getName()) && m.getParameterCount() == 3) {
+                    m.invoke(entity, x, y, z);
+                    return;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        // 2. Try setPositionAndUpdate(double, double, double) (1.7.10 – 1.12.2)
+        try {
+            for (Method m : entity.getClass().getMethods()) {
+                if ("setPositionAndUpdate".equals(m.getName()) && m.getParameterCount() == 3) {
+                    m.invoke(entity, x, y, z);
+                    return;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        // 3. Try setPosition(double, double, double)
+        try {
+            for (Method m : entity.getClass().getMethods()) {
+                if ("setPosition".equals(m.getName()) && m.getParameterCount() == 3) {
                     m.invoke(entity, x, y, z);
                     return;
                 }
@@ -279,5 +457,17 @@ public final class VesselBukkitCommandBridge {
             m.invoke(target, args);
         } catch (Exception ignored) {
         }
+    }
+
+    private static Field findField(Class<?> clazz, String fieldName) {
+        Class<?> current = clazz;
+        while (current != null && current != Object.class) {
+            try {
+                return current.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException e) {
+                current = current.getSuperclass();
+            }
+        }
+        return null;
     }
 }

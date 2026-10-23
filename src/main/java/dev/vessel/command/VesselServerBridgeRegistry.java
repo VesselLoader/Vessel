@@ -9,12 +9,13 @@ import java.util.List;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselServerBridgeRegistry {
 
     private static volatile Object activeMinecraftServer;
     private static volatile Object activeCommands;
+    private static volatile Object activeLegacyCommandManager;
 
     private VesselServerBridgeRegistry() {
     }
@@ -38,12 +39,18 @@ public final class VesselServerBridgeRegistry {
     }
 
     /**
-     * Stores the active running {@code net.minecraft.commands.Commands} instance.
+     * Stores the active running {@code net.minecraft.commands.Commands} or {@code ServerCommandManager} instance.
      *
      * @param commands the running Commands instance
      */
     public static void setActiveCommands(Object commands) {
         activeCommands = commands;
+        if (commands != null) {
+            String cName = commands.getClass().getName();
+            if (cName.contains("CommandManager") || cName.contains("CommandHandler")) {
+                activeLegacyCommandManager = commands;
+            }
+        }
     }
 
     /**
@@ -53,6 +60,24 @@ public final class VesselServerBridgeRegistry {
      */
     public static Object getActiveCommands() {
         return activeCommands;
+    }
+
+    /**
+     * Stores the active running legacy pre-1.13 command manager instance.
+     *
+     * @param manager legacy command manager
+     */
+    public static void setActiveLegacyCommandManager(Object manager) {
+        activeLegacyCommandManager = manager;
+    }
+
+    /**
+     * Returns the active running legacy pre-1.13 command manager instance, or {@code null}.
+     *
+     * @return legacy command manager
+     */
+    public static Object getActiveLegacyCommandManager() {
+        return activeLegacyCommandManager;
     }
 
     /**

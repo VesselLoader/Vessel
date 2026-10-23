@@ -21,7 +21,7 @@ import java.util.jar.JarOutputStream;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class VesselResourcePackDeliveryService {
 
@@ -30,6 +30,8 @@ public final class VesselResourcePackDeliveryService {
 
     private final VesselUniversalResourcePackCompiler packCompiler =
             new VesselUniversalResourcePackCompiler();
+    private final VesselServerPropertiesPackConfigurator propertiesConfigurator =
+            new VesselServerPropertiesPackConfigurator();
     private volatile HttpServer activeHttpServer;
     private volatile int activeHttpPort = 25566;
     private volatile String activePackSha1 = "";
@@ -43,6 +45,19 @@ public final class VesselResourcePackDeliveryService {
      * @return the local HTTP download URL of the pack (e.g., {@code "http://127.0.0.1:25566/vessel-pack.zip"})
      */
     public String startDeliveryServerAndConfigureProperties(Path serverRoot, int serverPort) {
+        return startDeliveryServerAndConfigureProperties(serverRoot, serverPort, "1.21.4");
+    }
+
+    /**
+     * Initializes the Universal Presentation Resource Pack ZIP with version-specific pack_format,
+     * binds the light HTTP server daemon on {@code serverPort + 1}, and injects era-aware properties into {@code server.properties}.
+     *
+     * @param serverRoot the server root directory
+     * @param serverPort the Minecraft game server port (e.g., {@code 25565})
+     * @param mcVersion  active Minecraft version (e.g., {@code "1.12.2"}, {@code "1.20.1"}, {@code "26.3"})
+     * @return the local HTTP download URL of the pack (e.g., {@code "http://127.0.0.1:25566/vessel-pack.zip"})
+     */
+    public String startDeliveryServerAndConfigureProperties(Path serverRoot, int serverPort, String mcVersion) {
         Objects.requireNonNull(serverRoot, "serverRoot must not be null");
         this.activeHttpPort = (serverPort > 0 && serverPort < 65535) ? serverPort + 1 : 25566;
 
@@ -51,7 +66,7 @@ public final class VesselResourcePackDeliveryService {
 
         try {
             Files.createDirectories(ecosystemDir);
-            this.activePackSha1 = packCompiler.compileResourcePack(serverRoot, packZip);
+            this.activePackSha1 = packCompiler.compileResourcePack(serverRoot, packZip, mcVersion);
 
             if (activeHttpServer == null) {
                 HttpServer server = HttpServer.create(new InetSocketAddress(activeHttpPort), 0);
@@ -62,7 +77,7 @@ public final class VesselResourcePackDeliveryService {
             }
 
             String packUrl = "http://127.0.0.1:" + activeHttpPort + PACK_ENDPOINT_PATH;
-            updateServerPropertiesWithPackUrl(serverRoot, packUrl, activePackSha1);
+            propertiesConfigurator.configureServerProperties(serverRoot, packUrl, activePackSha1, mcVersion);
             return packUrl;
         } catch (Exception e) {
             return "";
@@ -97,55 +112,5 @@ public final class VesselResourcePackDeliveryService {
             this.activeHttpServer = null;
         }
     }
-
-    private static void updateServerPropertiesWithPackUrl(
-            Path serverRoot,
-            String packUrl,
-            String packSha1) {
-        Path propsPath = serverRoot.resolve("server.properties");
-        if (!Files.isRegularFile(propsPath)) {
-            return;
-        }
-        try {
-            String content = Files.readString(propsPath, StandardCharsets.UTF_8);
-            StringBuilder sb = new StringBuilder(content.length() + 256);
-            boolean hasPack = false;
-            boolean hasSha1 = false;
-            boolean hasPrompt = false;
-            boolean hasPackId = false;
-
-            for (String rawLine : content.split("\\R")) {
-                String line = rawLine.trim();
-                if (line.startsWith("resource-pack=")) {
-                    sb.append("resource-pack=").append(packUrl).append('\n');
-                    hasPack = true;
-                } else if (line.startsWith("resource-pack-sha1=")) {
-                    sb.append("resource-pack-sha1=").append(packSha1).append('\n');
-                    hasSha1 = true;
-                } else if (line.startsWith("resource-pack-id=")) {
-                    sb.append("resource-pack-id=fcce4567-99de-3e01-949b-9799d6489542\n");
-                    hasPackId = true;
-                } else if (line.startsWith("resource-pack-prompt=")) {
-                    sb.append("resource-pack-prompt={\"text\":\"VESSEL Sovereign Universal Mod Presentation Pack\"}\n");
-                    hasPrompt = true;
-                } else {
-                    sb.append(rawLine).append('\n');
-                }
-            }
-            if (!hasPack) {
-                sb.append("resource-pack=").append(packUrl).append('\n');
-            }
-            if (!hasSha1) {
-                sb.append("resource-pack-sha1=").append(packSha1).append('\n');
-            }
-            if (!hasPackId) {
-                sb.append("resource-pack-id=fcce4567-99de-3e01-949b-9799d6489542\n");
-            }
-            if (!hasPrompt) {
-                sb.append("resource-pack-prompt={\"text\":\"VESSEL Sovereign Universal Mod Presentation Pack\"}\n");
-            }
-            Files.writeString(propsPath, sb.toString(), StandardCharsets.UTF_8);
-        } catch (Exception ignored) {
-        }
-    }
 }
+
