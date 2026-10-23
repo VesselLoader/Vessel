@@ -1,3 +1,4 @@
+# @version 1.0.1
 name: VESSEL Ecosystem Sync, Build & GitHub Pages Deploy
 
 on:
@@ -6,12 +7,19 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   sync-build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout VESSEL Repository
@@ -31,11 +39,18 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+      - name: Setup Gradle 8.8
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
+          validate-wrappers: false
+          cache-disabled: true
 
       - name: Verify All Unit Tests & Package Runnable server.jar
         run: gradle test jar --console=plain
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
