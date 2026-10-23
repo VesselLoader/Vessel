@@ -15,7 +15,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes, and zero lambdas.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselLegacyCommandInvocationHandler implements InvocationHandler {
 
@@ -65,7 +65,8 @@ public final class VesselLegacyCommandInvocationHandler implements InvocationHan
 
         if ("compareTo".equals(methodName)) {
             if (args != null && args.length > 0 && args[0] != null) {
-                return rootName.compareTo(args[0].toString());
+                String otherName = extractCommandName(args[0]);
+                return rootName.compareTo(otherName);
             }
             return 0;
         }
@@ -94,11 +95,31 @@ public final class VesselLegacyCommandInvocationHandler implements InvocationHan
         return null;
     }
 
+    private static String extractCommandName(Object cmd) {
+        if (cmd == null) {
+            return "";
+        }
+        for (String mName : new String[]{"getName", "getCommandName"}) {
+            try {
+                Method m = cmd.getClass().getMethod(mName);
+                Object res = m.invoke(cmd);
+                if (res != null) {
+                    return res.toString();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return cmd.toString();
+    }
+
     private List<String> handleTabCompletions(Object[] args, String methodName) {
         int argsIndex = "getTabCompletions".equals(methodName) ? 2 : 1;
         if (args != null && args.length > argsIndex && args[argsIndex] instanceof String[] rawArgs) {
-            if (rawArgs.length <= 1) {
-                String prefix = rawArgs.length == 1 ? rawArgs[0].toLowerCase(Locale.ROOT) : "";
+            if (rawArgs.length == 0) {
+                return subcommands;
+            }
+            if (rawArgs.length == 1) {
+                String prefix = rawArgs[0].toLowerCase(Locale.ROOT);
                 List<String> matching = new ArrayList<>();
                 for (String sub : subcommands) {
                     if (sub.toLowerCase(Locale.ROOT).startsWith(prefix)) {
@@ -107,6 +128,7 @@ public final class VesselLegacyCommandInvocationHandler implements InvocationHan
                 }
                 return matching;
             }
+            return Collections.emptyList();
         }
         return subcommands;
     }
@@ -115,16 +137,12 @@ public final class VesselLegacyCommandInvocationHandler implements InvocationHan
         Object sender = null;
         String[] cmdArgs = new String[0];
 
-        if ("execute".equals(methodName) && args != null && args.length >= 3) {
+        if (args != null && args.length >= 3 && args[2] instanceof String[] parsedArgs) {
             sender = args[1];
-            if (args[2] instanceof String[] parsedArgs) {
-                cmdArgs = parsedArgs;
-            }
-        } else if ("processCommand".equals(methodName) && args != null && args.length >= 2) {
+            cmdArgs = parsedArgs;
+        } else if (args != null && args.length >= 2 && args[1] instanceof String[] parsedArgs) {
             sender = args[0];
-            if (args[1] instanceof String[] parsedArgs) {
-                cmdArgs = parsedArgs;
-            }
+            cmdArgs = parsedArgs;
         }
 
         if (bukkitBridge.isBukkitCommand(rootName)) {

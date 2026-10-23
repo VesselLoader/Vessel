@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes, and zero lambdas.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselLegacyCommandBridge {
 
@@ -77,7 +77,7 @@ public final class VesselLegacyCommandBridge {
 
             Method registerMethod = null;
             for (Method m : manager.getClass().getMethods()) {
-                if ("registerCommand".equals(m.getName())
+                if (("registerCommand".equals(m.getName()) || "func_71560_a".equals(m.getName()) || "a".equals(m.getName()))
                         && m.getParameterCount() == 1
                         && m.getParameterTypes()[0].isAssignableFrom(iCommandClass)) {
                     registerMethod = m;
@@ -131,14 +131,19 @@ public final class VesselLegacyCommandBridge {
         }
 
         for (Method m : target.getClass().getMethods()) {
-            if ("registerCommand".equals(m.getName()) && m.getParameterCount() == 1) {
+            if (("registerCommand".equals(m.getName()) || "func_71560_a".equals(m.getName()))
+                    && m.getParameterCount() == 1) {
                 return target;
             }
         }
 
         for (Method m : target.getClass().getMethods()) {
             if (m.getParameterCount() == 0
-                    && ("getCommandManager".equals(m.getName()) || "getCommandHandler".equals(m.getName()))) {
+                    && ("getCommandManager".equals(m.getName())
+                    || "getCommandHandler".equals(m.getName())
+                    || "func_71187_D".equals(m.getName())
+                    || m.getReturnType().getSimpleName().contains("CommandManager")
+                    || m.getReturnType().getSimpleName().contains("CommandHandler"))) {
                 try {
                     Object res = m.invoke(target);
                     if (res != null) {

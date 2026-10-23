@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.4
+ * @version 1.0.5
  */
 public final class ServerEulaAndPropertiesBootstrap {
 
@@ -96,24 +96,41 @@ public final class ServerEulaAndPropertiesBootstrap {
         Path propsPath = serverRoot.resolve("server.properties");
         int safePort = (defaultPort > 0 && defaultPort <= 65535) ? defaultPort : 25565;
 
+        int[] v = parseVersion(mcVersion);
+        boolean isModern = v[0] >= 26;
+        boolean supportsCompressionAndWatchdog = isModern || (v[0] == 1 && v[1] >= 8);
+        boolean supportsSyncChunkWrites = isModern || (v[0] == 1 && (v[1] > 14 || (v[1] == 14 && v[2] >= 4)));
+        boolean supportsSimulationDistance = isModern || (v[0] == 1 && v[1] >= 18);
+        boolean supportsSecureProfile = isModern || (v[0] == 1 && (v[1] > 19 || (v[1] == 19 && v[2] >= 1)));
+        boolean supportsPauseWhenEmpty = isModern || (v[0] == 1 && (v[1] > 20 || (v[1] == 20 && v[2] >= 5)));
+
         Map<String, String> defaults = new LinkedHashMap<>();
         defaults.put("server-port", String.valueOf(safePort));
         defaults.put("query.port", String.valueOf(safePort));
         defaults.put("online-mode", "false");
-        defaults.put("enforce-secure-profile", "false");
+        if (supportsSecureProfile) {
+            defaults.put("enforce-secure-profile", "false");
+        }
         defaults.put("motd", "A VESSEL Sovereign Hybrid Server (Java & Bedrock Crossplay)");
         defaults.put("max-players", "100");
         defaults.put("view-distance", "7");
-        defaults.put("simulation-distance", "5");
-        defaults.put("pause-when-empty-seconds", "0");
+        if (supportsSimulationDistance) {
+            defaults.put("simulation-distance", "5");
+        }
+        if (supportsPauseWhenEmpty) {
+            defaults.put("pause-when-empty-seconds", "0");
+        }
         defaults.put("level-name", "world");
         defaults.put("difficulty", "normal");
         defaults.put("gamemode", "survival");
         defaults.put("spawn-protection", "0");
-        defaults.put("network-compression-threshold", "256");
-        defaults.put("sync-chunk-writes", "false");
-        // Disable Vanilla 60s Watchdog freeze-kill during heavy modded chunk generation on low-end CPUs
-        defaults.put("max-tick-time", "-1");
+        if (supportsCompressionAndWatchdog) {
+            defaults.put("network-compression-threshold", "256");
+            defaults.put("max-tick-time", "-1");
+        }
+        if (supportsSyncChunkWrites) {
+            defaults.put("sync-chunk-writes", "false");
+        }
         if (packConfigurator.isSupportedPrompt(mcVersion)) {
             defaults.put("resource-pack-prompt", "{\"text\":\"VESSEL Sovereign Universal Mod Presentation Pack\"}");
         }
@@ -146,8 +163,28 @@ public final class ServerEulaAndPropertiesBootstrap {
                     loaded.put(line.substring(0, eq).trim(), line.substring(eq + 1).trim());
                 }
             }
-            if ("60000".equals(loaded.get("max-tick-time")) || !loaded.containsKey("max-tick-time")) {
+            if (supportsCompressionAndWatchdog && ("60000".equals(loaded.get("max-tick-time")) || !loaded.containsKey("max-tick-time"))) {
                 loaded.put("max-tick-time", "-1");
+                modified = true;
+            }
+            if (!supportsCompressionAndWatchdog) {
+                if (loaded.remove("network-compression-threshold") != null) {
+                    modified = true;
+                }
+                if (loaded.remove("max-tick-time") != null) {
+                    modified = true;
+                }
+            }
+            if (!supportsSimulationDistance && loaded.remove("simulation-distance") != null) {
+                modified = true;
+            }
+            if (!supportsSecureProfile && loaded.remove("enforce-secure-profile") != null) {
+                modified = true;
+            }
+            if (!supportsPauseWhenEmpty && loaded.remove("pause-when-empty-seconds") != null) {
+                modified = true;
+            }
+            if (!supportsSyncChunkWrites && loaded.remove("sync-chunk-writes") != null) {
                 modified = true;
             }
             if (modified) {
@@ -162,5 +199,24 @@ public final class ServerEulaAndPropertiesBootstrap {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to initialize server.properties at " + propsPath, e);
         }
+    }
+
+    private static int[] parseVersion(String mcVersion) {
+        if (mcVersion == null || mcVersion.isBlank()) {
+            return new int[]{1, 21, 4};
+        }
+        String trimmed = mcVersion.trim();
+        if (trimmed.startsWith("26.") || trimmed.equals("26")) {
+            return new int[]{26, 3, 0};
+        }
+        java.util.regex.Matcher matcher =
+                java.util.regex.Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?").matcher(trimmed);
+        if (!matcher.find()) {
+            return new int[]{1, 21, 4};
+        }
+        int major = Integer.parseInt(matcher.group(1));
+        int minor = Integer.parseInt(matcher.group(2));
+        int patch = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
+        return new int[]{major, minor, patch};
     }
 }

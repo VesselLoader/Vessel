@@ -11,7 +11,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes, and zero lambdas.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselLegacyChatSender {
 
@@ -24,7 +24,8 @@ public final class VesselLegacyChatSender {
     }
 
     /**
-     * Sends a text message to the given command sender (player or console).
+     * Sends a text message to the given command sender (player or console), splitting multi-line
+     * strings into separate chat packets for legacy client rendering fidelity.
      *
      * @param sender             legacy {@code ICommandSender} instance
      * @param message            plain text message to send
@@ -35,16 +36,37 @@ public final class VesselLegacyChatSender {
             return;
         }
 
-        Object chatComponent = createChatComponent(message, tierOneClassLoader);
+        String[] lines = message.split("\\R");
+        for (String line : lines) {
+            sendSingleLine(sender, line, tierOneClassLoader);
+        }
+    }
+
+    private static void sendSingleLine(Object sender, String line, ClassLoader tierOneClassLoader) {
+        Object chatComponent = createChatComponent(line, tierOneClassLoader);
         if (chatComponent != null) {
             for (Method m : sender.getClass().getMethods()) {
                 if (("sendMessage".equals(m.getName()) || "addChatMessage".equals(m.getName()))
-                        && m.getParameterCount() == 1) {
+                        && m.getParameterCount() == 1
+                        && !m.getParameterTypes()[0].equals(String.class)) {
                     try {
                         m.invoke(sender, chatComponent);
                         return;
                     } catch (Exception ignored) {
                     }
+                }
+            }
+        }
+
+        // Fallback to direct String sender methods
+        for (Method m : sender.getClass().getMethods()) {
+            if (("sendMessage".equals(m.getName()) || "sendChatToPlayer".equals(m.getName()) || "addChatMessage".equals(m.getName()))
+                    && m.getParameterCount() == 1
+                    && m.getParameterTypes()[0].equals(String.class)) {
+                try {
+                    m.invoke(sender, line);
+                    return;
+                } catch (Exception ignored) {
                 }
             }
         }

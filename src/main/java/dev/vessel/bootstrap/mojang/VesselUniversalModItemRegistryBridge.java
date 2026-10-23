@@ -20,7 +20,7 @@ import java.util.jar.JarFile;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.3
+ * @version 1.0.4
  */
 public final class VesselUniversalModItemRegistryBridge {
 
@@ -98,14 +98,53 @@ public final class VesselUniversalModItemRegistryBridge {
                 while (entries.hasMoreElements()) {
                     JarEntry entry = entries.nextElement();
                     String name = entry.getName();
-                    // Match: assets/<namespace>/models/item/<item_name>.json
-                    if (name.startsWith("assets/") && name.contains("/models/item/") && name.endsWith(".json")) {
-                        String[] parts = name.split("/");
-                        if (parts.length == 5 && "assets".equals(parts[0]) && "models".equals(parts[2]) && "item".equals(parts[3])) {
-                            String namespace = parts[1];
-                            String filename = parts[4];
-                            String itemName = filename.substring(0, filename.length() - 5);
-                            result.add(namespace + ":" + itemName);
+                    if (!name.startsWith("assets/")) {
+                        continue;
+                    }
+
+                    // 1. Match models/item/: assets/<namespace>/models/item/<subpath>/<item>.json (1.8 – 1.21.3)
+                    if (name.endsWith(".json")) {
+                        int modelIdx = name.indexOf("/models/item/");
+                        if (modelIdx > 7) {
+                            String namespace = name.substring(7, modelIdx);
+                            String itemPath = name.substring(modelIdx + "/models/item/".length(), name.length() - 5);
+                            if (!namespace.isBlank() && !itemPath.isBlank() && !namespace.contains("/")) {
+                                result.add(namespace + ":" + itemPath);
+                                int lastSlash = itemPath.lastIndexOf('/');
+                                if (lastSlash >= 0) {
+                                    result.add(namespace + ":" + itemPath.substring(lastSlash + 1));
+                                }
+                            }
+                        }
+
+                        // 2. Match modern items/: assets/<namespace>/items/<subpath>/<item>.json (1.21.4+ / 26.3)
+                        int itemsIdx = name.indexOf("/items/");
+                        if (itemsIdx > 7 && !name.contains("/textures/")) {
+                            String namespace = name.substring(7, itemsIdx);
+                            String itemPath = name.substring(itemsIdx + "/items/".length(), name.length() - 5);
+                            if (!namespace.isBlank() && !itemPath.isBlank() && !namespace.contains("/")) {
+                                result.add(namespace + ":" + itemPath);
+                                int lastSlash = itemPath.lastIndexOf('/');
+                                if (lastSlash >= 0) {
+                                    result.add(namespace + ":" + itemPath.substring(lastSlash + 1));
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. Match legacy textures: assets/<namespace>/textures/items/<subpath>/<item>.png (1.7.10 – 1.12.2)
+                    if (name.endsWith(".png")) {
+                        int texItemsIdx = name.indexOf("/textures/items/");
+                        if (texItemsIdx > 7) {
+                            String namespace = name.substring(7, texItemsIdx);
+                            String itemPath = name.substring(texItemsIdx + "/textures/items/".length(), name.length() - 4);
+                            if (!namespace.isBlank() && !itemPath.isBlank() && !namespace.contains("/")) {
+                                result.add(namespace + ":" + itemPath);
+                                int lastSlash = itemPath.lastIndexOf('/');
+                                if (lastSlash >= 0) {
+                                    result.add(namespace + ":" + itemPath.substring(lastSlash + 1));
+                                }
+                            }
                         }
                     }
                 }

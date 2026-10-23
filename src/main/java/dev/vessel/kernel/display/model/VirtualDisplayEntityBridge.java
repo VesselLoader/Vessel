@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Generates compact synthetic entity descriptors enabling vanilla Java and Bedrock clients
  * to render complex modded models without client-side mod installations.
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class VirtualDisplayEntityBridge {
@@ -20,8 +20,11 @@ public final class VirtualDisplayEntityBridge {
     private final String partName;
     private final BoneTransformState transformState;
     private int interpolationDurationTicks = 3;
+    private int teleportDurationTicks = 0;
     private float viewRange = 64.0f;
     private boolean glowing = false;
+    private int customModelData = 0;
+    private String billboardConstraint = "fixed";
 
     /**
      * Constructs a VirtualDisplayEntityBridge with a generated synthetic entity ID.
@@ -67,6 +70,17 @@ public final class VirtualDisplayEntityBridge {
         this.interpolationDurationTicks = ticks;
     }
 
+    public int getTeleportDurationTicks() {
+        return teleportDurationTicks;
+    }
+
+    public void setTeleportDurationTicks(int ticks) {
+        if (ticks < 0) {
+            throw new IllegalArgumentException("ticks cannot be negative");
+        }
+        this.teleportDurationTicks = ticks;
+    }
+
     public float getViewRange() {
         return viewRange;
     }
@@ -84,5 +98,21 @@ public final class VirtualDisplayEntityBridge {
 
     public void setGlowing(boolean glowing) {
         this.glowing = glowing;
+    }
+
+    public int getCustomModelData() {
+        return customModelData;
+    }
+
+    public void setCustomModelData(int customModelData) {
+        this.customModelData = customModelData;
+    }
+
+    public String getBillboardConstraint() {
+        return billboardConstraint;
+    }
+
+    public void setBillboardConstraint(String billboardConstraint) {
+        this.billboardConstraint = Objects.requireNonNull(billboardConstraint, "billboardConstraint cannot be null");
     }
 }

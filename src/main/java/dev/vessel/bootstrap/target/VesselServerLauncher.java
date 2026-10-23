@@ -42,7 +42,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.15
+ * @version 1.0.16
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -212,7 +212,7 @@ public final class VesselServerLauncher {
         eulaBootstrap.ensureEulaAccepted(
                 serverRoot,
                 customFlags.isAcceptEulaEnabled() || customFlags.isSinglePassBootEnabled());
-        eulaBootstrap.ensureServerProperties(serverRoot, serverPort);
+        eulaBootstrap.ensureServerProperties(serverRoot, serverPort, resolvedActiveMcVersion);
         if (isFirstRunInstall) {
             consoleLogger.logInstaller("Generated eula.txt (eula=true) and server.properties (server-port=" + serverPort + ")");
             consoleLogger.logInstaller("Provisioning built-in GeyserMC (Bedrock Bridge), Floodgate & spark (Profiler) into cache/ecosystem/...");

@@ -8,12 +8,16 @@ import dev.vessel.command.VesselBukkitCommandBridge;
 import dev.vessel.command.VesselLegacyCommandBridge;
 import dev.vessel.command.VesselLegacyCommandInvocationHandler;
 import dev.vessel.kernel.optimization.VesselOptimizationCoordinator;
+import dev.vessel.command.VesselLegacyChatSender;
+import java.io.FileOutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.objectweb.asm.ClassReader;
@@ -28,7 +32,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes, and zero lambdas.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselMultiEraCompatibilityTest {
 
@@ -228,6 +232,143 @@ public final class VesselMultiEraCompatibilityTest {
         boolean ok = coordinator.initializeAllEngines(tempDir);
         assertThat(ok).isTrue();
         assertThat(VesselOptimizationCoordinator.areEnginesInitialized()).isTrue();
+    }
+
+    @Test
+    void shouldParseNamespacedHomesWithoutNumberFormatException() {
+        VesselBukkitCommandBridge bukkitBridge = new VesselBukkitCommandBridge();
+        Path serverRoot = tempDir.resolve("homes-test");
+        bukkitBridge.initialize(serverRoot);
+
+        TestPlayerEntityDouble player = new TestPlayerEntityDouble();
+
+        // 1. Set home with namespaced dimension
+        List<String> setHomeResponse = bukkitBridge.executeBukkitCommand("sethome", new String[]{"base"}, player);
+        assertThat(setHomeResponse.get(0)).contains("Home 'base' successfully set");
+
+        // 2. Teleport to home with namespaced dimension
+        List<String> homeResponse = bukkitBridge.executeBukkitCommand("home", new String[]{"base"}, player);
+        assertThat(homeResponse.get(0)).contains("Teleported to home 'base'");
+        assertThat(homeResponse.get(0)).doesNotContain("Failed to parse");
+        assertThat(player.isTeleported()).isTrue();
+    }
+
+    @Test
+    void shouldOmitModernPropertiesForLegacy1710() throws Exception {
+        ServerEulaAndPropertiesBootstrap bootstrap = new ServerEulaAndPropertiesBootstrap();
+
+        // Test 1.7.10
+        Path legacyRoot = tempDir.resolve("legacy-1710");
+        bootstrap.ensureServerProperties(legacyRoot, 25565, "1.7.10");
+        String legacyContent = Files.readString(legacyRoot.resolve("server.properties"));
+        assertThat(legacyContent).doesNotContain("network-compression-threshold");
+        assertThat(legacyContent).doesNotContain("max-tick-time");
+        assertThat(legacyContent).doesNotContain("simulation-distance");
+        assertThat(legacyContent).doesNotContain("pause-when-empty-seconds");
+        assertThat(legacyContent).doesNotContain("enforce-secure-profile");
+        assertThat(legacyContent).doesNotContain("sync-chunk-writes");
+        assertThat(legacyContent).contains("server-port=25565");
+
+        // Test modern 1.21.4
+        Path modernRoot = tempDir.resolve("modern-1214");
+        bootstrap.ensureServerProperties(modernRoot, 25565, "1.21.4");
+        String modernContent = Files.readString(modernRoot.resolve("server.properties"));
+        assertThat(modernContent).contains("network-compression-threshold=256");
+        assertThat(modernContent).contains("max-tick-time=-1");
+        assertThat(modernContent).contains("simulation-distance=5");
+        assertThat(modernContent).contains("pause-when-empty-seconds=0");
+        assertThat(modernContent).contains("enforce-secure-profile=false");
+        assertThat(modernContent).contains("sync-chunk-writes=false");
+    }
+
+    @Test
+    void shouldHandleLegacyCommandProxyCompareToAndTabCompletion() throws Throwable {
+        dev.vessel.bootstrap.target.VesselServerLauncher launcher =
+                new dev.vessel.bootstrap.target.VesselServerLauncher(tempDir);
+        VesselBukkitCommandBridge bukkitBridge = new VesselBukkitCommandBridge();
+        bukkitBridge.initialize(tempDir);
+
+        VesselLegacyCommandInvocationHandler handler = new VesselLegacyCommandInvocationHandler(
+                "vessel",
+                List.of("status", "tps", "version"),
+                getClass().getClassLoader(),
+                launcher,
+                bukkitBridge);
+
+        Method compareToMethod = Comparable.class.getMethod("compareTo", Object.class);
+        TestLegacyICommandDouble sameDouble = new TestLegacyICommandDouble("vessel");
+        Object cmpSame = handler.invoke(this, compareToMethod, new Object[]{sameDouble});
+        assertThat(cmpSame).isEqualTo(0);
+
+        TestLegacyICommandDouble alphaDouble = new TestLegacyICommandDouble("alpha");
+        Object cmpAlpha = handler.invoke(this, compareToMethod, new Object[]{alphaDouble});
+        assertThat((int) cmpAlpha).isGreaterThan(0);
+
+        Method tabMethod = handler.getClass().getDeclaredMethod("handleTabCompletions", Object[].class, String.class);
+        tabMethod.setAccessible(true);
+
+        // Subcommand prefix completion
+        @SuppressWarnings("unchecked")
+        List<String> prefixResults = (List<String>) tabMethod.invoke(
+                handler,
+                new Object[]{null, null, new String[]{"st"}},
+                "getTabCompletions");
+        assertThat(prefixResults).containsExactly("status");
+
+        // Subcommand with extra arguments should return empty list
+        @SuppressWarnings("unchecked")
+        List<String> extraArgsResults = (List<String>) tabMethod.invoke(
+                handler,
+                new Object[]{null, null, new String[]{"status", "more"}},
+                "getTabCompletions");
+        assertThat(extraArgsResults).isEmpty();
+    }
+
+    @Test
+    void shouldSplitMultiLineMessagesInLegacyChatSender() {
+        VesselLegacyChatSender chatSender = new VesselLegacyChatSender();
+        TestLegacyCommandSender sender = new TestLegacyCommandSender();
+        chatSender.sendMessage(sender, "Header\nBody line 1\nBody line 2\nFooter", getClass().getClassLoader());
+
+        assertThat(sender.getReceivedMessages()).containsExactly(
+                "Header",
+                "Body line 1",
+                "Body line 2",
+                "Footer");
+    }
+
+    @Test
+    void shouldDiscoverModItemsAcrossAllEras() throws Exception {
+        Path modsDir = tempDir.resolve("mods");
+        Files.createDirectories(modsDir);
+        Path testModJar = modsDir.resolve("testmod.jar");
+
+        try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(testModJar.toFile()))) {
+            // 1. Legacy 1.7.10 texture
+            jos.putNextEntry(new JarEntry("assets/legacy_mod/textures/items/ruby_blade.png"));
+            jos.write(new byte[]{1, 2, 3});
+            jos.closeEntry();
+
+            // 2. Modern 1.21.4 item model definition
+            jos.putNextEntry(new JarEntry("assets/modern_mod/items/laser_pickaxe.json"));
+            jos.write("{}".getBytes(StandardCharsets.UTF_8));
+            jos.closeEntry();
+
+            // 3. Subfolder model
+            jos.putNextEntry(new JarEntry("assets/sub_mod/models/item/tools/copper_wrench.json"));
+            jos.write("{}".getBytes(StandardCharsets.UTF_8));
+            jos.closeEntry();
+        }
+
+        VesselUniversalModItemRegistryBridge bridge = new VesselUniversalModItemRegistryBridge();
+        Method discoverMethod = VesselUniversalModItemRegistryBridge.class.getDeclaredMethod("discoverItemIdentifiersFromMods", Path.class);
+        discoverMethod.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        java.util.Set<String> discovered = (java.util.Set<String>) discoverMethod.invoke(null, modsDir);
+
+        assertThat(discovered).contains("legacy_mod:ruby_blade");
+        assertThat(discovered).contains("modern_mod:laser_pickaxe");
+        assertThat(discovered).contains("sub_mod:copper_wrench");
     }
 
     private static byte[] generateDummyServerClass(String methodName, String returnedString) {

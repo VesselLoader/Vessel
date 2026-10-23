@@ -13,7 +13,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class VesselBukkitCommandBridge {
 
@@ -103,9 +103,19 @@ public final class VesselBukkitCommandBridge {
             String[] parts = record.split(":");
             if (parts.length >= 4) {
                 try {
-                    double x = Double.parseDouble(parts[1]);
-                    double y = Double.parseDouble(parts[2]);
-                    double z = Double.parseDouble(parts[3]);
+                    int len = parts.length;
+                    double x;
+                    double y;
+                    double z;
+                    if (len >= 6) {
+                        x = Double.parseDouble(parts[len - 5]);
+                        y = Double.parseDouble(parts[len - 4]);
+                        z = Double.parseDouble(parts[len - 3]);
+                    } else {
+                        x = Double.parseDouble(parts[len - 3]);
+                        y = Double.parseDouble(parts[len - 2]);
+                        z = Double.parseDouble(parts[len - 1]);
+                    }
                     teleportEntity(playerEntity, x, y, z);
                     return List.of(String.format(Locale.ROOT,
                             "[EssentialsX] Teleported to home '%s' (%.1f, %.1f, %.1f).", homeName, x, y, z));
