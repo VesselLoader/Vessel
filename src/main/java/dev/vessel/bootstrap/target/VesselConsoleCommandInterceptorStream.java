@@ -17,7 +17,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class VesselConsoleCommandInterceptorStream extends InputStream {
 
@@ -72,7 +72,8 @@ public final class VesselConsoleCommandInterceptorStream extends InputStream {
                 || matchesCommandRoot(withoutSlash, "geyser")
                 || matchesCommandRoot(withoutSlash, "floodgate")
                 || matchesCommandRoot(withoutSlash, "fwhitelist")
-                || matchesCommandRoot(withoutSlash, "spark");
+                || matchesCommandRoot(withoutSlash, "spark")
+                || matchesCommandRoot(withoutSlash, "restart");
     }
 
     private static boolean matchesCommandRoot(String normalizedLine, String commandRoot) {

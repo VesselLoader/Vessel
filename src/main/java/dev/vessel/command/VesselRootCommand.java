@@ -18,7 +18,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class VesselRootCommand {
 
@@ -35,7 +35,8 @@ public final class VesselRootCommand {
             "pregen",
             "status",
             "reload",
-            "dump");
+            "dump",
+            "restart");
 
     /**
      * Executes the {@code /vessel} command with the given arguments and returns the formatted
@@ -255,6 +256,7 @@ public final class VesselRootCommand {
                 "  vessel pregen         - Control the parallel concentric-ring chunk pregenerator",
                 "  vessel reload         - Hot-reload 34 sections from vessel-config/vessel.yml",
                 "  vessel dump           - Export JVM thread, Region Strand & VFS diagnostic snapshot",
+                "  restart               - Gracefully save world and restart server process (Paper-style)",
                 "  geyser <subcommand>   - Manage built-in GeyserMC Bedrock bridge (UDP 19132)",
                 "  floodgate <subcommand>- Manage built-in Floodgate Xbox/Bedrock auth bridge",
                 "  spark <subcommand>    - Run built-in spark profiler commands (tps, profiler, health)",

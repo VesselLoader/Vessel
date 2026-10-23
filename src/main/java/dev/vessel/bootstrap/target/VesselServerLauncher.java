@@ -13,7 +13,9 @@ import dev.vessel.bootstrap.mojang.TierOneVanillaGameLauncher;
 import dev.vessel.bootstrap.mojang.VesselCustomFlagsProfile;
 import dev.vessel.bootstrap.updater.StagedKernelPatchManager;
 import dev.vessel.bootstrap.updater.VesselBuildVersionCode;
+import dev.vessel.command.VesselBrigadierCommandBridge;
 import dev.vessel.command.VesselRootCommand;
+import dev.vessel.command.VesselServerRestartService;
 import dev.vessel.kernel.identity.SourceLoaderKind;
 import dev.vessel.kernel.identity.VesselModuleIdentifier;
 import java.io.InputStream;
@@ -40,7 +42,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.11
+ * @version 1.0.12
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -57,6 +59,8 @@ public final class VesselServerLauncher {
     private volatile VesselStartupConsoleLogger activeConsoleLogger;
     private volatile VesselCustomFlagsProfile activeCustomFlags;
     private volatile BuiltInGeyserBedrockBridgeService activeGeyserBridgeService;
+    private volatile VesselResourcePackDeliveryService activeResourcePackService;
+    private volatile VesselBrigadierCommandBridge activeBrigadierBridge;
     private volatile List<String> lastBootConsoleLogs = List.of();
     private volatile String activeVesselVersionCode =
             VesselBuildVersionCode.CURRENT_EMBEDDED_VERSION_CODE;
@@ -67,6 +71,15 @@ public final class VesselServerLauncher {
 
     public VesselServerLauncher() {
         this(Path.of("."));
+    }
+
+    /**
+     * Returns the server root path.
+     *
+     * @return server root path
+     */
+    public Path getServerRoot() {
+        return serverRoot;
     }
 
     /**
@@ -259,7 +272,7 @@ public final class VesselServerLauncher {
                 + discoveredModules.size() + " module(s)");
         completedBootSteps = 10;
 
-        // Step 11: Startup Build Stage — eager render bundle compilation before world load & port bind
+        // Step 11: Startup Build Stage — eager render bundle compilation & HTTP streaming before world load
         buildOrchestrator.buildRenderBundleForCombination(
                 resolvedActiveMcVersion,
                 SourceLoaderKind.FABRIC,
@@ -267,6 +280,14 @@ public final class VesselServerLauncher {
         );
         consoleLogger.logDebug("Compiled default Universal Client Presentation render bundle for Minecraft "
                 + resolvedActiveMcVersion);
+
+        VesselResourcePackDeliveryService packService = new VesselResourcePackDeliveryService();
+        activeResourcePackService = packService;
+        String packUrl = packService.startDeliveryServerAndConfigureProperties(serverRoot, serverPort);
+        if (!packUrl.isBlank()) {
+            consoleLogger.logInfo("Universal Presentation HTTP Server active on " + packUrl
+                    + " (SHA-1: " + packService.getActivePackSha1() + ")");
+        }
         completedBootSteps = 11;
 
         // Steps 12–16: Download & unpack Mojang server JAR dynamically, verify JVM version, and start server
@@ -381,6 +402,10 @@ public final class VesselServerLauncher {
                             activeTierOneClassLoader,
                             mainClassName,
                             new String[]{"nogui"});
+                    VesselBrigadierCommandBridge brigadierBridge = new VesselBrigadierCommandBridge();
+                    activeBrigadierBridge = brigadierBridge;
+                    brigadierBridge.scheduleBackgroundBrigadierRegistration(activeTierOneClassLoader, this);
+                    consoleLogger.logDebug("Scheduled in-game Brigadier command registration for /vessel, /geyser, /floodgate, /spark, /restart");
                 } catch (Exception e) {
                     consoleLogger.logError("Failed to launch Minecraft DedicatedServer: " + e.getMessage());
                 }
@@ -581,6 +606,14 @@ public final class VesselServerLauncher {
                     subArgs,
                     sparkVer,
                     resolvedActiveMcVersion);
+        } else if ("restart".equals(rootCmd)) {
+            logger.logInfo("[VESSEL] Executing server graceful restart sequence...");
+            VesselServerRestartService restartService = new VesselServerRestartService();
+            restartService.triggerServerProcessRestart(serverRoot);
+            String msg = "[VESSEL] Server restart dispatched. Relaunching replacement JVM...";
+            logger.logInfo(msg);
+            lastBootConsoleLogs = logger.getRecordedLines();
+            return List.of(msg);
         } else {
             List<VesselModuleIdentifier> moduleList = new ArrayList<>(discoveredModules.values());
             boolean ultraOpt = activeCustomFlags != null && activeCustomFlags.isUltraOptimizationEnabled();

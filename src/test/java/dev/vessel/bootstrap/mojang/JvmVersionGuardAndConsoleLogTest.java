@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.vessel.bootstrap.ecosystem.BuiltInGeyserAndSparkProvisioner;
 import dev.vessel.bootstrap.ecosystem.BuiltInGeyserBedrockBridgeService;
 import dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream;
+import dev.vessel.bootstrap.target.VesselResourcePackDeliveryService;
 import dev.vessel.bootstrap.target.VesselServerLauncher;
 import dev.vessel.bootstrap.target.VesselStartupConsoleLogger;
+import dev.vessel.command.VesselBrigadierCommandBridge;
+import dev.vessel.command.VesselServerRestartService;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -42,11 +45,14 @@ import org.objectweb.asm.Opcodes;
  *   <li>Built-in GeyserMC, Floodgate, and spark ecosystem provisioning, Bedrock UDP 19132 bridge
  *       configuration, and live console interception of {@code /geyser}, {@code /floodgate}, and
  *       {@code /spark} commands.</li>
+ *   <li>Server Brand bytecode transformation to {@code "VESSEL"}, Universal Presentation HTTP Resource
+ *       Pack delivery on port {@code 25566}, {@code max-tick-time=-1} Watchdog crash guard, and
+ *       Paper-style {@code /restart} re-execution.</li>
  * </ol>
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.4
+ * @version 1.0.5
  */
 public final class JvmVersionGuardAndConsoleLogTest {
 
@@ -288,6 +294,48 @@ public final class JvmVersionGuardAndConsoleLogTest {
         assertThat(logs).anyMatch(l -> l.contains("[spark/VESSEL] TPS from last"));
     }
 
+    @Test
+    void shouldTransformServerBrandToVesselDeliverResourcePackAndHandleRestart() throws Exception {
+        Path serverRoot = tempDir.resolve("vessel-brand-and-pack-server");
+        Files.createDirectories(serverRoot);
+
+        // 1. Verify ServerEulaAndPropertiesBootstrap writes max-tick-time=-1
+        ServerEulaAndPropertiesBootstrap bootstrap = new ServerEulaAndPropertiesBootstrap();
+        var props = bootstrap.ensureServerProperties(serverRoot, 25565);
+        assertThat(props.get("max-tick-time")).isEqualTo("-1");
+        assertThat(props.get("online-mode")).isEqualTo("false");
+
+        // 2. Verify VesselServerBrandTransformer rewrites getServerModName to "VESSEL"
+        byte[] rawMcClass = createMainClassBytes("net/minecraft/server/MinecraftServer", 65);
+        VesselServerBrandTransformer brandTransformer = new VesselServerBrandTransformer();
+        byte[] transformedClass = brandTransformer.transformServerBrand(rawMcClass);
+        assertThat(transformedClass).isNotEmpty();
+
+        TestBytecodeClassDefiner testLoader = new TestBytecodeClassDefiner(ClassLoader.getSystemClassLoader());
+        Class<?> loadedClass = testLoader.defineFromBytes("net.minecraft.server.MinecraftServer", transformedClass);
+        Object inst = loadedClass.getDeclaredConstructor().newInstance();
+        var getModNameMethod = loadedClass.getMethod("getServerModName");
+        Object brand = getModNameMethod.invoke(inst);
+        assertThat(brand).isEqualTo("VESSEL");
+
+        // 3. Verify VesselResourcePackDeliveryService serves HTTP resource pack
+        VesselResourcePackDeliveryService packService = new VesselResourcePackDeliveryService();
+        String packUrl = packService.startDeliveryServerAndConfigureProperties(serverRoot, 25580);
+        assertThat(packUrl).contains("25581");
+        assertThat(packService.getActivePackSha1()).hasSize(40);
+        packService.stopDeliveryServer();
+
+        // 4. Verify VesselServerRestartService builds restart command line
+        VesselServerRestartService restartService = new VesselServerRestartService();
+        List<String> restartCmd = restartService.buildRestartCommandLine(serverRoot);
+        assertThat(restartCmd).isNotEmpty();
+
+        // 5. Verify /restart console command dispatch
+        VesselServerLauncher launcher = new VesselServerLauncher(serverRoot);
+        List<String> restartOutput = launcher.executeVesselConsoleCommand("restart");
+        assertThat(restartOutput).anyMatch(l -> l.contains("Server restart dispatched"));
+    }
+
     private static byte[] createInnerServerJarWithClassVersion(
             String internalClassName,
             int classFileMajorVersion) throws Exception {
@@ -310,6 +358,35 @@ public final class JvmVersionGuardAndConsoleLogTest {
                 null,
                 "java/lang/Object",
                 null);
+
+        // <init>()V
+        MethodVisitor initMv = cw.visitMethod(
+                Opcodes.ACC_PUBLIC,
+                "<init>",
+                "()V",
+                null,
+                null);
+        initMv.visitCode();
+        initMv.visitVarInsn(Opcodes.ALOAD, 0);
+        initMv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        initMv.visitInsn(Opcodes.RETURN);
+        initMv.visitMaxs(1, 1);
+        initMv.visitEnd();
+
+        // getServerModName()Ljava/lang/String; -> returns "vanilla"
+        MethodVisitor modNameMv = cw.visitMethod(
+                Opcodes.ACC_PUBLIC,
+                "getServerModName",
+                "()Ljava/lang/String;",
+                null,
+                null);
+        modNameMv.visitCode();
+        modNameMv.visitLdcInsn("vanilla");
+        modNameMv.visitInsn(Opcodes.ARETURN);
+        modNameMv.visitMaxs(1, 1);
+        modNameMv.visitEnd();
+
+        // main([Ljava/lang/String;)V
         MethodVisitor mv = cw.visitMethod(
                 Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
                 "main",

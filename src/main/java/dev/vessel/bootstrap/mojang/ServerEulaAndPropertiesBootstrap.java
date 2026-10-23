@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class ServerEulaAndPropertiesBootstrap {
 
@@ -92,6 +92,8 @@ public final class ServerEulaAndPropertiesBootstrap {
         defaults.put("spawn-protection", "0");
         defaults.put("network-compression-threshold", "256");
         defaults.put("sync-chunk-writes", "false");
+        // Disable Vanilla 60s Watchdog freeze-kill during heavy modded chunk generation on low-end CPUs
+        defaults.put("max-tick-time", "-1");
 
         try {
             Files.createDirectories(serverRoot);
@@ -107,6 +109,7 @@ public final class ServerEulaAndPropertiesBootstrap {
 
             Map<String, String> loaded = new LinkedHashMap<>(defaults);
             String content = Files.readString(propsPath, StandardCharsets.UTF_8);
+            boolean modified = false;
             for (String rawLine : content.split("\\R")) {
                 String line = rawLine.trim();
                 if (line.isEmpty() || line.startsWith("#")) {
@@ -116,6 +119,18 @@ public final class ServerEulaAndPropertiesBootstrap {
                 if (eq > 0) {
                     loaded.put(line.substring(0, eq).trim(), line.substring(eq + 1).trim());
                 }
+            }
+            if ("60000".equals(loaded.get("max-tick-time")) || !loaded.containsKey("max-tick-time")) {
+                loaded.put("max-tick-time", "-1");
+                modified = true;
+            }
+            if (modified) {
+                StringBuilder sb = new StringBuilder(512);
+                sb.append("#Minecraft server properties (Managed by VESSEL Sovereign Microkernel)\n");
+                for (Map.Entry<String, String> entry : loaded.entrySet()) {
+                    sb.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
+                }
+                Files.writeString(propsPath, sb.toString(), StandardCharsets.UTF_8);
             }
             return Map.copyOf(loaded);
         } catch (IOException e) {

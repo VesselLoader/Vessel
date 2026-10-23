@@ -15,7 +15,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class TierOneVanillaGameLauncher {
 
@@ -41,7 +41,7 @@ public final class TierOneVanillaGameLauncher {
                 }
             }
         }
-        return new URLClassLoader(
+        return new TierOneGameTransformingClassLoader(
                 "vessel-tier1-vanilla-game",
                 urls.toArray(new URL[0]),
                 parentClassLoader != null ? parentClassLoader : ClassLoader.getSystemClassLoader());

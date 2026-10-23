@@ -33,7 +33,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.3
+ * @version 1.0.4
  */
 public final class SinglePassModAndPluginLiveActivator {
 
@@ -42,6 +42,7 @@ public final class SinglePassModAndPluginLiveActivator {
     private final FastJarEntrypointHeaderScanner entrypointScanner =
             new FastJarEntrypointHeaderScanner();
     private final Map<String, String> rejectedForwardVersionModules = new LinkedHashMap<>();
+    private volatile LiveJarBytecodeTransformingClassLoader activeTransformingClassLoader;
 
     /**
      * Initializes the live {@link FabricLoader} and {@link Bukkit} runtime singletons, enforces
@@ -116,13 +117,17 @@ public final class SinglePassModAndPluginLiveActivator {
         }
 
         // 3. Load and activate all compatible entrypoints in a single pass with multi-era upgrading
+        // Keep activeTransformingClassLoader open for the server lifetime so mod entities, items,
+        // blocks, and event listeners can be loaded on demand.
         int activatedCount = 0;
-        try (LiveJarBytecodeTransformingClassLoader transformingLoader =
-                new LiveJarBytecodeTransformingClassLoader(
-                        jarPaths,
-                        parentClassLoader,
-                        customFlags.isUniversalCompatEnabled(),
-                        customFlags.isDeepDebugEnabled())) {
+        try {
+            LiveJarBytecodeTransformingClassLoader transformingLoader =
+                    new LiveJarBytecodeTransformingClassLoader(
+                            jarPaths,
+                            parentClassLoader != null ? parentClassLoader : SinglePassModAndPluginLiveActivator.class.getClassLoader(),
+                            customFlags.isUniversalCompatEnabled(),
+                            customFlags.isDeepDebugEnabled());
+            activeTransformingClassLoader = transformingLoader;
             for (Map.Entry<Path, VesselModuleIdentifier> entry : compatibleModules.entrySet()) {
                 Path jarPath = entry.getKey();
                 VesselModuleIdentifier moduleId = entry.getValue();
@@ -135,9 +140,18 @@ public final class SinglePassModAndPluginLiveActivator {
                         customFlags.isLenientLoadEnabled());
             }
         } catch (Exception ignored) {
-            // Safely release JAR file handles on Windows
         }
         return activatedCount;
+    }
+
+    /**
+     * Returns the active {@link LiveJarBytecodeTransformingClassLoader} hosting the active mods and
+     * plugins.
+     *
+     * @return active transforming classloader, or {@code null} if no mods are loaded
+     */
+    public LiveJarBytecodeTransformingClassLoader getActiveTransformingClassLoader() {
+        return activeTransformingClassLoader;
     }
 
     /**
