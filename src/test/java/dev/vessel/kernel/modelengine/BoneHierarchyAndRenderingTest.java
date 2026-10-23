@@ -9,6 +9,7 @@ import dev.vessel.kernel.modelengine.bone.ItemDisplayRenderer;
 import dev.vessel.kernel.modelengine.bone.LegacyArmorStandRenderer;
 import dev.vessel.kernel.modelengine.bone.QuaternionRotation;
 import dev.vessel.kernel.modelengine.bone.ResourcePackModelMapping;
+import dev.vessel.kernel.modelengine.lod.DisplayInterpolationConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.offset;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public class BoneHierarchyAndRenderingTest {
@@ -176,5 +177,46 @@ public class BoneHierarchyAndRenderingTest {
 
         // Non-existent bone returns 0
         assertThat(mapping.getCustomModelData("custom_golem", "nonexistent")).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("QuaternionRotation correctly evaluates Euler angles across compound yaw and roll without axis collapse")
+    void testQuaternionEulerAngleRoundTripAndGimbalLock() {
+        // Compound rotation: yaw = 90 deg (PI/2), roll = 45 deg (PI/4), pitch = 0
+        float expectedYaw = (float) (Math.PI / 2.0);
+        float expectedRoll = (float) (Math.PI / 4.0);
+        float expectedPitch = 0.0f;
+
+        QuaternionRotation q = QuaternionRotation.fromEuler(expectedPitch, expectedYaw, expectedRoll);
+        float[] euler = q.toEulerAngles();
+
+        assertThat(euler[0]).isCloseTo(expectedPitch, offset(1e-4f));
+        assertThat(euler[1]).isCloseTo(expectedYaw, offset(1e-4f));
+        assertThat(euler[2]).isCloseTo(expectedRoll, offset(1e-4f));
+
+        // Gimbal lock test: pitch at +90 degrees (PI/2)
+        QuaternionRotation gimbalLockQ = QuaternionRotation.fromEuler((float) (Math.PI / 2.0), 0.0f, 0.0f);
+        float[] gimbalEuler = gimbalLockQ.toEulerAngles();
+        assertThat(gimbalEuler[0]).isCloseTo((float) (Math.PI / 2.0), offset(1e-4f));
+        assertThat(gimbalEuler[2]).isCloseTo(0.0f, offset(1e-4f));
+    }
+
+    @Test
+    @DisplayName("ItemDisplayRenderer wires custom DisplayInterpolationConfig duration and teleport ticks")
+    void testItemDisplayRendererInterpolationConfig() {
+        BoneNode bone = new BoneNode("shield_plate", null);
+        bone.setCustomModelData(40001);
+
+        BoneTransformState transformState = new BoneTransformState("shield_plate");
+        VirtualDisplayEntityBridge bridge = new VirtualDisplayEntityBridge("shield_plate", transformState);
+
+        DisplayInterpolationConfig config = new DisplayInterpolationConfig(2);
+        config.setTeleportDurationTicks(1);
+
+        ItemDisplayRenderer renderer = new ItemDisplayRenderer(bone, bridge, config);
+
+        assertThat(bridge.getInterpolationDurationTicks()).isEqualTo(2);
+        assertThat(bridge.getTeleportDurationTicks()).isEqualTo(1);
+        assertThat(config.getInterpolationDurationMillis()).isEqualTo(100L);
     }
 }

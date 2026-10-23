@@ -11,7 +11,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class DamageRelayCoordinator {
@@ -37,6 +37,17 @@ public final class DamageRelayCoordinator {
 
         if (rawDamage < 0.0f) {
             throw new IllegalArgumentException("rawDamage cannot be negative: " + rawDamage);
+        }
+
+        if (!hitbox.isActive()) {
+            return new DamageRelayResult(
+                    hitbox.getHitboxId(),
+                    rawDamage,
+                    0.0f,
+                    0.0f,
+                    controller.getState().getCurrentHealth(),
+                    false
+            );
         }
 
         float multiplier = hitbox.getDamageMultiplier();

@@ -1,5 +1,7 @@
 package dev.vessel.kernel.modelengine.hitbox;
 
+import dev.vessel.kernel.modelengine.bone.QuaternionRotation;
+
 import java.util.Objects;
 
 /**
@@ -8,7 +10,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @author VESSEL Engine Team
  */
 public final class HitboxSpatialCalculator {
@@ -49,6 +51,54 @@ public final class HitboxSpatialCalculator {
     }
 
     /**
+     * Computes and updates the world coordinates of a dynamic hitbox attached to an animated bone,
+     * rotating the hitbox local offset by the bone's 3D quaternion rotation.
+     *
+     * @param hitbox           dynamic hitbox to update
+     * @param rootX            driver entity X
+     * @param rootY            driver entity Y
+     * @param rootZ            driver entity Z
+     * @param rootYaw          driver entity yaw in degrees
+     * @param boneTranslationX bone global translation X
+     * @param boneTranslationY bone global translation Y
+     * @param boneTranslationZ bone global translation Z
+     * @param boneRotation     bone composite quaternion rotation
+     */
+    public void updateBoneHitboxPosition(
+            DynamicHitbox hitbox,
+            double rootX, double rootY, double rootZ,
+            float rootYaw,
+            float boneTranslationX, float boneTranslationY, float boneTranslationZ,
+            QuaternionRotation boneRotation
+    ) {
+        Objects.requireNonNull(hitbox, "hitbox cannot be null");
+
+        double localRelX = hitbox.getOffsetX();
+        double localRelY = hitbox.getOffsetY();
+        double localRelZ = hitbox.getOffsetZ();
+
+        if (boneRotation != null && boneRotation != QuaternionRotation.IDENTITY) {
+            float[] rotatedOffset = boneRotation.rotateVector((float) localRelX, (float) localRelY, (float) localRelZ);
+            localRelX = rotatedOffset[0];
+            localRelY = rotatedOffset[1];
+            localRelZ = rotatedOffset[2];
+        }
+
+        double combinedOx = localRelX + boneTranslationX;
+        double combinedOy = localRelY + boneTranslationY;
+        double combinedOz = localRelZ + boneTranslationZ;
+
+        double radYaw = Math.toRadians(rootYaw);
+        double cos = Math.cos(radYaw);
+        double sin = Math.sin(radYaw);
+
+        double rotatedX = combinedOx * cos - combinedOz * sin;
+        double rotatedZ = combinedOz * cos + combinedOx * sin;
+
+        hitbox.setWorldPosition(rootX + rotatedX, rootY + combinedOy, rootZ + rotatedZ);
+    }
+
+    /**
      * Computes and updates the world coordinates of a dynamic hitbox attached to an animated bone.
      *
      * @param hitbox           dynamic hitbox to update
@@ -66,18 +116,12 @@ public final class HitboxSpatialCalculator {
             float rootYaw,
             float boneTranslationX, float boneTranslationY, float boneTranslationZ
     ) {
-        Objects.requireNonNull(hitbox, "hitbox cannot be null");
-        double combinedOx = hitbox.getOffsetX() + boneTranslationX;
-        double combinedOy = hitbox.getOffsetY() + boneTranslationY;
-        double combinedOz = hitbox.getOffsetZ() + boneTranslationZ;
-
-        double radYaw = Math.toRadians(rootYaw);
-        double cos = Math.cos(radYaw);
-        double sin = Math.sin(radYaw);
-
-        double rotatedX = combinedOx * cos - combinedOz * sin;
-        double rotatedZ = combinedOz * cos + combinedOx * sin;
-
-        hitbox.setWorldPosition(rootX + rotatedX, rootY + combinedOy, rootZ + rotatedZ);
+        updateBoneHitboxPosition(
+                hitbox,
+                rootX, rootY, rootZ,
+                rootYaw,
+                boneTranslationX, boneTranslationY, boneTranslationZ,
+                QuaternionRotation.IDENTITY
+        );
     }
 }

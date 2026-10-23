@@ -15,6 +15,7 @@ import dev.vessel.kernel.modelengine.hitbox.HitboxInteractionEvent;
 import dev.vessel.kernel.modelengine.hitbox.HitboxInteractionRelay;
 import dev.vessel.kernel.modelengine.hitbox.HitboxSpatialCalculator;
 import dev.vessel.kernel.modelengine.hitbox.ModernInteractionHitboxSimulator;
+import dev.vessel.kernel.modelengine.lod.DisplayInterpolationConfig;
 import dev.vessel.kernel.modelengine.lod.ModelAnimationLODGovernor;
 import dev.vessel.kernel.modelengine.lod.ModelAnimationLODTier;
 import dev.vessel.kernel.modelengine.lod.MovementDeltaCullingFilter;
@@ -36,7 +37,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class ActiveModelInstance {
@@ -53,6 +54,8 @@ public final class ActiveModelInstance {
 
     private final Map<String, VirtualDisplayEntityBridge> boneDisplayEntities = new LinkedHashMap<>();
     private final Map<String, ItemDisplayRenderer> itemDisplayRenderers = new LinkedHashMap<>();
+    private final Map<String, ComputedBoneTransform> lastComputedTransforms = new LinkedHashMap<>();
+    private DisplayInterpolationConfig interpolationConfig = new DisplayInterpolationConfig(3);
 
     private final MovementDeltaCullingFilter deltaCullingFilter;
     private final ModelAnimationLODGovernor lodGovernor;
@@ -93,6 +96,7 @@ public final class ActiveModelInstance {
 
         // Initialize bone display entities
         initializeBoneDisplayEntities();
+        updateBoneTransforms();
     }
 
     private void initializeBoneDisplayEntities() {
@@ -102,7 +106,7 @@ public final class ActiveModelInstance {
             bridge.setCustomModelData(bone.getCustomModelData());
 
             boneDisplayEntities.put(bone.getBoneName(), bridge);
-            itemDisplayRenderers.put(bone.getBoneName(), new ItemDisplayRenderer(bone, bridge));
+            itemDisplayRenderers.put(bone.getBoneName(), new ItemDisplayRenderer(bone, bridge, interpolationConfig));
 
             // Mount bone display entity onto root mob as passenger
             passengerTracker.addPassenger(bridge.getVirtualEntityId());
@@ -153,6 +157,11 @@ public final class ActiveModelInstance {
         // Step 1: Resolve LOD tier
         this.activeTier = lodGovernor.resolveTier(currentX, currentY, currentZ, players);
 
+        // Zero CPU overhead for unobserved entities
+        if (this.activeTier == ModelAnimationLODTier.DORMANT) {
+            return;
+        }
+
         // Step 2: Passenger mount movement tracking
         passengerTracker.recordMovementTick();
 
@@ -178,6 +187,8 @@ public final class ActiveModelInstance {
      */
     public synchronized void updateBoneTransforms() {
         Map<String, ComputedBoneTransform> transforms = boneHierarchy.computeGlobalTransforms();
+        lastComputedTransforms.clear();
+        lastComputedTransforms.putAll(transforms);
         for (Map.Entry<String, ComputedBoneTransform> entry : transforms.entrySet()) {
             ItemDisplayRenderer renderer = itemDisplayRenderers.get(entry.getKey());
             if (renderer != null) {
@@ -205,19 +216,32 @@ public final class ActiveModelInstance {
         if (attachedBone == null || attachedBone.isEmpty()) {
             spatialCalculator.updateRootHitboxPosition(hitbox, rootX, rootY, rootZ, rootYaw);
         } else {
-            VirtualDisplayEntityBridge bridge = boneDisplayEntities.get(attachedBone);
-            if (bridge != null) {
-                BoneTransformState state = bridge.getTransformState();
+            ComputedBoneTransform computed = lastComputedTransforms.get(attachedBone);
+            if (computed != null) {
                 spatialCalculator.updateBoneHitboxPosition(
                         hitbox,
                         rootX, rootY, rootZ,
                         rootYaw,
-                        state.getTranslationX(),
-                        state.getTranslationY(),
-                        state.getTranslationZ()
+                        computed.translationX(),
+                        computed.translationY(),
+                        computed.translationZ(),
+                        computed.rotation()
                 );
             } else {
-                spatialCalculator.updateRootHitboxPosition(hitbox, rootX, rootY, rootZ, rootYaw);
+                VirtualDisplayEntityBridge bridge = boneDisplayEntities.get(attachedBone);
+                if (bridge != null) {
+                    BoneTransformState state = bridge.getTransformState();
+                    spatialCalculator.updateBoneHitboxPosition(
+                            hitbox,
+                            rootX, rootY, rootZ,
+                            rootYaw,
+                            state.getTranslationX(),
+                            state.getTranslationY(),
+                            state.getTranslationZ()
+                    );
+                } else {
+                    spatialCalculator.updateRootHitboxPosition(hitbox, rootX, rootY, rootZ, rootYaw);
+                }
             }
         }
     }
@@ -325,5 +349,86 @@ public final class ActiveModelInstance {
 
     public long getBoneUpdatesRun() {
         return boneUpdatesRun;
+    }
+
+    /**
+     * Teleports the active model instance to new coordinates, immediately updating positions
+     * and marking display entities for smooth teleport orientation.
+     *
+     * @param x   new X coordinate
+     * @param y   new Y coordinate
+     * @param z   new Z coordinate
+     * @param yaw new yaw in degrees
+     * @param pitch new pitch in degrees
+     */
+    public synchronized void teleport(double x, double y, double z, float yaw, float pitch) {
+        driverController.getState().setPosition(x, y, z);
+        driverController.getState().setRotation(yaw, pitch);
+
+        deltaCullingFilter.forceDispatch(x, y, z, yaw, pitch);
+        updateBoneTransforms();
+        updateAllHitboxPositions();
+
+        for (VirtualDisplayEntityBridge bridge : boneDisplayEntities.values()) {
+            bridge.setTeleportDurationTicks(interpolationConfig.getTeleportDurationTicks());
+        }
+    }
+
+    /**
+     * Unregisters and removes a dynamic hitbox from this active instance.
+     *
+     * @param hitboxId hitbox identifier
+     * @return true if removed, false if not found
+     */
+    public synchronized boolean removeHitbox(String hitboxId) {
+        DynamicHitbox hitbox = hitboxes.remove(hitboxId);
+        if (hitbox != null) {
+            hitboxesByEntityId.remove(hitbox.getVirtualEntityId());
+            interactionSimulators.remove(hitboxId);
+            passengerTracker.removePassenger(hitbox.getVirtualEntityId());
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Dynamically resizes a dynamic hitbox on the fly (e.g. dragon wing folding).
+     *
+     * @param hitboxId hitbox identifier
+     * @param width    new width
+     * @param height   new height
+     * @return true if resized, false if not found
+     */
+    public synchronized boolean resizeHitbox(String hitboxId, float width, float height) {
+        DynamicHitbox hitbox = hitboxes.get(hitboxId);
+        if (hitbox != null) {
+            hitbox.setWidth(width);
+            hitbox.setHeight(height);
+            ModernInteractionHitboxSimulator sim = interactionSimulators.get(hitboxId);
+            if (sim != null) {
+                sim.resize(width, height);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public DisplayInterpolationConfig getInterpolationConfig() {
+        return interpolationConfig;
+    }
+
+    public synchronized void setInterpolationConfig(DisplayInterpolationConfig config) {
+        this.interpolationConfig = Objects.requireNonNull(config, "config cannot be null");
+        for (ItemDisplayRenderer renderer : itemDisplayRenderers.values()) {
+            renderer.applyInterpolationConfig(this.interpolationConfig);
+        }
+    }
+
+    public ModernInteractionHitboxSimulator getInteractionSimulator(String hitboxId) {
+        return interactionSimulators.get(hitboxId);
+    }
+
+    public Map<String, ComputedBoneTransform> getLastComputedTransforms() {
+        return Collections.unmodifiableMap(new LinkedHashMap<>(lastComputedTransforms));
     }
 }

@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class ModelEngineManager {
@@ -122,6 +122,74 @@ public final class ModelEngineManager {
         }
 
         return instance;
+    }
+
+    /**
+     * Registers a dynamic hitbox onto an active model instance and indexes it for attack/interaction routing.
+     *
+     * @param driverEntityId Minecraft entity ID of the driver mob
+     * @param hitbox         dynamic hitbox to add
+     */
+    public synchronized void addHitbox(int driverEntityId, DynamicHitbox hitbox) {
+        Objects.requireNonNull(hitbox, "hitbox cannot be null");
+        ActiveModelInstance instance = instancesByDriverId.get(driverEntityId);
+        if (instance != null) {
+            instance.addHitbox(hitbox);
+            instancesByHitboxId.put(hitbox.getVirtualEntityId(), instance);
+        }
+    }
+
+    /**
+     * Unregisters a dynamic hitbox from an active model instance and removes its index.
+     *
+     * @param driverEntityId Minecraft entity ID of the driver mob
+     * @param hitboxId       hitbox identifier
+     * @return true if found and removed
+     */
+    public synchronized boolean removeHitbox(int driverEntityId, String hitboxId) {
+        ActiveModelInstance instance = instancesByDriverId.get(driverEntityId);
+        if (instance != null) {
+            DynamicHitbox hitbox = instance.getHitboxes().get(hitboxId);
+            if (hitbox != null) {
+                instancesByHitboxId.remove(hitbox.getVirtualEntityId());
+                return instance.removeHitbox(hitboxId);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Resizes a dynamic hitbox on an active model instance.
+     *
+     * @param driverEntityId Minecraft entity ID of the driver mob
+     * @param hitboxId       hitbox identifier
+     * @param width          new width
+     * @param height         new height
+     * @return true if found and resized
+     */
+    public synchronized boolean resizeHitbox(int driverEntityId, String hitboxId, float width, float height) {
+        ActiveModelInstance instance = instancesByDriverId.get(driverEntityId);
+        if (instance != null) {
+            return instance.resizeHitbox(hitboxId, width, height);
+        }
+        return false;
+    }
+
+    /**
+     * Teleports an active model instance across coordinates or dimensions.
+     *
+     * @param driverEntityId Minecraft entity ID of the driver mob
+     * @param x              new X coordinate
+     * @param y              new Y coordinate
+     * @param z              new Z coordinate
+     * @param yaw            new yaw
+     * @param pitch          new pitch
+     */
+    public synchronized void teleportInstance(int driverEntityId, double x, double y, double z, float yaw, float pitch) {
+        ActiveModelInstance instance = instancesByDriverId.get(driverEntityId);
+        if (instance != null) {
+            instance.teleport(x, y, z, yaw, pitch);
+        }
     }
 
     /**

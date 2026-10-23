@@ -1,5 +1,14 @@
 package dev.vessel.kernel.modelengine;
 
+import dev.vessel.kernel.modelengine.bone.BoneHierarchyTree;
+import dev.vessel.kernel.modelengine.bone.BoneNode;
+import dev.vessel.kernel.modelengine.driver.DriverDropSuppressor;
+import dev.vessel.kernel.modelengine.driver.DriverHealthScaler;
+import dev.vessel.kernel.modelengine.driver.DriverInvisibilityGovernor;
+import dev.vessel.kernel.modelengine.driver.DriverMobController;
+import dev.vessel.kernel.modelengine.driver.DriverMobState;
+import dev.vessel.kernel.modelengine.hitbox.DynamicHitbox;
+import dev.vessel.kernel.modelengine.hitbox.HitboxType;
 import dev.vessel.kernel.modelengine.lod.DisplayInterpolationConfig;
 import dev.vessel.kernel.modelengine.lod.ModelAnimationLODGovernor;
 import dev.vessel.kernel.modelengine.lod.ModelAnimationLODTier;
@@ -12,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public class PassengerMountAndAntiLagLODTest {
@@ -147,5 +157,109 @@ public class PassengerMountAndAntiLagLODTest {
         boolean dispatchedRot = filter.shouldDispatchUpdate(0.1, 0.0, 0.0, 3.0f, 0.0f);
         assertThat(dispatchedRot).isTrue();
         assertThat(filter.getAcceptedUpdatesCount()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("ActiveModelInstance achieves true zero CPU overhead when in DORMANT tier (unobserved)")
+    void testActiveModelInstanceDormantZeroCpu() {
+        BoneHierarchyTree tree = new BoneHierarchyTree();
+        BoneNode root = new BoneNode("root", null);
+        root.setTranslation(0.0f, 1.0f, 0.0f);
+        tree.registerBone(root);
+
+        DriverMobState state = new DriverMobState(800, UUID.randomUUID(), "minecraft:cow");
+        DriverMobController controller = new DriverMobController(
+                state,
+                new DriverHealthScaler(100.0f),
+                new DriverInvisibilityGovernor(),
+                new DriverDropSuppressor()
+        );
+
+        ActiveModelInstance instance = new ActiveModelInstance("cow_dormant", "model_cow", controller, tree);
+
+        // Tick with 0 active players in the world -> DORMANT tier
+        instance.tick(1L, Collections.emptyList());
+
+        assertThat(instance.getActiveTier()).isEqualTo(ModelAnimationLODTier.DORMANT);
+        // Bone calculations skipped
+        assertThat(instance.getBoneUpdatesRun()).isEqualTo(0);
+        // Movement tracking skipped
+        assertThat(instance.getPassengerTracker().getTotalMovementTicks()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("ActiveModelInstance teleport updates positions, forces delta dispatch, and sets teleport duration")
+    void testActiveModelInstanceTeleportation() {
+        BoneHierarchyTree tree = new BoneHierarchyTree();
+        BoneNode root = new BoneNode("torso", null);
+        tree.registerBone(root);
+
+        DriverMobState state = new DriverMobState(900, UUID.randomUUID(), "minecraft:blaze");
+        state.setPosition(0.0, 64.0, 0.0);
+
+        DriverMobController controller = new DriverMobController(
+                state,
+                new DriverHealthScaler(200.0f),
+                new DriverInvisibilityGovernor(),
+                new DriverDropSuppressor()
+        );
+
+        ActiveModelInstance instance = new ActiveModelInstance("blaze_1", "model_blaze", controller, tree);
+        DynamicHitbox hitbox = new DynamicHitbox("blaze_core", HitboxType.INTERACTION, null, 1.0f, 2.0f);
+        instance.addHitbox(hitbox);
+
+        // Configure 2-tick teleport duration
+        DisplayInterpolationConfig config = new DisplayInterpolationConfig(2);
+        config.setTeleportDurationTicks(2);
+        instance.setInterpolationConfig(config);
+
+        // Teleport 1000 blocks away (simulating Nether portal or /tp)
+        instance.teleport(1000.0, 70.0, 2000.0, 90.0f, 0.0f);
+
+        assertThat(state.getPosX()).isEqualTo(1000.0);
+        assertThat(state.getPosY()).isEqualTo(70.0);
+        assertThat(state.getPosZ()).isEqualTo(2000.0);
+        assertThat(state.getYaw()).isEqualTo(90.0f);
+
+        assertThat(hitbox.getWorldX()).isEqualTo(1000.0);
+        assertThat(hitbox.getWorldY()).isEqualTo(70.0);
+        assertThat(hitbox.getWorldZ()).isEqualTo(2000.0);
+
+        // Display bridge has teleportDurationTicks applied
+        assertThat(instance.getBoneDisplayEntities().get("torso").getTeleportDurationTicks()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("ActiveModelInstance dynamically resizes and removes hitboxes, updating passenger mounts")
+    void testActiveModelInstanceHitboxLifecycleAndResizing() {
+        BoneHierarchyTree tree = new BoneHierarchyTree();
+        BoneNode body = new BoneNode("body", null);
+        tree.registerBone(body);
+
+        DriverMobState state = new DriverMobState(950, UUID.randomUUID(), "minecraft:spider");
+        DriverMobController controller = new DriverMobController(
+                state,
+                new DriverHealthScaler(80.0f),
+                new DriverInvisibilityGovernor(),
+                new DriverDropSuppressor()
+        );
+
+        ActiveModelInstance instance = new ActiveModelInstance("spider_1", "model_spider", controller, tree);
+        DynamicHitbox wingHitbox = new DynamicHitbox("wing", 3001, HitboxType.INTERACTION, null, 3.0f, 1.0f);
+        instance.addHitbox(wingHitbox);
+
+        assertThat(instance.getPassengerTracker().getPassengerCount()).isEqualTo(2); // 1 bone + 1 hitbox
+
+        // Dynamically resize wing (e.g. wing folding sequence)
+        boolean resized = instance.resizeHitbox("wing", 1.0f, 0.5f);
+        assertThat(resized).isTrue();
+        assertThat(wingHitbox.getWidth()).isEqualTo(1.0f);
+        assertThat(wingHitbox.getHeight()).isEqualTo(0.5f);
+
+        // Remove wing hitbox
+        boolean removed = instance.removeHitbox("wing");
+        assertThat(removed).isTrue();
+        assertThat(instance.getHitboxes()).doesNotContainKey("wing");
+        assertThat(instance.getPassengerTracker().getPassengerCount()).isEqualTo(1); // Only 1 bone remains mounted
     }
 }

@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public class DriverMobAndDropSuppressionTest {
@@ -165,5 +165,23 @@ public class DriverMobAndDropSuppressionTest {
         List<DroppedItemEntry> drops = controller.onDeath(1);
         assertThat(drops).hasSize(1);
         assertThat(drops.get(0).itemId()).isEqualTo("mymod:golem_core");
+    }
+
+    @Test
+    @DisplayName("CustomDropItem rolls increased item count with looting count bonus")
+    void testCustomDropItemLootingCountBonus() {
+        // Drop diamond: base 1 to 2, 100% chance, 0 looting chance bonus, +2 max count per looting level
+        CustomDropItem dropItem = new CustomDropItem("minecraft:diamond", 1, 2, 1.0f, 0.0f, 2);
+        assertThat(dropItem.getLootingCountBonus()).isEqualTo(2);
+
+        // Looting 0 -> range [1, 2]
+        int count0 = dropItem.rollDropCount(0);
+        assertThat(count0).isBetween(1, 2);
+
+        // Looting 3 -> max count is 2 + (3 * 2) = 8 -> range [1, 8]
+        for (int i = 0; i < 20; i++) {
+            int count3 = dropItem.rollDropCount(3);
+            assertThat(count3).isBetween(1, 8);
+        }
     }
 }

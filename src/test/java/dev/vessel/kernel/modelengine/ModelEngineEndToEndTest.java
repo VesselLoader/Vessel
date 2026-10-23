@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public class ModelEngineEndToEndTest {
@@ -80,20 +80,26 @@ public class ModelEngineEndToEndTest {
         assertThat(instance.getDriverController().getState().isSilent()).isTrue();
         assertThat(instance.getDriverController().getDropSuppressor().shouldSuppressVanillaLoot()).isTrue();
 
-        // 3. Attach dynamic hitboxes (Interaction entities visible in F3+B)
+        // 3. Attach dynamic hitboxes directly via manager
         DynamicHitbox headHitbox = new DynamicHitbox("head_box", 2001, HitboxType.INTERACTION, "head", 1.2f, 1.2f);
         headHitbox.setDamageMultiplier(2.5f); // 2.5x localized headshot multiplier
-        instance.addHitbox(headHitbox);
-        manager.indexHitbox(2001, instance);
+        manager.addHitbox(1000, headHitbox);
 
         DynamicHitbox bodyHitbox = new DynamicHitbox("body_box", 2002, HitboxType.INTERACTION, "torso", 2.0f, 2.0f);
         bodyHitbox.setDamageMultiplier(1.0f);
-        instance.addHitbox(bodyHitbox);
-        manager.indexHitbox(2002, instance);
+        manager.addHitbox(1000, bodyHitbox);
 
         // Verify passenger mounting: 4 bones + 2 hitboxes = 6 passengers
         assertThat(instance.getPassengerTracker().getPassengerCount()).isEqualTo(6);
         assertThat(instance.getPassengerTracker().calculatePacketReductionRatio()).isGreaterThanOrEqualTo(0.85);
+
+        // Test dynamic hitbox resizing during animation (wing/head change)
+        boolean resized = manager.resizeHitbox(1000, "head_box", 1.5f, 1.5f);
+        assertThat(resized).isTrue();
+        assertThat(headHitbox.getWidth()).isEqualTo(1.5f);
+
+        // Test instance teleportation (portal traversal)
+        manager.teleportInstance(1000, 100.0, 64.0, 100.0, 0.0f, 0.0f);
 
         // 4. Tick with player at near distance (<16m) -> LOD NEAR (20 TPS)
         List<PlayerSpatialCoordinates> nearPlayers = List.of(new PlayerSpatialCoordinates(105.0, 64.0, 100.0));

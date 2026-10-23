@@ -9,7 +9,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class ModernInteractionHitboxSimulator {
@@ -49,6 +49,9 @@ public final class ModernInteractionHitboxSimulator {
      * @return true if point intersects bounding box
      */
     public boolean containsPoint(double px, double py, double pz) {
+        if (!hitbox.isActive()) {
+            return false;
+        }
         float[] bbox = hitbox.computeBoundingBox();
         return px >= bbox[0] && px <= bbox[3]
                 && py >= bbox[1] && py <= bbox[4]
@@ -72,11 +75,15 @@ public final class ModernInteractionHitboxSimulator {
             double rayDirX, double rayDirY, double rayDirZ,
             double maxDist
     ) {
+        if (!hitbox.isActive()) {
+            return false;
+        }
+
         float[] bbox = hitbox.computeBoundingBox();
 
-        double invDirX = 1.0 / (rayDirX == 0.0 ? 1e-9 : rayDirX);
-        double invDirY = 1.0 / (rayDirY == 0.0 ? 1e-9 : rayDirY);
-        double invDirZ = 1.0 / (rayDirZ == 0.0 ? 1e-9 : rayDirZ);
+        double invDirX = 1.0 / (Math.abs(rayDirX) < 1e-9 ? (rayDirX < 0.0 ? -1e-9 : 1e-9) : rayDirX);
+        double invDirY = 1.0 / (Math.abs(rayDirY) < 1e-9 ? (rayDirY < 0.0 ? -1e-9 : 1e-9) : rayDirY);
+        double invDirZ = 1.0 / (Math.abs(rayDirZ) < 1e-9 ? (rayDirZ < 0.0 ? -1e-9 : 1e-9) : rayDirZ);
 
         double t1 = (bbox[0] - rayOriginX) * invDirX;
         double t2 = (bbox[3] - rayOriginX) * invDirX;
@@ -92,7 +99,8 @@ public final class ModernInteractionHitboxSimulator {
             return false;
         }
 
-        return tmin <= maxDist;
+        double hitDist = (tmin < 0.0) ? 0.0 : tmin;
+        return hitDist <= maxDist;
     }
 
     public DynamicHitbox getHitbox() {

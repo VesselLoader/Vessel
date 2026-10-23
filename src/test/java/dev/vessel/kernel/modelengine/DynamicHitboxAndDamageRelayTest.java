@@ -1,5 +1,6 @@
 package dev.vessel.kernel.modelengine;
 
+import dev.vessel.kernel.modelengine.bone.QuaternionRotation;
 import dev.vessel.kernel.modelengine.driver.DriverDropSuppressor;
 import dev.vessel.kernel.modelengine.driver.DriverHealthScaler;
 import dev.vessel.kernel.modelengine.driver.DriverInvisibilityGovernor;
@@ -21,6 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.offset;
 
 /**
  * Verification test suite for dynamic hitboxes, F3+B debug rendering simulation,
@@ -28,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public class DynamicHitboxAndDamageRelayTest {
@@ -171,5 +173,86 @@ public class DynamicHitboxAndDamageRelayTest {
         assertThat(event.clickX()).isEqualTo(5.0);
         assertThat(event.clickY()).isEqualTo(1.2);
         assertThat(event.clickZ()).isEqualTo(-3.4);
+    }
+
+    @Test
+    @DisplayName("Deactivated hitbox suppresses point containment, raycast, damage relay, and interaction")
+    void testDeactivatedHitboxIgnoresAttacksAndInteractions() {
+        DynamicHitbox disabledHitbox = new DynamicHitbox("shield_part", HitboxType.INTERACTION, null, 1.0f, 1.0f);
+        disabledHitbox.setWorldPosition(0.0, 10.0, 0.0);
+        disabledHitbox.setActive(false);
+
+        ModernInteractionHitboxSimulator simulator = new ModernInteractionHitboxSimulator(disabledHitbox);
+        assertThat(simulator.containsPoint(0.0, 10.5, 0.0)).isFalse();
+        assertThat(simulator.intersectsRay(0.0, 10.5, -5.0, 0.0, 0.0, 1.0, 10.0)).isFalse();
+
+        DriverMobState state = new DriverMobState(701, UUID.randomUUID(), "minecraft:iron_golem");
+        DriverMobController controller = new DriverMobController(
+                state,
+                new DriverHealthScaler(100.0f),
+                new DriverInvisibilityGovernor(),
+                new DriverDropSuppressor()
+        );
+
+        DamageRelayCoordinator coordinator = new DamageRelayCoordinator();
+        DamageRelayResult result = coordinator.relayDamage(disabledHitbox, controller, 50.0f);
+        assertThat(result.finalDamage()).isEqualTo(0.0f);
+        assertThat(result.remainingHealth()).isEqualTo(100.0f);
+        assertThat(controller.getState().getCurrentHealth()).isEqualTo(100.0f);
+
+        HitboxInteractionRelay relay = new HitboxInteractionRelay();
+        HitboxInteractionEvent event = relay.relayInteraction(disabledHitbox, controller, 1002, true, 0.0, 10.5, 0.0);
+        assertThat(event).isNull();
+    }
+
+    @Test
+    @DisplayName("HitboxSpatialCalculator rotates hitbox local offsets by bone quaternion rotation")
+    void testHitboxSpatialCalculatorWithBoneQuaternionRotation() {
+        HitboxSpatialCalculator calculator = new HitboxSpatialCalculator();
+
+        DynamicHitbox hitbox = new DynamicHitbox("snout", HitboxType.INTERACTION, "head", 0.5f, 0.5f);
+        // Hitbox offset +2 blocks forward along Z relative to bone
+        hitbox.setOffsets(0.0, 0.0, 2.0);
+
+        // Bone rotated 90 deg around Y axis (yaw = PI/2)
+        QuaternionRotation boneRot90 = QuaternionRotation.fromEuler(0.0f, (float) (Math.PI / 2.0), 0.0f);
+
+        // Driver entity at (10, 64, 10) with rootYaw = 0 (facing south)
+        // Bone translation at (0, 1.5, 0)
+        calculator.updateBoneHitboxPosition(
+                hitbox,
+                10.0, 64.0, 10.0,
+                0.0f,
+                0.0f, 1.5f, 0.0f,
+                boneRot90
+        );
+
+        // (0, 0, 2) rotated 90 deg around Y in right-handed system points to (2, 0, 0) in boneRot
+        // Vector rotation: (0, 0, 2) with yaw 90 -> (+2, 0, 0)
+        // World coordinates = (10 + 2, 64 + 1.5, 10 + 0) = (12.0, 65.5, 10.0)
+        assertThat(hitbox.getWorldX()).isCloseTo(12.0, offset(1e-4));
+        assertThat(hitbox.getWorldY()).isCloseTo(65.5, offset(1e-4));
+        assertThat(hitbox.getWorldZ()).isCloseTo(10.0, offset(1e-4));
+    }
+
+    @Test
+    @DisplayName("ModernInteractionHitboxSimulator correctly handles negative-zero ray direction without sign flip")
+    void testModernInteractionHitboxNegativeZeroRaycast() {
+        DynamicHitbox hitbox = new DynamicHitbox("chest", HitboxType.INTERACTION, null, 2.0f, 2.0f);
+        hitbox.setWorldPosition(0.0, 5.0, 10.0);
+
+        ModernInteractionHitboxSimulator simulator = new ModernInteractionHitboxSimulator(hitbox);
+
+        // Ray from (0, 6.0, 0) pointing along +Z towards target at Z=10, with rayDirX = -0.0
+        double rayDirX = -0.0;
+        double rayDirY = 0.0;
+        double rayDirZ = 1.0;
+
+        boolean hit = simulator.intersectsRay(0.0, 6.0, 0.0, rayDirX, rayDirY, rayDirZ, 15.0);
+        assertThat(hit).isTrue();
+
+        // Ray pointing away (Z = -1) with rayDirX = -0.0 should miss
+        boolean miss = simulator.intersectsRay(0.0, 6.0, 0.0, rayDirX, rayDirY, -1.0, 15.0);
+        assertThat(miss).isFalse();
     }
 }

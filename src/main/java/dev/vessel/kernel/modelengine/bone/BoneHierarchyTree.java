@@ -13,7 +13,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class BoneHierarchyTree {
@@ -38,7 +38,11 @@ public final class BoneHierarchyTree {
 
         String parent = bone.getParentBoneName();
         if (parent != null && !parent.isEmpty()) {
-            List<String> children = childrenMap.computeIfAbsent(parent, k -> new ArrayList<>());
+            List<String> children = childrenMap.get(parent);
+            if (children == null) {
+                children = new ArrayList<>();
+                childrenMap.put(parent, children);
+            }
             if (!children.contains(bone.getBoneName())) {
                 children.add(bone.getBoneName());
             }

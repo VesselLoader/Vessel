@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class CustomDropItem {
@@ -19,9 +19,10 @@ public final class CustomDropItem {
     private final int maxCount;
     private final float dropChance;
     private final float lootingChanceBonus;
+    private final int lootingCountBonus;
 
     /**
-     * Constructs a CustomDropItem definition.
+     * Constructs a CustomDropItem definition without looting count bonus.
      *
      * @param itemId             item namespaced identifier (e.g. "minecraft:diamond" or "mymod:dragon_scale")
      * @param minCount           minimum drop quantity (must be &gt;= 0)
@@ -30,6 +31,20 @@ public final class CustomDropItem {
      * @param lootingChanceBonus extra drop chance per level of Looting enchantment
      */
     public CustomDropItem(String itemId, int minCount, int maxCount, float dropChance, float lootingChanceBonus) {
+        this(itemId, minCount, maxCount, dropChance, lootingChanceBonus, 0);
+    }
+
+    /**
+     * Constructs a CustomDropItem definition with looting count bonus.
+     *
+     * @param itemId             item namespaced identifier (e.g. "minecraft:diamond" or "mymod:dragon_scale")
+     * @param minCount           minimum drop quantity (must be &gt;= 0)
+     * @param maxCount           maximum drop quantity (must be &gt;= minCount)
+     * @param dropChance         base drop probability [0.0, 1.0]
+     * @param lootingChanceBonus extra drop chance per level of Looting enchantment
+     * @param lootingCountBonus  extra maximum drop count per level of Looting enchantment
+     */
+    public CustomDropItem(String itemId, int minCount, int maxCount, float dropChance, float lootingChanceBonus, int lootingCountBonus) {
         this.itemId = Objects.requireNonNull(itemId, "itemId cannot be null");
         if (minCount < 0) {
             throw new IllegalArgumentException("minCount cannot be negative: " + minCount);
@@ -43,10 +58,14 @@ public final class CustomDropItem {
         if (lootingChanceBonus < 0.0f) {
             throw new IllegalArgumentException("lootingChanceBonus cannot be negative: " + lootingChanceBonus);
         }
+        if (lootingCountBonus < 0) {
+            throw new IllegalArgumentException("lootingCountBonus cannot be negative: " + lootingCountBonus);
+        }
         this.minCount = minCount;
         this.maxCount = maxCount;
         this.dropChance = dropChance;
         this.lootingChanceBonus = lootingChanceBonus;
+        this.lootingCountBonus = lootingCountBonus;
     }
 
     /**
@@ -61,10 +80,11 @@ public final class CustomDropItem {
         if (roll > effectiveChance) {
             return 0;
         }
-        if (minCount == maxCount) {
+        int effectiveMax = maxCount + (Math.max(0, lootingLevel) * lootingCountBonus);
+        if (minCount >= effectiveMax) {
             return minCount;
         }
-        return ThreadLocalRandom.current().nextInt(minCount, maxCount + 1);
+        return ThreadLocalRandom.current().nextInt(minCount, effectiveMax + 1);
     }
 
     public String getItemId() {
@@ -85,5 +105,9 @@ public final class CustomDropItem {
 
     public float getLootingChanceBonus() {
         return lootingChanceBonus;
+    }
+
+    public int getLootingCountBonus() {
+        return lootingCountBonus;
     }
 }

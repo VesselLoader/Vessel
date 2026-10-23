@@ -10,7 +10,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class HitboxInteractionRelay {
@@ -31,7 +31,7 @@ public final class HitboxInteractionRelay {
      * @param clickX     click position X
      * @param clickY     click position Y
      * @param clickZ     click position Z
-     * @return interaction event record
+     * @return interaction event record, or null if hitbox is inactive
      */
     public HitboxInteractionEvent relayInteraction(
             DynamicHitbox hitbox,
@@ -44,6 +44,10 @@ public final class HitboxInteractionRelay {
     ) {
         Objects.requireNonNull(hitbox, "hitbox cannot be null");
         Objects.requireNonNull(controller, "controller cannot be null");
+
+        if (!hitbox.isActive()) {
+            return null;
+        }
 
         return new HitboxInteractionEvent(
                 hitbox.getHitboxId(),

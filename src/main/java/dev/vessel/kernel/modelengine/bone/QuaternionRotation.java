@@ -8,7 +8,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class QuaternionRotation {
@@ -117,24 +117,24 @@ public final class QuaternionRotation {
      * @return 3-element float array of Euler angles in radians
      */
     public float[] toEulerAngles() {
-        // Roll (z-axis rotation)
-        float sinrCosp = 2.0f * (w * z + x * y);
-        float cosrCosp = 1.0f - 2.0f * (y * y + z * z);
-        float roll = (float) Math.atan2(sinrCosp, cosrCosp);
-
-        // Pitch (x-axis rotation)
         float sinp = 2.0f * (w * x - y * z);
         float pitch;
-        if (Math.abs(sinp) >= 1.0f) {
-            pitch = (float) Math.copySign(Math.PI / 2, sinp); // Use 90 degrees if out of range
+        float yaw;
+        float roll;
+
+        if (Math.abs(sinp) >= 0.999999f) {
+            pitch = (float) Math.copySign(Math.PI / 2.0, sinp);
+            roll = 0.0f;
+            yaw = (float) Math.atan2(2.0f * (w * y + z * x), 1.0f - 2.0f * (x * x + y * y));
         } else {
             pitch = (float) Math.asin(sinp);
+            float sinrCosp = 2.0f * (w * z + x * y);
+            float cosrCosp = 1.0f - 2.0f * (x * x + z * z);
+            roll = (float) Math.atan2(sinrCosp, cosrCosp);
+            float sinyCosp = 2.0f * (w * y + z * x);
+            float cosyCosp = 1.0f - 2.0f * (x * x + y * y);
+            yaw = (float) Math.atan2(sinyCosp, cosyCosp);
         }
-
-        // Yaw (y-axis rotation)
-        float sinyCosp = 2.0f * (w * y + z * x);
-        float cosyCosp = 1.0f - 2.0f * (x * x + y * y);
-        float yaw = (float) Math.atan2(sinyCosp, cosyCosp);
 
         return new float[]{pitch, yaw, roll};
     }
