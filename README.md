@@ -1,6 +1,6 @@
 <div align="center">
 
-# VESSEL (v2.3 — Sovereign Server Microkernel)
+# VESSEL (v2.3.1 — Sovereign Server Microkernel)
 
 **Virtualized Ecosystem Shared Server & Engine Loader**
 
@@ -17,7 +17,7 @@
 ---
 
 > [!TIP]
-> **Tài Liệu Hướng Dẫn Admin & Developer (Tiếng Việt):** Xem chi tiết tại [`VESSEL-ADMIN-AND-DEV-GUIDE.md`](VESSEL-ADMIN-AND-DEV-GUIDE.md) và [`CREDITS.md`](CREDITS.md).
+> **Comprehensive Administrator & Developer Guide:** See [`VESSEL-ADMIN-AND-DEV-GUIDE.md`](VESSEL-ADMIN-AND-DEV-GUIDE.md) and [`CREDITS.md`](CREDITS.md) for complete documentation on CLI flags, configuration tuning, multi-era compatibility, and third-party attributions.
 
 ---
 

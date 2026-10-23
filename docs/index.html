@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi">
+<!-- @version 1.0.1 -->
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VESSEL Sovereign Server Microkernel — Universal Minecraft Server Loader</title>
+  <title>VESSEL Sovereign Server Microkernel — Universal Minecraft Server Loader (v1.0.1)</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -144,12 +145,12 @@
   <header>
     <h1>VESSEL Sovereign Server Microkernel</h1>
     <p>
-      Universal Minecraft Server Loader hợp nhất 6 hệ sinh thái (<strong>Fabric, Quilt, Forge, NeoForge, Bukkit/Spigot, Paper/Folia</strong>) trong 1 tệp <code>server.jar</code> duy nhất — Khởi động 1 lần duy nhất, tự động tải Minecraft bản mới nhất, tích hợp sẵn <strong>GeyserMC</strong> &amp; <strong>spark</strong>, và tự động cập nhật mỗi 1 tiếng.
+      Universal Minecraft Server Loader uniting 6 ecosystems (<strong>Fabric, Quilt, Forge, NeoForge, Bukkit/Spigot, Paper/Folia</strong>) inside a single runnable <code>server.jar</code> — Single-Pass First-Run Boot, automatic latest Minecraft release provisioning, built-in <strong>GeyserMC</strong> &amp; <strong>spark</strong>, and hourly zero-lag auto-updates.
     </p>
     <div class="badges">
-      <span class="badge green" id="live-version-badge">Release: VESSEL-2.3.0-rev1046</span>
+      <span class="badge green" id="live-version-badge">Release: VESSEL-2.3.1-rev1047</span>
       <span class="badge">Java 21 LTS + Vector SIMD</span>
-      <span class="badge">Single-Pass Boot (0 Restart)</span>
+      <span class="badge">Single-Pass Boot (0 Restarts)</span>
       <span class="badge green">Built-in GeyserMC &amp; spark</span>
       <span class="badge">Hourly Zero-Lag Auto-Update</span>
     </div>
@@ -157,100 +158,100 @@
 
   <main>
     <section class="card">
-      <h2>1. Khởi Chạy Nhanh Chỉ Với 1 Lần Duy Nhất (Single-Pass First-Run Boot)</h2>
+      <h2>1. Quick Start — Single-Pass First-Run Boot (Zero Restart Required)</h2>
       <p>
-        Khác với các server truyền thống bắt buộc phải chạy lần 1 để sinh file rồi tắt đi bật lại, <strong>VESSEL hoàn tất toàn bộ 16 bước khởi động chỉ trong 1 lần chạy duy nhất</strong> kể cả ở lần chạy đầu tiên:
+        Unlike traditional Minecraft server loaders that require an initial run to generate configuration files followed by a mandatory server restart, <strong>VESSEL completes all 16 boot stages in a single execution pass</strong> even on a brand-new directory:
       </p>
-      <pre><code># 1. Chạy mặc định (Tự động lấy Minecraft release mới nhất, tích hợp Geyser + Spark, nạp mọi mod/plugin):
+      <pre><code># 1. Standard Launch (Automatically resolves latest Minecraft release, provisions Geyser + Spark, loads all mods &amp; plugins):
 java -jar server.jar --nogui
 
-# 2. Chạy chế độ Tối Ưu Tối Đa (Bật toàn bộ SIMD Physics, Zero-Copy Netty, AI LOD, Zstd RAM Cache, LazyDFU):
+# 2. Maximum Optimization Suite (Enables SIMD Physics, Zero-Copy Netty, AI LOD, Zstd RAM Cache, Lockless Strands &amp; LazyDFU):
 java -jar server.jar --vessel-ultra-optimize --nogui
 
-# 3. Chạy chế độ Debug Sâu (Trace chi tiết Bytecode Rewriting, ClassLoader, Event Bus &amp; Registry Audit):
+# 3. Deep Diagnostic Debug Mode (Traces Bytecode Rewriting, ClassLoader Routing, Event Bus Dispatch &amp; Registry Audit):
 java -jar server.jar --vessel-deep-debug --nogui</code></pre>
     </section>
 
     <section class="card">
-      <h2>2. Bảng Tham Chiếu Toàn Bộ Custom CLI Flags Của VESSEL</h2>
+      <h2>2. Complete VESSEL Custom CLI Flags Reference</h2>
       <table>
         <thead>
           <tr>
             <th>CLI Flag</th>
-            <th>Mặc Định</th>
-            <th>Chức Năng &amp; Khi Nào Nên Dùng</th>
+            <th>Default</th>
+            <th>Description &amp; Recommended Usage</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><code>--vessel-ultra-optimize</code><br/>(hoặc <code>--vessel-max-perf</code>)</td>
+            <td><code>--vessel-ultra-optimize</code><br/>(or <code>--vessel-max-perf</code>)</td>
             <td><code>false</code></td>
-            <td><strong>Bộ Flag Tối Ưu Hết Cỡ:</strong> Kích hoạt đồng thời 6 hệ thống tối ưu cấp nhân: <code>--vessel-simd-physics</code>, <code>--vessel-zero-copy-netty</code>, <code>--vessel-aggressive-ai-lod</code>, <code>--vessel-zstd-ram-cache</code>, <code>--vessel-lockless-strands</code>, và <code>--vessel-lazy-dfu-noisium</code> cùng 40 bộ điều phối Super-Mod.</td>
+            <td><strong>Maximum Performance Bundle:</strong> Simultaneously enables all 6 microkernel optimization engines: <code>--vessel-simd-physics</code>, <code>--vessel-zero-copy-netty</code>, <code>--vessel-aggressive-ai-lod</code>, <code>--vessel-zstd-ram-cache</code>, <code>--vessel-lockless-strands</code>, and <code>--vessel-lazy-dfu-noisium</code> alongside 40 Super-Mod governors.</td>
           </tr>
           <tr>
-            <td><code>--vessel-deep-debug</code><br/>(hoặc <code>--vessel-debug-all</code>)</td>
+            <td><code>--vessel-deep-debug</code><br/>(or <code>--vessel-debug-all</code>)</td>
             <td><code>false</code></td>
-            <td><strong>Flag Debug Sâu VESSEL:</strong> Kích hoạt toàn bộ chẩn đoán sâu gồm <code>--vessel-trace-bytecode</code>, <code>--vessel-trace-classloader</code>, <code>--vessel-trace-events</code>, <code>--vessel-trace-registry</code>, và <code>--vessel-profile-boot</code> để admin/dev theo dõi từng bước dịch bytecode và nạp mod/plugin.</td>
+            <td><strong>Deep Diagnostic Bundle:</strong> Enables full runtime tracing including <code>--vessel-trace-bytecode</code>, <code>--vessel-trace-classloader</code>, <code>--vessel-trace-events</code>, <code>--vessel-trace-registry</code>, and <code>--vessel-profile-boot</code> for administrators and developers.</td>
           </tr>
           <tr>
             <td><code>--vessel-single-pass-boot</code></td>
             <td><code>true</code></td>
-            <td>Hoàn tất khởi tạo thư mục, chấp nhận EULA, tải Mojang bundler, nạp mod/plugin và mở server ngay trong <strong>1 lần khởi chạy duy nhất</strong> mà không cần khởi động lại.</td>
+            <td>Completes directory scaffolding, EULA provisioning, Mojang bundler extraction, mod/plugin activation, and server startup in <strong>1 single pass</strong> with zero restarts required.</td>
           </tr>
           <tr>
             <td><code>--vessel-universal-compat</code></td>
             <td><code>true</code></td>
-            <td>Bật động cơ nâng cấp bytecode đa thế hệ trong RAM, cho phép các mod và plugin viết cho bản Minecraft thấp hơn chạy mượt trên bản Minecraft mới nhất.</td>
+            <td>Enables the in-memory multi-era bytecode upgrading pipeline, allowing mods and plugins built for older Minecraft versions to run seamlessly on the latest Minecraft release.</td>
           </tr>
           <tr>
             <td><code>--vessel-auto-latest</code></td>
             <td><code>true</code></td>
-            <td>Tự động truy vấn Mojang Piston Meta API (<code>version_manifest_v2.json</code>) để luôn chạy phiên bản Minecraft chính thức mới nhất (<code>latest.release</code>).</td>
+            <td>Automatically queries Mojang's Piston Meta API (<code>version_manifest_v2.json</code>) to resolve and launch the latest official Minecraft release (<code>latest.release</code>).</td>
           </tr>
           <tr>
             <td><code>--vessel-version=&lt;ver&gt;</code></td>
             <td><code>latest.release</code></td>
-            <td>Ghim cứng một phiên bản Minecraft cụ thể (ví dụ <code>--vessel-version=1.21.4</code>) nếu admin muốn cố định phiên bản server.</td>
+            <td>Pins a specific Minecraft version (for example, <code>--vessel-version=1.21.4</code>) when an administrator wishes to lock the server to a fixed version.</td>
           </tr>
         </tbody>
       </table>
     </section>
 
     <section class="card">
-      <h2>3. Quy Tắc Tương Thích Mod/Plugin Đa Thế Hệ &amp; Chặn Mod Bản Cao Hơn Server</h2>
+      <h2>3. Multi-Era Backward Compatibility &amp; Strict Forward-Version Mod Guard</h2>
       <div class="alert ok">
-        <strong>Tương thích ngược tự động (<code>modMcVersion &lt;= serverMcVersion</code>):</strong>
-        Khi server chạy phiên bản Minecraft mới nhất (hoặc cao hơn bản của mod/plugin), <code>LiveJarBytecodeTransformingClassLoader</code> sẽ tự động nâng cấp bytecode trong RAM (ví dụ: đổi constructor <code>new ResourceLocation(...)</code> sang <code>ResourceLocation.fromNamespaceAndPath(...)</code>, đổi field <code>Entity.level</code> sang method <code>Entity.level()</code>, nâng <code>INVOKEVIRTUAL InventoryView</code> của Bukkit cũ lên <code>INVOKEINTERFACE</code> cho 1.21+, và nâng schema DataPack <code>loot_tables/</code> &rarr; <code>loot_table/</code>).
+        <strong>Automatic Backward Compatibility (<code>modMcVersion &lt;= serverMcVersion</code>):</strong>
+        When the server runs the latest Minecraft release (or any version equal to or higher than a mod/plugin's target version), <code>LiveJarBytecodeTransformingClassLoader</code> automatically upgrades legacy bytecode in memory (e.g., rewriting <code>new ResourceLocation(...)</code> constructors to <code>ResourceLocation.fromNamespaceAndPath(...)</code>, rewriting <code>Entity.level</code> field accesses to <code>Entity.level()</code> method calls, promoting legacy Bukkit <code>INVOKEVIRTUAL InventoryView</code> calls to <code>INVOKEINTERFACE</code> for 1.21+, and migrating DataPack paths <code>loot_tables/</code> &rarr; <code>loot_table/</code>).
       </div>
       <div class="alert warn">
-        <strong>Từ chối thẳng nếu Server chạy bản thấp hơn Mod (<code>modMcVersion &gt; serverMcVersion</code>):</strong>
-        Nếu server đang chạy phiên bản Minecraft <strong>thấp hơn</strong> phiên bản mà mod/plugin yêu cầu (ví dụ server chạy <code>1.20.1</code> nhưng bỏ mod yêu cầu <code>1.21.4</code> vào), <code>ForwardVersionModRejectionGuard</code> sẽ <strong>từ chối load thẳng mod/plugin đó ngay lập tức</strong> và hiển thị thông báo rõ ràng:
-        <br/><em>"Yêu cầu cài đặt bản thấp hơn của mod/plugin hỗ trợ phiên bản server hiện tại, hoặc nâng cấp server lên phiên bản Minecraft cao hơn (<code>--vessel-version=&lt;ver&gt;</code> hoặc mặc định <code>latest.release</code>)."</em>
+        <strong>Immediate Rejection When Server Is Older Than Mod (<code>modMcVersion &gt; serverMcVersion</code>):</strong>
+        If the server is running a <strong>lower</strong> Minecraft version than the minimum version required by a mod or plugin (for example, running a <code>1.20.1</code> server while loading a mod that requires <code>1.21.4</code>), <code>ForwardVersionModRejectionGuard</code> <strong>immediately refuses to load that mod/plugin</strong> and outputs an actionable diagnostic message:
+        <br/><em>"Please install a lower build of the mod/plugin that supports the current server version, or upgrade the server to a higher Minecraft release (<code>--vessel-version=&lt;ver&gt;</code> or default <code>latest.release</code>)."</em>
       </div>
     </section>
 
     <section class="card">
-      <h2>4. Auto-Update Từ GitHub Mỗi 1 Tiếng (Không Lag, Staged Patches, Bảo Vệ 100% Dữ Liệu User)</h2>
+      <h2>4. Hourly Zero-Lag GitHub Auto-Updater (Staged Patching &amp; 100% User Data Protection)</h2>
       <ul>
-        <li><strong>Quét tự động mỗi 1 tiếng (<code>3600s</code>):</strong> <code>HourlyGitHubAutoUpdateDaemon</code> chạy trên một Daemon Thread có độ ưu tiên thấp tách biệt hoàn toàn khỏi Main Tick Thread (<strong>0.00 ms lag</strong>).</li>
-        <li><strong>Chuỗi mã định danh <code>VesselBuildVersionCode</code>:</strong> Có định dạng <code>VESSEL-&lt;semver&gt;-rev&lt;build&gt;+mc&lt;mcVer&gt;-geyser&lt;geyserVer&gt;-spark&lt;sparkVer&gt;</code>. VESSEL giải mã chuỗi này để biết chính xác bản hiện tại đang <strong>thấp hơn (<code>&lt;</code>)</strong>, <strong>bằng (<code>==</code> bản mới nhất)</strong>, hay <strong>cao hơn (<code>&gt;</code>)</strong> bản trên GitHub.</li>
-        <li><strong>Cập nhật ngay khi đang chạy &amp; Apply Patches khi Restart:</strong> Khi phát hiện bản mới hơn trên GitHub, VESSEL tải gói cập nhật về vùng đệm <code>cache/updates/staged/</code> đồng thời cập nhật ngay phiên bản <strong>Geyser</strong>, <strong>Spark</strong> và <strong>Minecraft <code>latest.release</code></strong> mới nhất mà không làm gián đoạn server đang chạy. Các bản vá nhân (kernel patches) sẽ tự động được áp dụng (apply) ngay ở giây đầu tiên khi admin restart server.</li>
-        <li><strong>Bảo vệ 100% dữ liệu người dùng (<code>UserDataPreservationSnapshotGuard</code>):</strong> Mọi thư mục và tệp riêng của user gồm <code>mods/</code>, <code>plugins/</code>, <code>config/</code>, <code>vessel.yml</code>, <code>server.properties</code>, <code>eula.txt</code>, <code>world/</code> được khóa bảo vệ bằng chữ ký SHA-256 — <strong>không bao giờ bị xóa hay ghi đè khi auto-update</strong>.</li>
+        <li><strong>Automatic Hourly Scan (<code>3600s</code>):</strong> <code>HourlyGitHubAutoUpdateDaemon</code> runs on an isolated low-priority daemon thread completely decoupled from the 20 TPS Main Tick Thread (<strong>0.00 ms tick lag</strong>).</li>
+        <li><strong>Deterministic Version Code (<code>VesselBuildVersionCode</code>):</strong> Formatted as <code>VESSEL-&lt;semver&gt;-rev&lt;build&gt;+mc&lt;mcVer&gt;-geyser&lt;geyserVer&gt;-spark&lt;sparkVer&gt;</code>. VESSEL parses this token to determine whether the running server is <strong>older (<code>&lt;</code>)</strong>, <strong>identical (<code>==</code> latest)</strong>, or <strong>newer (<code>&gt;</code>)</strong> than the GitHub release.</li>
+        <li><strong>Live Update Staging &amp; Apply on Restart:</strong> When a newer release is published on GitHub, VESSEL downloads the update into <code>cache/updates/staged/</code> and immediately refreshes the latest <strong>Geyser</strong>, <strong>Spark</strong>, and <strong>Minecraft <code>latest.release</code></strong> descriptors without interrupting the running server. Staged kernel patches are automatically promoted at Step 0 of the next server restart.</li>
+        <li><strong>100% User Data Preservation (<code>UserDataPreservationSnapshotGuard</code>):</strong> All user directories and configuration files including <code>mods/</code>, <code>plugins/</code>, <code>config/</code>, <code>vessel.yml</code>, <code>server.properties</code>, <code>eula.txt</code>, and <code>world/</code> are guarded via SHA-256 integrity snapshots and are <strong>never deleted or overwritten during auto-updates</strong>.</li>
       </ul>
     </section>
 
     <section class="card">
-      <h2>5. Tích Hợp Sẵn GeyserMC &amp; Spark Bản Mới Nhất — Ghi Nhận Bản Quyền (Credits)</h2>
+      <h2>5. Built-In Latest GeyserMC &amp; Spark Integration — Open-Source Credits &amp; Attributions</h2>
       <p>
-        Mỗi lần khởi chạy hoặc cập nhật mã nguồn, VESSEL tự động kiểm tra và tích hợp sẵn bản release mới nhất của <strong>GeyserMC</strong> và <strong>spark</strong> (cùng tệp <code>CREDITS.md</code> tự động sinh tại thư mục gốc server):
+        On every startup and source update, VESSEL automatically verifies and provisions the latest official releases of <strong>GeyserMC</strong> and <strong>spark</strong> (along with an automatically generated <code>CREDITS.md</code> file in the server root):
       </p>
       <table>
         <thead>
           <tr>
-            <th>Dự Án Tích Hợp</th>
-            <th>Tác Giả &amp; Đội Ngũ Phát Triển</th>
-            <th>Giấy Phép</th>
-            <th>Vai Trò Trong VESSEL &amp; Liên Kết Gốc</th>
+            <th>Integrated Project</th>
+            <th>Authors &amp; Development Team</th>
+            <th>License</th>
+            <th>Role in VESSEL &amp; Official Links</th>
           </tr>
         </thead>
         <tbody>
@@ -258,13 +259,13 @@ java -jar server.jar --vessel-deep-debug --nogui</code></pre>
             <td><strong>GeyserMC (Geyser &amp; Floodgate)</strong></td>
             <td>GeyserMC Team &amp; Contributors</td>
             <td>MIT License</td>
-            <td>Hỗ trợ người chơi Minecraft: Bedrock Edition kết nối trực tiếp vào server VESSEL Java Edition.<br/><a href="https://geysermc.org" target="_blank">https://geysermc.org</a> | <a href="https://github.com/GeyserMC/Geyser" target="_blank">GitHub</a></td>
+            <td>Enables Minecraft: Bedrock Edition clients to join VESSEL Java Edition servers seamlessly.<br/><a href="https://geysermc.org" target="_blank">https://geysermc.org</a> | <a href="https://github.com/GeyserMC/Geyser" target="_blank">GitHub</a></td>
           </tr>
           <tr>
             <td><strong>spark Performance Profiler</strong></td>
             <td>Lucko (<code>lucko</code>) &amp; Contributors</td>
             <td>GPL-3.0 (Standalone Agent/Plugin)</td>
-            <td>Phân tích hiệu năng CPU, MSPT, GC và bộ nhớ Heap chuyên sâu kết hợp cùng bộ đo vi nhân của VESSEL.<br/><a href="https://spark.lucko.me" target="_blank">https://spark.lucko.me</a> | <a href="https://github.com/lucko/spark" target="_blank">GitHub</a></td>
+            <td>Provides deep CPU, MSPT, GC, and heap memory telemetry alongside VESSEL's built-in microkernel flight recorder.<br/><a href="https://spark.lucko.me" target="_blank">https://spark.lucko.me</a> | <a href="https://github.com/lucko/spark" target="_blank">GitHub</a></td>
           </tr>
         </tbody>
       </table>
@@ -272,7 +273,7 @@ java -jar server.jar --vessel-deep-debug --nogui</code></pre>
   </main>
 
   <footer>
-    VESSEL Sovereign Server Microkernel &bull; Repository: <a href="https://github.com/VesselLoader/Vessel">github.com/VesselLoader/Vessel</a>
+    VESSEL Sovereign Server Microkernel (v1.0.1) &bull; Repository: <a href="https://github.com/VesselLoader/Vessel">github.com/VesselLoader/Vessel</a>
   </footer>
 
   <script>
