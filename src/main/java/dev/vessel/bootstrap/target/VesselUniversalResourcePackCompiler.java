@@ -26,7 +26,7 @@ import java.util.zip.ZipOutputStream;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselUniversalResourcePackCompiler {
 

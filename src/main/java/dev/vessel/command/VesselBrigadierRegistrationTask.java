@@ -14,7 +14,7 @@ import java.util.Set;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class VesselBrigadierRegistrationTask implements Runnable {
 
@@ -34,7 +34,8 @@ public final class VesselBrigadierRegistrationTask implements Runnable {
     @Override
     public void run() {
         VesselUniversalModItemRegistryBridge itemBridge = new VesselUniversalModItemRegistryBridge();
-        for (int i = 0; i < 60; i++) {
+        boolean registered = false;
+        for (int i = 0; i < 300; i++) {
             try {
                 Thread.sleep(1000L);
 
@@ -50,14 +51,23 @@ public final class VesselBrigadierRegistrationTask implements Runnable {
                     serverInstance = findActiveServerInstance(serverClass);
                 }
 
-                if (serverInstance != null) {
+                if (serverInstance != null && !registered) {
                     // 1. Inject all mod items (Create, etc.) into BuiltInRegistries.ITEM
                     itemBridge.injectAllModItemsIntoRegistry(tierOneClassLoader, launcher.getServerRoot());
 
                     // 2. Register all commands into Brigadier dispatcher
                     boolean ok = bridge.registerIntoBrigadier(serverInstance, tierOneClassLoader, launcher);
                     if (ok) {
+                        registered = true;
                         VesselServerBridgeRegistry.sendCommandsToAllPlayers();
+                    }
+                }
+
+                // If registered, periodically re-broadcast commands when players are online to guarantee sync
+                if (registered) {
+                    int sent = VesselServerBridgeRegistry.sendCommandsToAllPlayers();
+                    if (sent > 0 && i > 15) {
+                        // After initial player join sync, break daemon loop
                         break;
                     }
                 }

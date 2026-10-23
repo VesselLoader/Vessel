@@ -17,7 +17,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class VesselConsoleCommandInterceptorStream extends InputStream {
 
@@ -73,7 +73,16 @@ public final class VesselConsoleCommandInterceptorStream extends InputStream {
                 || matchesCommandRoot(withoutSlash, "floodgate")
                 || matchesCommandRoot(withoutSlash, "fwhitelist")
                 || matchesCommandRoot(withoutSlash, "spark")
-                || matchesCommandRoot(withoutSlash, "restart");
+                || matchesCommandRoot(withoutSlash, "restart")
+                || matchesCommandRoot(withoutSlash, "sethome")
+                || matchesCommandRoot(withoutSlash, "home")
+                || matchesCommandRoot(withoutSlash, "delhome")
+                || matchesCommandRoot(withoutSlash, "spawn")
+                || matchesCommandRoot(withoutSlash, "heal")
+                || matchesCommandRoot(withoutSlash, "feed")
+                || matchesCommandRoot(withoutSlash, "fly")
+                || matchesCommandRoot(withoutSlash, "esethome")
+                || matchesCommandRoot(withoutSlash, "createhome");
     }
 
     private static boolean matchesCommandRoot(String normalizedLine, String commandRoot) {

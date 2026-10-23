@@ -42,7 +42,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.13
+ * @version 1.0.14
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -393,6 +393,12 @@ public final class VesselServerLauncher {
                         + Math.max(JvmVersionCompatibilityGuard.VESSEL_MINIMUM_JAVA_VERSION, requiredJavaVer)
                         + "). Handing off to Minecraft DedicatedServer (" + mainClassName + ")...");
                 consoleLogger.logInfo("Sovereign Console Commands active: type 'vessel', 'geyser', 'floodgate', or 'spark' at any time.");
+                if (customFlags != null && customFlags.isUltraOptimizationEnabled()) {
+                    dev.vessel.kernel.optimization.VesselOptimizationCoordinator optCoordinator =
+                            new dev.vessel.kernel.optimization.VesselOptimizationCoordinator();
+                    optCoordinator.initializeAllEngines(serverRoot);
+                    consoleLogger.logInfo("Sovereign Optimization Suite active: C2ME, Krypton, Lithium, FerriteCore & Starlight wired.");
+                }
                 installConsoleCommandInterceptor();
                 TierOneVanillaGameLauncher vanillaLauncher = new TierOneVanillaGameLauncher();
                 // Keep activeTierOneClassLoader open for the entire lifetime of the server process

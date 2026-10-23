@@ -20,7 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselUniversalModAndCommandTest {
 
@@ -87,5 +87,36 @@ public final class VesselUniversalModAndCommandTest {
         boolean deleted = store.deleteHome("TheRealShiroz", "base");
         assertThat(deleted).isTrue();
         assertThat(store.getHome("TheRealShiroz", "base")).isNull();
+    }
+
+    @Test
+    void shouldInterceptBukkitCommandsInConsoleStream() {
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("sethome")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("/sethome base")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("home")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("delhome")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("spawn")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("heal")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("feed")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("fly")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("restart")).isTrue();
+        assertThat(dev.vessel.bootstrap.target.VesselConsoleCommandInterceptorStream.isVesselInterceptedLine("say hello")).isFalse();
+    }
+
+    @Test
+    void shouldInitializeVesselOptimizationCoordinatorAndEngines() {
+        Path serverRoot = tempDir.resolve("opt-server");
+        dev.vessel.kernel.optimization.VesselOptimizationCoordinator coordinator =
+                new dev.vessel.kernel.optimization.VesselOptimizationCoordinator();
+        boolean ok = coordinator.initializeAllEngines(serverRoot);
+        assertThat(ok).isTrue();
+        assertThat(dev.vessel.kernel.optimization.VesselOptimizationCoordinator.areEnginesInitialized()).isTrue();
+        assertThat(coordinator.getChunkThrottle()).isNotNull();
+        assertThat(coordinator.getEntityLod()).isNotNull();
+        assertThat(coordinator.getBrainThrottle()).isNotNull();
+        assertThat(coordinator.getLightEngine()).isNotNull();
+        assertThat(coordinator.getPaletteOptimizer()).isNotNull();
+        assertThat(coordinator.getLeakSanitizer()).isNotNull();
+        assertThat(System.getProperty("io.netty.allocator.type")).isEqualTo("pooled");
     }
 }

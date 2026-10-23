@@ -12,7 +12,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselBukkitCommandBridge {
 
@@ -239,10 +239,20 @@ public final class VesselBukkitCommandBridge {
                 Method dimMethod = level.getClass().getMethod("dimension");
                 Object dim = dimMethod.invoke(level);
                 if (dim != null) {
-                    Method locMethod = dim.getClass().getMethod("location");
-                    Object loc = locMethod.invoke(dim);
-                    if (loc != null) {
-                        return loc.toString();
+                    Method locMethod = null;
+                    try {
+                        locMethod = dim.getClass().getMethod("identifier");
+                    } catch (NoSuchMethodException e) {
+                        try {
+                            locMethod = dim.getClass().getMethod("location");
+                        } catch (NoSuchMethodException ignored) {
+                        }
+                    }
+                    if (locMethod != null) {
+                        Object loc = locMethod.invoke(dim);
+                        if (loc != null) {
+                            return loc.toString();
+                        }
                     }
                 }
             }

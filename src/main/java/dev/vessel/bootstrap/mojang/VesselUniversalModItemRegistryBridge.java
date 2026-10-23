@@ -20,7 +20,7 @@ import java.util.jar.JarFile;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.2
  */
 public final class VesselUniversalModItemRegistryBridge {
 
@@ -66,6 +66,22 @@ public final class VesselUniversalModItemRegistryBridge {
                     tierOneClassLoader);
             Method parseIdentifierMethod = identifierClass.getMethod("parse", String.class);
 
+            Class<?> resourceKeyClass = Class.forName(
+                    "net.minecraft.resources.ResourceKey",
+                    true,
+                    tierOneClassLoader);
+            Class<?> registriesKeyClass = Class.forName(
+                    "net.minecraft.core.registries.Registries",
+                    true,
+                    tierOneClassLoader);
+            Field registriesItemField = registriesKeyClass.getField("ITEM");
+            Object registriesItemKey = registriesItemField.get(null);
+
+            Method createResourceKeyMethod = resourceKeyClass.getMethod(
+                    "create",
+                    resourceKeyClass,
+                    identifierClass);
+
             Class<?> itemClass = Class.forName(
                     "net.minecraft.world.item.Item",
                     true,
@@ -76,6 +92,12 @@ public final class VesselUniversalModItemRegistryBridge {
                     tierOneClassLoader);
             Constructor<?> itemPropsConstructor = itemPropertiesClass.getDeclaredConstructor();
             itemPropsConstructor.setAccessible(true);
+            Method setIdMethod = null;
+            try {
+                setIdMethod = itemPropertiesClass.getMethod("setId", resourceKeyClass);
+            } catch (NoSuchMethodException ignored) {
+            }
+
             Constructor<?> itemConstructor = itemClass.getDeclaredConstructor(itemPropertiesClass);
             itemConstructor.setAccessible(true);
 
@@ -104,6 +126,10 @@ public final class VesselUniversalModItemRegistryBridge {
                     boolean alreadyPresent = (boolean) containsKeyMethod.invoke(itemRegistry, idObj);
                     if (!alreadyPresent) {
                         Object propsInstance = itemPropsConstructor.newInstance();
+                        if (setIdMethod != null && registriesItemKey != null) {
+                            Object itemKey = createResourceKeyMethod.invoke(null, registriesItemKey, idObj);
+                            setIdMethod.invoke(propsInstance, itemKey);
+                        }
                         Object newItemInstance = itemConstructor.newInstance(propsInstance);
                         registerMethod.invoke(null, itemRegistry, idObj, newItemInstance);
                         registeredCount++;
@@ -142,7 +168,7 @@ public final class VesselUniversalModItemRegistryBridge {
                     // Match: assets/<namespace>/models/item/<item_name>.json
                     if (name.startsWith("assets/") && name.contains("/models/item/") && name.endsWith(".json")) {
                         String[] parts = name.split("/");
-                        if (parts.length >= 5 && "assets".equals(parts[0]) && "models".equals(parts[2]) && "item".equals(parts[3])) {
+                        if (parts.length == 5 && "assets".equals(parts[0]) && "models".equals(parts[2]) && "item".equals(parts[3])) {
                             String namespace = parts[1];
                             String filename = parts[4];
                             String itemName = filename.substring(0, filename.length() - 5);
