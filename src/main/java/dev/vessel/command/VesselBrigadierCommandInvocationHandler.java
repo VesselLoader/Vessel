@@ -4,27 +4,31 @@ import dev.vessel.bootstrap.target.VesselServerLauncher;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
  * Dynamic invocation handler implementing Brigadier's {@code Command#run(CommandContext)}
- * to execute VESSEL commands from in-game chat or rcon and stream responses back to the sender.
+ * to execute VESSEL kernel commands and Bukkit/EssentialsX player commands from in-game chat or rcon
+ * and stream responses back to the sender.
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselBrigadierCommandInvocationHandler implements InvocationHandler {
 
     private final VesselServerLauncher launcher;
     private final ClassLoader tierOneClassLoader;
+    private final VesselBukkitCommandBridge bukkitBridge = new VesselBukkitCommandBridge();
 
     public VesselBrigadierCommandInvocationHandler(
             VesselServerLauncher launcher,
             ClassLoader tierOneClassLoader) {
         this.launcher = Objects.requireNonNull(launcher, "launcher must not be null");
         this.tierOneClassLoader = Objects.requireNonNull(tierOneClassLoader, "tierOneClassLoader must not be null");
+        this.bukkitBridge.initialize(launcher.getServerRoot());
     }
 
     @Override
@@ -34,10 +38,27 @@ public final class VesselBrigadierCommandInvocationHandler implements Invocation
             String input = extractInput(context);
             Object source = extractSource(context);
 
-            if ("restart".equalsIgnoreCase(input.trim()) || "/restart".equalsIgnoreCase(input.trim())) {
+            String trimmed = input.trim();
+            String withoutSlash = trimmed.startsWith("/") ? trimmed.substring(1).trim() : trimmed;
+            String[] tokens = withoutSlash.split("\\s+");
+            String rootCmd = tokens.length > 0 ? tokens[0].toLowerCase(Locale.ROOT) : "vessel";
+            String[] subArgs = tokens.length > 1 ? new String[tokens.length - 1] : new String[0];
+            if (tokens.length > 1) {
+                System.arraycopy(tokens, 1, subArgs, 0, subArgs.length);
+            }
+
+            if ("restart".equalsIgnoreCase(rootCmd)) {
                 sendMessageToSource(source, "[VESSEL] Initiating server graceful restart sequence...");
                 VesselServerRestartService restartService = new VesselServerRestartService();
                 restartService.triggerServerProcessRestart(launcher.getServerRoot());
+                return 1;
+            }
+
+            if (bukkitBridge.isBukkitCommand(rootCmd)) {
+                List<String> bukkitOutput = bukkitBridge.executeBukkitCommand(rootCmd, subArgs, source);
+                for (String line : bukkitOutput) {
+                    sendMessageToSource(source, line);
+                }
                 return 1;
             }
 
@@ -96,7 +117,7 @@ public final class VesselBrigadierCommandInvocationHandler implements Invocation
                 if ("sendSuccess".equals(m.getName()) && m.getParameterCount() == 2) {
                     Class<?> firstParam = m.getParameterTypes()[0];
                     if (Supplier.class.isAssignableFrom(firstParam)) {
-                        Supplier<Object> supplier = () -> component;
+                        VesselComponentSupplier supplier = new VesselComponentSupplier(component);
                         m.invoke(source, supplier, false);
                         return;
                     } else if (firstParam.isAssignableFrom(componentClass)) {

@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class ServerEulaAndPropertiesBootstrap {
 
@@ -84,8 +84,9 @@ public final class ServerEulaAndPropertiesBootstrap {
         defaults.put("enforce-secure-profile", "false");
         defaults.put("motd", "A VESSEL Sovereign Hybrid Server (Java & Bedrock Crossplay)");
         defaults.put("max-players", "100");
-        defaults.put("view-distance", "10");
-        defaults.put("simulation-distance", "10");
+        defaults.put("view-distance", "7");
+        defaults.put("simulation-distance", "5");
+        defaults.put("pause-when-empty-seconds", "0");
         defaults.put("level-name", "world");
         defaults.put("difficulty", "normal");
         defaults.put("gamemode", "survival");
@@ -94,6 +95,8 @@ public final class ServerEulaAndPropertiesBootstrap {
         defaults.put("sync-chunk-writes", "false");
         // Disable Vanilla 60s Watchdog freeze-kill during heavy modded chunk generation on low-end CPUs
         defaults.put("max-tick-time", "-1");
+        defaults.put("resource-pack-prompt", "{\"text\":\"VESSEL Sovereign Universal Mod Presentation Pack\"}");
+        defaults.put("resource-pack-id", "fcce4567-99de-3e01-949b-9799d6489542");
 
         try {
             Files.createDirectories(serverRoot);

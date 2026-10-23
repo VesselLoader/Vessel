@@ -1,28 +1,32 @@
 package dev.vessel.command;
 
 import dev.vessel.bootstrap.target.VesselServerLauncher;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 /**
  * Bridges the entire VESSEL Sovereign command suite ({@code /vessel}, {@code /geyser},
- * {@code /floodgate}, {@code /spark}, and {@code /restart}) into Minecraft's native Brigadier
- * {@code CommandDispatcher<CommandSourceStack>} so that in-game players with operator permissions
- * have full tab-completion, syntax highlighting, and immediate execution parity with the console.
+ * {@code /floodgate}, {@code /spark}, {@code /restart}) and Bukkit/EssentialsX player commands
+ * ({@code /sethome}, {@code /home}, {@code /delhome}, {@code /spawn}, {@code /heal}, {@code /feed},
+ * {@code /fly}) into Minecraft's native Brigadier {@code CommandDispatcher<CommandSourceStack>}
+ * with greedy argument parsing, tab-completion, and live packet broadcast to connected players.
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselBrigadierCommandBridge {
 
-    public static final String[] ROOT_COMMANDS = new String[]{
+    public static final String[] KERNEL_COMMANDS = new String[]{
             "vessel", "geyser", "floodgate", "fwhitelist", "spark", "restart"
+    };
+
+    public static final String[] BUKKIT_COMMANDS = new String[]{
+            "sethome", "home", "delhome", "spawn", "heal", "feed", "fly", "esethome", "createhome"
     };
 
     private volatile boolean commandsRegistered;
@@ -81,10 +85,25 @@ public final class VesselBrigadierCommandBridge {
                     "com.mojang.brigadier.builder.ArgumentBuilder",
                     true,
                     tierOneClassLoader);
+            Class<?> requiredBuilderClass = Class.forName(
+                    "com.mojang.brigadier.builder.RequiredArgumentBuilder",
+                    true,
+                    tierOneClassLoader);
+            Class<?> argumentTypeClass = Class.forName(
+                    "com.mojang.brigadier.arguments.ArgumentType",
+                    true,
+                    tierOneClassLoader);
+            Class<?> stringArgTypeClass = Class.forName(
+                    "com.mojang.brigadier.arguments.StringArgumentType",
+                    true,
+                    tierOneClassLoader);
+            Method greedyStringMethod = stringArgTypeClass.getMethod("greedyString");
+            Object greedyStringInstance = greedyStringMethod.invoke(null);
+
+            Method argumentMethod = requiredBuilderClass.getMethod("argument", String.class, argumentTypeClass);
             Method executesMethod = argumentBuilderClass.getMethod("executes", commandInterface);
-            Method registerMethod = dispatcher.getClass().getMethod(
-                    "register",
-                    literalClass);
+            Method thenMethod = argumentBuilderClass.getMethod("then", argumentBuilderClass);
+            Method registerMethod = dispatcher.getClass().getMethod("register", literalClass);
 
             VesselBrigadierCommandInvocationHandler handler =
                     new VesselBrigadierCommandInvocationHandler(launcher, tierOneClassLoader);
@@ -93,16 +112,24 @@ public final class VesselBrigadierCommandBridge {
                     new Class<?>[]{commandInterface},
                     handler);
 
-            for (String rootName : ROOT_COMMANDS) {
+            List<String> allCommands = new ArrayList<>();
+            allCommands.addAll(List.of(KERNEL_COMMANDS));
+            allCommands.addAll(List.of(BUKKIT_COMMANDS));
+
+            for (String rootName : allCommands) {
                 Object builder = literalMethod.invoke(null, rootName);
                 builder = executesMethod.invoke(builder, commandProxy);
 
-                // Add subcommands for tab-completion
+                // Add greedy string argument to accept arbitrary subarguments without Brigadier syntax rejection
+                Object greedyArgBuilder = argumentMethod.invoke(null, "args", greedyStringInstance);
+                greedyArgBuilder = executesMethod.invoke(greedyArgBuilder, commandProxy);
+                builder = thenMethod.invoke(builder, greedyArgBuilder);
+
+                // Add literal subcommands for tab-completion
                 List<String> subcommands = getSubcommandsForRoot(rootName);
                 for (String sub : subcommands) {
                     Object subBuilder = literalMethod.invoke(null, sub);
                     subBuilder = executesMethod.invoke(subBuilder, commandProxy);
-                    Method thenMethod = argumentBuilderClass.getMethod("then", argumentBuilderClass);
                     builder = thenMethod.invoke(builder, subBuilder);
                 }
 
@@ -110,6 +137,7 @@ public final class VesselBrigadierCommandBridge {
             }
 
             commandsRegistered = true;
+            VesselServerBridgeRegistry.sendCommandsToAllPlayers();
             return true;
         } catch (Exception ignored) {
             return false;
@@ -126,6 +154,15 @@ public final class VesselBrigadierCommandBridge {
     }
 
     private static Object extractDispatcher(Object target) {
+        if (target == null) {
+            target = VesselServerBridgeRegistry.getActiveCommands();
+            if (target == null) {
+                target = VesselServerBridgeRegistry.getActiveMinecraftServer();
+            }
+        }
+        if (target == null) {
+            return null;
+        }
         try {
             // Case 1: Target is already CommandDispatcher
             if (target.getClass().getName().contains("CommandDispatcher")) {
@@ -161,6 +198,7 @@ public final class VesselBrigadierCommandBridge {
             case "geyser" -> List.of("version", "list", "status", "reload", "dump", "help");
             case "floodgate" -> List.of("version", "whitelist", "help");
             case "spark" -> List.of("tps", "health", "profiler", "heapsummary", "help");
+            case "sethome", "home", "delhome" -> List.of("home", "base", "spawn");
             default -> List.of();
         };
     }

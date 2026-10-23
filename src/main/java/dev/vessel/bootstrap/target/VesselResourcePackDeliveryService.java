@@ -21,13 +21,15 @@ import java.util.jar.JarOutputStream;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselResourcePackDeliveryService {
 
     public static final String PACK_FILE_NAME = "vessel-pack.zip";
     public static final String PACK_ENDPOINT_PATH = "/vessel-pack.zip";
 
+    private final VesselUniversalResourcePackCompiler packCompiler =
+            new VesselUniversalResourcePackCompiler();
     private volatile HttpServer activeHttpServer;
     private volatile int activeHttpPort = 25566;
     private volatile String activePackSha1 = "";
@@ -49,12 +51,7 @@ public final class VesselResourcePackDeliveryService {
 
         try {
             Files.createDirectories(ecosystemDir);
-            if (!Files.isRegularFile(packZip) || Files.size(packZip) < 256L) {
-                compileDefaultUniversalResourcePack(packZip);
-            }
-            byte[] packBytes = Files.readAllBytes(packZip);
-            MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
-            this.activePackSha1 = HexFormat.of().formatHex(sha1Digest.digest(packBytes));
+            this.activePackSha1 = packCompiler.compileResourcePack(serverRoot, packZip);
 
             if (activeHttpServer == null) {
                 HttpServer server = HttpServer.create(new InetSocketAddress(activeHttpPort), 0);
@@ -101,43 +98,6 @@ public final class VesselResourcePackDeliveryService {
         }
     }
 
-    private static void compileDefaultUniversalResourcePack(Path packZip) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (JarOutputStream jos = new JarOutputStream(baos)) {
-            // 1. pack.mcmeta
-            JarEntry mcmetaEntry = new JarEntry("pack.mcmeta");
-            jos.putNextEntry(mcmetaEntry);
-            String mcmeta = """
-                    {
-                      "pack": {
-                        "pack_format": 46,
-                        "description": "VESSEL Sovereign Universal Mod Presentation Pack"
-                      }
-                    }
-                    """;
-            jos.write(mcmeta.getBytes(StandardCharsets.UTF_8));
-            jos.closeEntry();
-
-            // 2. assets/vessel/textures/item/vessel_core.png (minimal 1x1 valid PNG)
-            JarEntry textureEntry = new JarEntry("assets/vessel/textures/item/vessel_core.png");
-            jos.putNextEntry(textureEntry);
-            byte[] minPng = new byte[]{
-                    (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
-                    0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-                    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-                    0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, (byte) 0xC4,
-                    (byte) 0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
-                    0x54, 0x78, (byte) 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-                    0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, (byte) 0xB4, 0x00,
-                    0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, (byte) 0xAE,
-                    0x42, 0x60, (byte) 0x82
-            };
-            jos.write(minPng);
-            jos.closeEntry();
-        }
-        Files.write(packZip, baos.toByteArray());
-    }
-
     private static void updateServerPropertiesWithPackUrl(
             Path serverRoot,
             String packUrl,
@@ -152,6 +112,7 @@ public final class VesselResourcePackDeliveryService {
             boolean hasPack = false;
             boolean hasSha1 = false;
             boolean hasPrompt = false;
+            boolean hasPackId = false;
 
             for (String rawLine : content.split("\\R")) {
                 String line = rawLine.trim();
@@ -161,8 +122,11 @@ public final class VesselResourcePackDeliveryService {
                 } else if (line.startsWith("resource-pack-sha1=")) {
                     sb.append("resource-pack-sha1=").append(packSha1).append('\n');
                     hasSha1 = true;
+                } else if (line.startsWith("resource-pack-id=")) {
+                    sb.append("resource-pack-id=fcce4567-99de-3e01-949b-9799d6489542\n");
+                    hasPackId = true;
                 } else if (line.startsWith("resource-pack-prompt=")) {
-                    sb.append("resource-pack-prompt=VESSEL Sovereign Universal Mod Presentation Pack\n");
+                    sb.append("resource-pack-prompt={\"text\":\"VESSEL Sovereign Universal Mod Presentation Pack\"}\n");
                     hasPrompt = true;
                 } else {
                     sb.append(rawLine).append('\n');
@@ -174,8 +138,11 @@ public final class VesselResourcePackDeliveryService {
             if (!hasSha1) {
                 sb.append("resource-pack-sha1=").append(packSha1).append('\n');
             }
+            if (!hasPackId) {
+                sb.append("resource-pack-id=fcce4567-99de-3e01-949b-9799d6489542\n");
+            }
             if (!hasPrompt) {
-                sb.append("resource-pack-prompt=VESSEL Sovereign Universal Mod Presentation Pack\n");
+                sb.append("resource-pack-prompt={\"text\":\"VESSEL Sovereign Universal Mod Presentation Pack\"}\n");
             }
             Files.writeString(propsPath, sb.toString(), StandardCharsets.UTF_8);
         } catch (Exception ignored) {

@@ -42,12 +42,14 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.12
+ * @version 1.0.13
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
 
     private final Path serverRoot;
+    private final dev.vessel.command.VesselBukkitCommandBridge bukkitCommandBridge =
+            new dev.vessel.command.VesselBukkitCommandBridge();
     private volatile int completedBootSteps;
     private volatile String resolvedActiveMcVersion = MojangVersionManifestResolver.FALLBACK_LATEST_RELEASE;
     private volatile Map<Path, VesselModuleIdentifier> discoveredModules = Map.of();
@@ -67,6 +69,7 @@ public final class VesselServerLauncher {
 
     public VesselServerLauncher(Path serverRoot) {
         this.serverRoot = Objects.requireNonNull(serverRoot, "serverRoot cannot be null");
+        this.bukkitCommandBridge.initialize(this.serverRoot);
     }
 
     public VesselServerLauncher() {
@@ -614,6 +617,8 @@ public final class VesselServerLauncher {
             logger.logInfo(msg);
             lastBootConsoleLogs = logger.getRecordedLines();
             return List.of(msg);
+        } else if (bukkitCommandBridge.isBukkitCommand(rootCmd)) {
+            outputLines = bukkitCommandBridge.executeBukkitCommand(rootCmd, subArgs, null);
         } else {
             List<VesselModuleIdentifier> moduleList = new ArrayList<>(discoveredModules.values());
             boolean ultraOpt = activeCustomFlags != null && activeCustomFlags.isUltraOptimizationEnabled();

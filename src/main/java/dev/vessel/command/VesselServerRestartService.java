@@ -15,7 +15,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class VesselServerRestartService {
 
@@ -90,6 +90,7 @@ public final class VesselServerRestartService {
         args.add("-Djava.net.preferIPv4Stack=true");
         args.add("-jar");
         args.add("server.jar");
+        args.add("--vessel-ultra-optimize");
         args.add("--nogui");
         return List.copyOf(args);
     }

@@ -52,7 +52,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.5
+ * @version 1.0.6
  */
 public final class JvmVersionGuardAndConsoleLogTest {
 
@@ -299,11 +299,16 @@ public final class JvmVersionGuardAndConsoleLogTest {
         Path serverRoot = tempDir.resolve("vessel-brand-and-pack-server");
         Files.createDirectories(serverRoot);
 
-        // 1. Verify ServerEulaAndPropertiesBootstrap writes max-tick-time=-1
+        // 1. Verify ServerEulaAndPropertiesBootstrap writes max-tick-time=-1 and optimized properties
         ServerEulaAndPropertiesBootstrap bootstrap = new ServerEulaAndPropertiesBootstrap();
         var props = bootstrap.ensureServerProperties(serverRoot, 25565);
         assertThat(props.get("max-tick-time")).isEqualTo("-1");
         assertThat(props.get("online-mode")).isEqualTo("false");
+        assertThat(props.get("view-distance")).isEqualTo("7");
+        assertThat(props.get("simulation-distance")).isEqualTo("5");
+        assertThat(props.get("pause-when-empty-seconds")).isEqualTo("0");
+        assertThat(props.get("resource-pack-prompt")).contains("VESSEL Sovereign Universal Mod Presentation Pack");
+        assertThat(props.get("resource-pack-id")).isEqualTo("fcce4567-99de-3e01-949b-9799d6489542");
 
         // 2. Verify VesselServerBrandTransformer rewrites getServerModName to "VESSEL"
         byte[] rawMcClass = createMainClassBytes("net/minecraft/server/MinecraftServer", 65);
@@ -330,10 +335,17 @@ public final class JvmVersionGuardAndConsoleLogTest {
         List<String> restartCmd = restartService.buildRestartCommandLine(serverRoot);
         assertThat(restartCmd).isNotEmpty();
 
-        // 5. Verify /restart console command dispatch
+        // 5. Verify /restart and Bukkit command dispatch in console
         VesselServerLauncher launcher = new VesselServerLauncher(serverRoot);
         List<String> restartOutput = launcher.executeVesselConsoleCommand("restart");
         assertThat(restartOutput).anyMatch(l -> l.contains("Server restart dispatched"));
+
+        List<String> sethomeOutput = launcher.executeVesselConsoleCommand("sethome");
+        assertThat(sethomeOutput).anyMatch(l -> l.contains("must be executed by an in-game player"));
+
+        // 6. Verify VesselServerBridgeRegistry
+        dev.vessel.command.VesselServerBridgeRegistry.setActiveMinecraftServer(inst);
+        assertThat(dev.vessel.command.VesselServerBridgeRegistry.getActiveMinecraftServer()).isSameAs(inst);
     }
 
     private static byte[] createInnerServerJarWithClassVersion(
