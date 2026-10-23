@@ -14,8 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Unit verification suite for network packet multiplexing, zero-copy frames, and compression.
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public class NetworkMultiplexingTest {

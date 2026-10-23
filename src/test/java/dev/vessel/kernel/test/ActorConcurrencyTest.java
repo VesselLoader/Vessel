@@ -25,8 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Unit verification suite for Actor Mailbox, Regional/Global Strands, and Universal Harmonizer Barrier.
  *
- * @version 1.0.2
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.3
  * @since 1.0.0 (Pass K-4)
  */
 public class ActorConcurrencyTest {

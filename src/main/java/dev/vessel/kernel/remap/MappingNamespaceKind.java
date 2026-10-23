@@ -7,8 +7,7 @@ package dev.vessel.kernel.remap;
  * load-time translation into the canonical runtime namespace ({@link #MOJMAP} / {@link #CANONICAL_UIR})
  * under Decision 32 and Decision 40.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-27)
  */
 public enum MappingNamespaceKind {

@@ -14,8 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * VESSEL's custom deep-debug and ultra-optimization flag suite ({@link VesselCustomFlagsProfile}),
  * and arbitrary {@code --key=value} server flags in strict compliance with Rule 17.</p>
  *
- * @version 1.0.1
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselCliFlagsParser {

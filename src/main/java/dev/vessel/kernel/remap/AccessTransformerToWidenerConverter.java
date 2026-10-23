@@ -19,8 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Implements Sealed Class {@code PermittedSubclasses} removal via extendable class rules
  * (Decision 40) and tracks Forge field-to-getter redirections per Lesson L34.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-27)
  */
 public final class AccessTransformerToWidenerConverter {

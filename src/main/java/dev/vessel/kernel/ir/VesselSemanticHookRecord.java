@@ -16,8 +16,7 @@ import java.util.Objects;
  * @param sourceClass internal name of injecting module class
  * @param sourceMethod injecting handler method name
  * @param priority execution priority order (higher priority executes first)
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-7)
  */
 public record VesselSemanticHookRecord(

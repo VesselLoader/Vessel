@@ -16,8 +16,7 @@ import java.util.regex.Pattern;
  * Automatically inspects Folia support flags to assign the most specific {@link SourceLoaderKind}.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-4)
  */
 public class BukkitPluginYamlParser {

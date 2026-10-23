@@ -17,8 +17,7 @@ import java.util.Objects;
  * @param platform target edition platform (Java or Bedrock)
  * @param sha1Hex lowercase SHA-1 checksum required by client download handshake
  * @param archiveData raw zip or mcpack binary data
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public record VirtualResourcePack(

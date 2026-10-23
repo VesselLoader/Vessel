@@ -27,8 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * interrupted build purging, per-loader data routing, relative path VFS redirection, tick loop
  * injection, and LazyDFU/ModernFix/Noisium/PacketFixer optimizations.</p>
  *
- * @version 1.0.1
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-29)
  */
 class ServerLauncherAndStartupBuildStageTest {

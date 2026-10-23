@@ -10,6 +10,7 @@ bin/
 
 # IDE & Environment configurations
 VESSEL-docs/
+/test/
 .idea/
 .vscode/
 *.iml

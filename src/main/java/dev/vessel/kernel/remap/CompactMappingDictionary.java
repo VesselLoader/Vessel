@@ -15,8 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Uses composite string keys with zero nested helper classes in strict compliance with Rule 17.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-27)
  */
 public final class CompactMappingDictionary {

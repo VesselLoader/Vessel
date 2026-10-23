@@ -6,8 +6,7 @@ package dev.vessel.kernel.resourcepack;
  * Distinguishes Java Edition zip resource packs from Bedrock Edition .mcpack / .mcaddon archives.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public enum PackTargetPlatform {

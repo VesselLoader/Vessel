@@ -15,8 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Unit tests verifying core identity, classification, actor coordinate hashing, and IR invariants.
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-3)
  */
 class IdentityAndActorTest {

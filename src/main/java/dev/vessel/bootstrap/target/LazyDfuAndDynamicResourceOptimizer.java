@@ -21,8 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *       {@code DecoderException} disconnects on large modpacks.</li>
  * </ul>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-29)
  */
 public final class LazyDfuAndDynamicResourceOptimizer {

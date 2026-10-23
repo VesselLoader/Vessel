@@ -12,8 +12,7 @@ import java.util.Objects;
  * by providing safe, read-only window views over byte sequences.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-5)
  */
 public final class ZeroCopyByteBuffer {

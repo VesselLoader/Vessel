@@ -17,8 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * providing zero-disk-I/O resource lookups for runtime bytecode transformations and Jar-in-Jar modules.
  * </p>
  *
- * @version 1.0.1
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-4)
  */
 public class InMemoryVirtualFileSystemMount implements VirtualFileSystemMount {

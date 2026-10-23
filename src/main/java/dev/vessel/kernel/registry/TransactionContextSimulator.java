@@ -14,8 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * <p>Uses flat maps with composite keys and zero inner classes in strict compliance with Rule 17.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-28)
  */
 public final class TransactionContextSimulator {

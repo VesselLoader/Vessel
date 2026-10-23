@@ -30,8 +30,7 @@ import java.util.stream.Stream;
  *       preserving completed bundles.</li>
  * </ul>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-29)
  */
 public final class StartupBuildStageOrchestrator {

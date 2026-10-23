@@ -16,8 +16,7 @@ import java.util.zip.Inflater;
  * latencies strictly sub-millisecond.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-5)
  */
 public class CompactBytecodeStorage {

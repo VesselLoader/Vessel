@@ -13,8 +13,7 @@ import java.util.zip.Inflater;
  * reducing outbound bandwidth consumption by 60%–80% for chunk packets and entity metadata.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public class PacketCompressionEngine {

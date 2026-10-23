@@ -8,8 +8,7 @@ import java.util.Objects;
  * <p>Enables fine-grained resolution of multi-jar packages where library, API, or compatibility
  * bridges accompany the primary mod jar.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-3)
  */
 public enum ModuleClassifier {

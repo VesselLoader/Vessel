@@ -13,8 +13,7 @@ import java.util.Objects;
  * Ensures reproducible builds and prevents corrupted or tampered module payloads from executing.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-4)
  */
 public class JarContentHashVerifier {

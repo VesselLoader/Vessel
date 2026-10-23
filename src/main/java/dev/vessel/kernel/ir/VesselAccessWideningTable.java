@@ -16,8 +16,7 @@ import java.util.Objects;
  * typed IR format, allowing multi-loader modules to access Minecraft internals safely.
  * </p>
  *
- * @version 1.0.1
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-7)
  */
 public class VesselAccessWideningTable {

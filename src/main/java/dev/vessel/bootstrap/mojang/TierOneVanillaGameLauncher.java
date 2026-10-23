@@ -15,7 +15,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class TierOneVanillaGameLauncher {
 
@@ -71,7 +71,7 @@ public final class TierOneVanillaGameLauncher {
             Method mainMethod = mainClass.getMethod("main", String[].class);
             mainMethod.invoke(null, (Object) mcArgs);
             return true;
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | UnsupportedClassVersionError e) {
             return false;
         } catch (Exception e) {
             throw new IllegalStateException(

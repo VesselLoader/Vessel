@@ -14,8 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * ownership handoffs between {@link dev.vessel.kernel.actor.RegionalActorStrand} executors.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public class EntityRegionTransitionTracker {

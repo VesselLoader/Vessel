@@ -19,8 +19,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Combined with {@link LongPrimitive2ObjectMap}, spatial routing executes with zero heap allocations.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-5)
  */
 public class RegionStrandRouter {

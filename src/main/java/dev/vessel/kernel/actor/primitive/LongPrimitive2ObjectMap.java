@@ -13,8 +13,7 @@ import java.util.Objects;
  * </p>
  *
  * @param <V> value type
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-5)
  */
 public class LongPrimitive2ObjectMap<V> {

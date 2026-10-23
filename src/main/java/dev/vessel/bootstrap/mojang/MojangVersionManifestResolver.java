@@ -17,11 +17,11 @@ import java.util.regex.Pattern;
  * Resolves the latest official Minecraft release version (`latest.release`) and per-version
  * metadata URLs from Mojang's Piston Meta API
  * ({@code https://piston-meta.mojang.com/mc/game/version_manifest_v2.json}), with transparent
- * local disk caching and offline fallback.
+ * local disk caching (per-version {@code cache/meta/<version>.json}) and offline fallback.
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class MojangVersionManifestResolver {
 
@@ -104,11 +104,68 @@ public final class MojangVersionManifestResolver {
     }
 
     /**
+     * Fetches or loads the cached per-version detail metadata JSON for {@code targetVersion},
+     * storing it in {@code metaCacheDir/<targetVersion>.json} so multiple Minecraft versions never
+     * overwrite one another's cached metadata.
+     *
+     * @param metaCacheDir   the metadata cache directory (e.g. {@code cache/meta})
+     * @param targetVersion  the target Minecraft version ID (e.g. {@code "1.16.5"}, {@code "1.21.11"}, {@code "26.3"})
+     * @param versionMetaUrl the version metadata URL from {@code version_manifest_v2.json}
+     * @return the version detail JSON string, or an empty string if unavailable
+     */
+    public String fetchOrLoadVersionDetailJson(
+            Path metaCacheDir,
+            String targetVersion,
+            String versionMetaUrl) {
+        Objects.requireNonNull(metaCacheDir, "metaCacheDir must not be null");
+        Objects.requireNonNull(targetVersion, "targetVersion must not be null");
+        Objects.requireNonNull(versionMetaUrl, "versionMetaUrl must not be null");
+
+        String safeFileName = targetVersion.trim().replaceAll("[^a-zA-Z0-9._-]", "_") + ".json";
+        Path cachedFile = metaCacheDir.resolve(safeFileName);
+        try {
+            Files.createDirectories(metaCacheDir);
+            if (Files.isRegularFile(cachedFile)) {
+                String existing = Files.readString(cachedFile, StandardCharsets.UTF_8);
+                if (!existing.isBlank() && existing.contains("\"downloads\"")) {
+                    return existing;
+                }
+            }
+            if (versionMetaUrl.startsWith("http://") || versionMetaUrl.startsWith("https://")) {
+                HttpClient client = HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(8))
+                        .build();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(versionMetaUrl))
+                        .timeout(Duration.ofSeconds(12))
+                        .GET()
+                        .build();
+                HttpResponse<String> response =
+                        client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (response.statusCode() == 200 && response.body() != null && !response.body().isBlank()) {
+                    Files.writeString(cachedFile, response.body(), StandardCharsets.UTF_8);
+                    return response.body();
+                }
+            }
+        } catch (Exception ignored) {
+            // Fall back to cached file if present
+        }
+        try {
+            if (Files.isRegularFile(cachedFile)) {
+                return Files.readString(cachedFile, StandardCharsets.UTF_8);
+            }
+        } catch (IOException ignored) {
+            // Ignore read error
+        }
+        return "";
+    }
+
+    /**
      * Extracts the version-specific metadata JSON URL for {@code targetVersion} from the Mojang
      * version manifest JSON.
      *
      * @param manifestJson  the raw {@code version_manifest_v2.json} content
-     * @param targetVersion the target Minecraft version ID (e.g., {@code "1.21.4"} or {@code "1.21.1"})
+     * @param targetVersion the target Minecraft version ID (e.g., {@code "1.16.5"}, {@code "1.21.11"}, {@code "26.3"})
      * @return the version metadata URL, or an empty string if not present
      */
     public String extractVersionMetadataUrl(String manifestJson, String targetVersion) {
@@ -153,6 +210,16 @@ public final class MojangVersionManifestResolver {
                   },
                   "versions": [
                     {
+                      "id": "26.3",
+                      "type": "release",
+                      "url": "https://piston-meta.mojang.com/v1/packages/61fff1316bd50312624a858bbb5eb18fa45208ed/26.3.json"
+                    },
+                    {
+                      "id": "1.21.11",
+                      "type": "release",
+                      "url": "https://piston-meta.mojang.com/v1/packages/240f9560a4a6bc07faf42a7032a96b225f76e658/1.21.11.json"
+                    },
+                    {
                       "id": "1.21.4",
                       "type": "release",
                       "url": "https://piston-meta.mojang.com/v1/packages/1.21.4/1.21.4.json"
@@ -161,6 +228,21 @@ public final class MojangVersionManifestResolver {
                       "id": "1.21.1",
                       "type": "release",
                       "url": "https://piston-meta.mojang.com/v1/packages/1.21.1/1.21.1.json"
+                    },
+                    {
+                      "id": "1.20.1",
+                      "type": "release",
+                      "url": "https://piston-meta.mojang.com/v1/packages/38d412af3b247e485c7f7e50ac25febc4e79ab1d/1.20.1.json"
+                    },
+                    {
+                      "id": "1.16.5",
+                      "type": "release",
+                      "url": "https://piston-meta.mojang.com/v1/packages/fba9f7833e858a1257d810d21a9e3c967f9077/1.16.5.json"
+                    },
+                    {
+                      "id": "1.12.2",
+                      "type": "release",
+                      "url": "https://piston-meta.mojang.com/v1/packages/832d95b9f40699d4961394dcf6cf549e65f15dc5/1.12.2.json"
                     }
                   ]
                 }

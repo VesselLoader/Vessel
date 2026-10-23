@@ -9,8 +9,7 @@ import java.util.Objects;
  * collisions, VESSEL decompiles foreign mod hooks into declarative semantic intents. These intents
  * are deterministically re-ordered and woven into target classes during load time in a single pass.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-3)
  */
 public enum VesselSemanticHookIntent {

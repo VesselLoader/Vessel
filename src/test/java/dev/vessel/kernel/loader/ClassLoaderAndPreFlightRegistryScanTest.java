@@ -31,8 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *
  * <p>Uses pure in-memory ASM bytecode synthesis and JUnit temporary directories with zero external downloads.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-28)
  */
 class ClassLoaderAndPreFlightRegistryScanTest {

@@ -16,8 +16,7 @@ import java.util.function.Supplier;
  * coordinate region are strictly serialized and executed without race conditions.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-4)
  */
 public class RegionalActorStrand implements AutoCloseable {

@@ -20,8 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Verification test suite for performance diagnostics, metrics, rate limiting, and batch draining.
  *
- * @version 1.0.1
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-5)
  */
 public class PerformanceDiagnosticsTest {

@@ -18,8 +18,7 @@ import java.util.function.Supplier;
  * maintaining region state integrity.
  * </p>
  *
- * @version 1.0.1
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-4)
  */
 public class GlobalRegionSyncBarrier {

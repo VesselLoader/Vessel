@@ -20,8 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * access widening tables, and capability declarations.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-7)
  */
 public class CanonicalVesselModuleIR implements VesselModuleIR {

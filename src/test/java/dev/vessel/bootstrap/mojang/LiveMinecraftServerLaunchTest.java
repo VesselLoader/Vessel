@@ -29,7 +29,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 class LiveMinecraftServerLaunchTest {
 
@@ -101,6 +101,9 @@ class LiveMinecraftServerLaunchTest {
         assertTrue(Bukkit.getPluginManager().isPluginEnabled("essentialSX"));
         assertTrue(Files.exists(tempDir.resolve("eula.txt")));
         assertTrue(Files.exists(tempDir.resolve("server.properties")));
+        if (launcher.getActiveTierOneClassLoader() != null) {
+            launcher.getActiveTierOneClassLoader().close();
+        }
     }
 
     private static void createFabricModJar(Path targetJar) throws Exception {

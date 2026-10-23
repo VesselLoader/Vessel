@@ -9,8 +9,7 @@ import java.util.Objects;
  * @param found              {@code true} if an explicit mapping entry matched the query
  * @param remappedName       translated symbol name, or original name when unmapped
  * @param remappedDescriptor translated JVM descriptor, or original descriptor when unmapped
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-27)
  */
 public record MappingLookupResult(

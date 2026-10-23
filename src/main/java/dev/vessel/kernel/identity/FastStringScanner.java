@@ -10,8 +10,7 @@ import java.util.Objects;
  * for 300+ modpacks by 5x to 10x.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-5)
  */
 public class FastStringScanner {

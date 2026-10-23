@@ -22,8 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Unit verification suite for Virtual File System (VFS), Hash Verification, and Nested Jar Extraction.
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-4)
  */
 public class VfsTest {

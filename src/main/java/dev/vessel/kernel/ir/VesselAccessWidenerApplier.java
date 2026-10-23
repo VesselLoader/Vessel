@@ -14,8 +14,7 @@ import java.util.Objects;
  * and {@code ACC_FINAL}, and applying {@code ACC_PUBLIC}) with zero AST recompilation overhead.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-7)
  */
 public class VesselAccessWidenerApplier {

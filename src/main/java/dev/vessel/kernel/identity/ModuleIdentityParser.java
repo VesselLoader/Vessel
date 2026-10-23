@@ -10,8 +10,7 @@ import java.util.Objects;
  * in compliance with Rule 17.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-4)
  */
 public class ModuleIdentityParser {

@@ -8,8 +8,7 @@ import java.lang.instrument.Instrumentation;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselInstrumentationAgent {

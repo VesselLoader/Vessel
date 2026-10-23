@@ -14,8 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Prevents {@link LinkageError} and illegal cross-module package sealing breaches when multiple
  * jars bundle overlapping library or API packages.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-28)
  */
 public final class SplitPackageResolver {

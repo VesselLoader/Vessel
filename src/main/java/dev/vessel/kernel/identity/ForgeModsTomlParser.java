@@ -16,8 +16,7 @@ import java.util.regex.Pattern;
  * accordance with Clean-Room standards without external TOML library dependencies.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-4)
  */
 public class ForgeModsTomlParser {

@@ -19,8 +19,7 @@ import java.util.regex.Pattern;
  * @param namespace  the normalized module identifier (e.g., "worldedit", "jei")
  * @param version    the declared semantic version string
  * @param classifier the structural classification role (default: {@link ModuleClassifier#MAIN})
- * @version 1.0.1
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-3)
  */
 public record VesselModuleIdentifier(

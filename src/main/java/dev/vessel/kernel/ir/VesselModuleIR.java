@@ -12,8 +12,7 @@ import java.util.Set;
  * <p>Encapsulates all compiled components of a module after pre-flight decompilation and
  * metadata normalization (Choice A: Normalized ASM {@link ClassNode} set + Semantic Tables).</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-3)
  */
 public interface VesselModuleIR {

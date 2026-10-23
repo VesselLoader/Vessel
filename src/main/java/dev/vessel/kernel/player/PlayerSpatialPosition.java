@@ -19,8 +19,7 @@ import java.util.UUID;
  * @param yaw horizontal rotation in degrees
  * @param pitch vertical rotation in degrees
  * @param regionHash pre-computed 16x16 chunk region spatial hash
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public record PlayerSpatialPosition(

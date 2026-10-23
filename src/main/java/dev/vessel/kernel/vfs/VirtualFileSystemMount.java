@@ -11,8 +11,7 @@ import java.util.Set;
  * directly from memory without extracting unneeded files to disk, eliminating fragile host-specific
  * locator hacks.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-3)
  */
 public interface VirtualFileSystemMount extends AutoCloseable {

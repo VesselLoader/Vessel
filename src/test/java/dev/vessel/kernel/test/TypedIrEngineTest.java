@@ -29,8 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Unit verification suite for Universal Typed IR, Access Wideners, and Pre-flight AOT Validation.
  *
- * @version 1.0.1
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-7)
  */
 public class TypedIrEngineTest {

@@ -15,8 +15,7 @@ import java.util.Objects;
  * small entity movement, particle, and metadata packets into a single network buffer.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public class NetworkPacketBatcher {

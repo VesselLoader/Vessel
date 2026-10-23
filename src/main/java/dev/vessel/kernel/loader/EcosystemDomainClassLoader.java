@@ -14,8 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * EventBus and Capabilities, Bukkit/Spigot/Paper API) per {@link SourceLoaderKind}, enforcing
  * strict package prefix allowlists to prevent cross-ecosystem ABI pollution.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-28)
  */
 public final class EcosystemDomainClassLoader extends ClassLoader {

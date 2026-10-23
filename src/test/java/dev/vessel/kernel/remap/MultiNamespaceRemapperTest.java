@@ -32,8 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Uses pure in-memory ASM 9.7 bytecode synthesis with zero external downloads.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-27)
  */
 class MultiNamespaceRemapperTest {

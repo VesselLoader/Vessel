@@ -6,8 +6,7 @@ package dev.vessel.kernel.ir;
  * <p>Used in the {@code VesselAccessWideningTable} to unify Fabric Access Wideners and Forge/NeoForge
  * Access Transformers into a single declarative visibility representation.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-3)
  */
 public enum VesselAccessLevel {

@@ -23,8 +23,7 @@ import java.util.Objects;
  * <p>Eliminates {@link NoSuchMethodError}, {@link AbstractMethodError}, and Mixin
  * {@code LocalCapture.CAPTURE_FAILHARD} crashes common on Arclight, Mohist, and Sinytra.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-27)
  */
 public final class HybridMethodOverloadAndBridgeSynthesizer {

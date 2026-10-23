@@ -14,8 +14,7 @@ package dev.vessel.kernel.actor;
  *
  * @param regionX the coarse region X coordinate
  * @param regionZ the coarse region Z coordinate
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-3)
  */
 public record RegionCoordinateHash(int regionX, int regionZ) implements Comparable<RegionCoordinateHash> {

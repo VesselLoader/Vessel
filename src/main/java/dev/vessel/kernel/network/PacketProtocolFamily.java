@@ -6,8 +6,7 @@ package dev.vessel.kernel.network;
  * Governs network multiplexing and serialization rules in the VESSEL dual-protocol core.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public enum PacketProtocolFamily {

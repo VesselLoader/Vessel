@@ -9,8 +9,7 @@ import java.util.Objects;
  * and capability semantics. VESSEL distinguishes all modules by their originating
  * loader kind to guarantee full isolation and prevent cross-loader name collisions.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-3)
  */
 public enum SourceLoaderKind {

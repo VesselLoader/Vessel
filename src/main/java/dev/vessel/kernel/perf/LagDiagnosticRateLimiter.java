@@ -11,8 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * metadata warnings) are emitted at most once within a configured time window per diagnostic key.
  * </p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-5)
  */
 public class LagDiagnosticRateLimiter {

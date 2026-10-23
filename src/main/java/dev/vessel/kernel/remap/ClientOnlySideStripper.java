@@ -26,8 +26,7 @@ import java.util.Set;
  *
  * <p>Operates directly on ASM {@link ClassNode} structures with zero inner classes (Rule 17).</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-27)
  */
 public final class ClientOnlySideStripper {

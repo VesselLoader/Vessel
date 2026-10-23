@@ -21,8 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@code ArgumentTypeInfos#registerByClass}). Triggers a Hard Stop with ANSI red diagnostics
  * naming both conflicting modules and JAR paths when duplicate keys are claimed in the same registry.</p>
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-28)
  */
 public final class PreFlightRegistryCollisionScanner {

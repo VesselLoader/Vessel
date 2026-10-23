@@ -11,8 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Unit verification suite for server tick pacing, phases, and MSPT/TPS budget tracking.
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-6)
  */
 public class ServerTickTest {

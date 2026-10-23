@@ -10,8 +10,7 @@ import java.util.Objects;
 /**
  * Ahead-Of-Time parser converting raw JVM bytecode into normalized ASM {@link ClassNode} representations.
  *
- * @version 1.0.0
- * @author Shiroz &amp; Antigravity
+ * @version 1.0.1
  * @since 1.0.0 (Pass K-7)
  */
 public class BytecodeToIRParser {
