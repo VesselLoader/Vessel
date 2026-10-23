@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "vesselVersion": "2.3.0",
+  "revisionNumber": 1046,
+  "versionCode": "VESSEL-2.3.0-rev1046+mc26.3-geyser2.12.0-b1269-spark1.10.187-neoforge",
+  "channel": "release",
+  "updateIntervalSeconds": 3600,
+  "restartRequiredForKernelPatches": true,
+  "preservesAllUserData": true,
+  "ecosystemDefaults": {
+    "minecraftDefaultLatestRelease": "26.3",
+    "geyserLatestVersion": "2.12.0-b1269",
+    "sparkLatestVersion": "1.10.187-neoforge"
+  },
+  "credits": {
+    "geyser": {
+      "name": "GeyserMC (Geyser & Floodgate)",
+      "authors": "GeyserMC Team & Contributors",
+      "license": "MIT License",
+      "url": "https://geysermc.org"
+    },
+    "spark": {
+      "name": "spark (Performance Profiler)",
+      "authors": "Lucko (lucko) & Contributors",
+      "license": "GPL-3.0 (Standalone Profiler Agent/Plugin Integration)",
+      "url": "https://spark.lucko.me"
+    }
+  }
+}

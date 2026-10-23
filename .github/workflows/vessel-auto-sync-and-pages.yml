@@ -1,0 +1,47 @@
+name: VESSEL Ecosystem Sync, Build & GitHub Pages Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  sync-build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout VESSEL Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11 for Ecosystem Auto-Sync
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Sync Latest Minecraft Release, Geyser & Spark Versions
+        run: python tools/sync_latest_ecosystem.py
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Verify All Unit Tests & Package Runnable server.jar
+        run: gradle test jar --console=plain
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs/'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

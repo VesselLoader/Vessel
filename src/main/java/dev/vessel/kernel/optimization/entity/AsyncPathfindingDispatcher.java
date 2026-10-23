@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * the previous search completes, the stale calculation is instantly cancelled, eliminating 70%+ of redundant CPU work.
  * </p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class AsyncPathfindingDispatcher {
@@ -33,6 +33,7 @@ public final class AsyncPathfindingDispatcher {
 
     private final ThreadPoolExecutor executor;
     private final Map<Integer, Long> entityRequestVersions = new ConcurrentHashMap<>();
+    private final Map<Integer, PathfindingCallback> activeEntityCallbacks = new ConcurrentHashMap<>();
     private final AtomicLong totalSubmitted = new AtomicLong(0L);
     private final AtomicLong totalCompleted = new AtomicLong(0L);
     private final AtomicLong totalCancelled = new AtomicLong(0L);
@@ -92,6 +93,7 @@ public final class AsyncPathfindingDispatcher {
         Objects.requireNonNull(callback, "callback cannot be null");
 
         int entityId = goal.entityId();
+        activeEntityCallbacks.put(entityId, callback);
         long requestVersion = entityRequestVersions.compute(entityId, (k, oldVer) -> (oldVer == null) ? 1L : oldVer + 1L);
         totalSubmitted.incrementAndGet();
 
@@ -99,20 +101,24 @@ public final class AsyncPathfindingDispatcher {
             long currentVersion = entityRequestVersions.getOrDefault(entityId, 0L);
             if (currentVersion != requestVersion) {
                 // Stale request cancelled before starting
-                totalCancelled.incrementAndGet();
-                callback.onPathResult(PathfindingResult.cancelled(entityId));
+                PathfindingCallback cb = activeEntityCallbacks.remove(entityId);
+                if (cb != null) {
+                    totalCancelled.incrementAndGet();
+                    cb.onPathResult(PathfindingResult.cancelled(entityId));
+                }
                 return;
             }
 
-            long startNs = System.nanoTime();
             PathfindingResult result = computePathWaypoints(goal, requestVersion);
-            long endNs = System.nanoTime();
 
             // Check version again after computation
             currentVersion = entityRequestVersions.getOrDefault(entityId, 0L);
             if (currentVersion != requestVersion) {
-                totalCancelled.incrementAndGet();
-                callback.onPathResult(PathfindingResult.cancelled(entityId));
+                PathfindingCallback cb = activeEntityCallbacks.remove(entityId);
+                if (cb != null) {
+                    totalCancelled.incrementAndGet();
+                    cb.onPathResult(PathfindingResult.cancelled(entityId));
+                }
             } else {
                 totalCompleted.incrementAndGet();
                 callback.onPathResult(result);
@@ -144,6 +150,11 @@ public final class AsyncPathfindingDispatcher {
      */
     public void cancelEntityRequests(int entityId) {
         entityRequestVersions.compute(entityId, (k, oldVer) -> (oldVer == null) ? 1L : oldVer + 1L);
+        PathfindingCallback cb = activeEntityCallbacks.remove(entityId);
+        if (cb != null) {
+            totalCancelled.incrementAndGet();
+            cb.onPathResult(PathfindingResult.cancelled(entityId));
+        }
     }
 
     /**

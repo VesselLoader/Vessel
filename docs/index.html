@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VESSEL Sovereign Server Microkernel — Universal Minecraft Server Loader</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card: #131a2a;
+      --border: #243049;
+      --accent: #38bdf8;
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    header {
+      background: radial-gradient(circle at top, #1e293b 0%, #0b0f19 75%);
+      border-bottom: 1px solid var(--border);
+      padding: 3.5rem 1.5rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2.6rem;
+      margin: 0 0 0.75rem;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+    header p {
+      max-width: 820px;
+      margin: 0 auto 1.5rem;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    .badge {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent);
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .badge.green {
+      background: rgba(52, 211, 153, 0.12);
+      border-color: rgba(52, 211, 153, 0.35);
+      color: var(--accent-green);
+    }
+    main {
+      max-width: 1120px;
+      margin: 2.5rem auto;
+      padding: 0 1.5rem 4rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      margin-bottom: 1.75rem;
+    }
+    h2 {
+      margin-top: 0;
+      color: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.6rem;
+    }
+    h3 { color: var(--accent); margin-bottom: 0.5rem; }
+    pre, code {
+      font-family: "JetBrains Mono", Consolas, monospace;
+      background: #080b12;
+      border-radius: 6px;
+    }
+    code {
+      padding: 0.15rem 0.4rem;
+      color: #7dd3fc;
+      border: 1px solid #1e293b;
+    }
+    pre {
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      color: #e2e8f0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.94rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.7rem 0.9rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #1a2438;
+      color: #ffffff;
+    }
+    .alert {
+      border-left: 4px solid var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+      padding: 1rem 1.25rem;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+    .alert.warn {
+      border-left-color: var(--accent-red);
+      background: rgba(248, 113, 113, 0.08);
+    }
+    .alert.ok {
+      border-left-color: var(--accent-green);
+      background: rgba(52, 211, 153, 0.08);
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>VESSEL Sovereign Server Microkernel</h1>
+    <p>
+      Universal Minecraft Server Loader hợp nhất 6 hệ sinh thái (<strong>Fabric, Quilt, Forge, NeoForge, Bukkit/Spigot, Paper/Folia</strong>) trong 1 tệp <code>server.jar</code> duy nhất — Khởi động 1 lần duy nhất, tự động tải Minecraft bản mới nhất, tích hợp sẵn <strong>GeyserMC</strong> &amp; <strong>spark</strong>, và tự động cập nhật mỗi 1 tiếng.
+    </p>
+    <div class="badges">
+      <span class="badge green" id="live-version-badge">Release: VESSEL-2.3.0-rev1046</span>
+      <span class="badge">Java 21 LTS + Vector SIMD</span>
+      <span class="badge">Single-Pass Boot (0 Restart)</span>
+      <span class="badge green">Built-in GeyserMC &amp; spark</span>
+      <span class="badge">Hourly Zero-Lag Auto-Update</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Khởi Chạy Nhanh Chỉ Với 1 Lần Duy Nhất (Single-Pass First-Run Boot)</h2>
+      <p>
+        Khác với các server truyền thống bắt buộc phải chạy lần 1 để sinh file rồi tắt đi bật lại, <strong>VESSEL hoàn tất toàn bộ 16 bước khởi động chỉ trong 1 lần chạy duy nhất</strong> kể cả ở lần chạy đầu tiên:
+      </p>
+      <pre><code># 1. Chạy mặc định (Tự động lấy Minecraft release mới nhất, tích hợp Geyser + Spark, nạp mọi mod/plugin):
+java -jar server.jar --nogui
+
+# 2. Chạy chế độ Tối Ưu Tối Đa (Bật toàn bộ SIMD Physics, Zero-Copy Netty, AI LOD, Zstd RAM Cache, LazyDFU):
+java -jar server.jar --vessel-ultra-optimize --nogui
+
+# 3. Chạy chế độ Debug Sâu (Trace chi tiết Bytecode Rewriting, ClassLoader, Event Bus &amp; Registry Audit):
+java -jar server.jar --vessel-deep-debug --nogui</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>2. Bảng Tham Chiếu Toàn Bộ Custom CLI Flags Của VESSEL</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>CLI Flag</th>
+            <th>Mặc Định</th>
+            <th>Chức Năng &amp; Khi Nào Nên Dùng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>--vessel-ultra-optimize</code><br/>(hoặc <code>--vessel-max-perf</code>)</td>
+            <td><code>false</code></td>
+            <td><strong>Bộ Flag Tối Ưu Hết Cỡ:</strong> Kích hoạt đồng thời 6 hệ thống tối ưu cấp nhân: <code>--vessel-simd-physics</code>, <code>--vessel-zero-copy-netty</code>, <code>--vessel-aggressive-ai-lod</code>, <code>--vessel-zstd-ram-cache</code>, <code>--vessel-lockless-strands</code>, và <code>--vessel-lazy-dfu-noisium</code> cùng 40 bộ điều phối Super-Mod.</td>
+          </tr>
+          <tr>
+            <td><code>--vessel-deep-debug</code><br/>(hoặc <code>--vessel-debug-all</code>)</td>
+            <td><code>false</code></td>
+            <td><strong>Flag Debug Sâu VESSEL:</strong> Kích hoạt toàn bộ chẩn đoán sâu gồm <code>--vessel-trace-bytecode</code>, <code>--vessel-trace-classloader</code>, <code>--vessel-trace-events</code>, <code>--vessel-trace-registry</code>, và <code>--vessel-profile-boot</code> để admin/dev theo dõi từng bước dịch bytecode và nạp mod/plugin.</td>
+          </tr>
+          <tr>
+            <td><code>--vessel-single-pass-boot</code></td>
+            <td><code>true</code></td>
+            <td>Hoàn tất khởi tạo thư mục, chấp nhận EULA, tải Mojang bundler, nạp mod/plugin và mở server ngay trong <strong>1 lần khởi chạy duy nhất</strong> mà không cần khởi động lại.</td>
+          </tr>
+          <tr>
+            <td><code>--vessel-universal-compat</code></td>
+            <td><code>true</code></td>
+            <td>Bật động cơ nâng cấp bytecode đa thế hệ trong RAM, cho phép các mod và plugin viết cho bản Minecraft thấp hơn chạy mượt trên bản Minecraft mới nhất.</td>
+          </tr>
+          <tr>
+            <td><code>--vessel-auto-latest</code></td>
+            <td><code>true</code></td>
+            <td>Tự động truy vấn Mojang Piston Meta API (<code>version_manifest_v2.json</code>) để luôn chạy phiên bản Minecraft chính thức mới nhất (<code>latest.release</code>).</td>
+          </tr>
+          <tr>
+            <td><code>--vessel-version=&lt;ver&gt;</code></td>
+            <td><code>latest.release</code></td>
+            <td>Ghim cứng một phiên bản Minecraft cụ thể (ví dụ <code>--vessel-version=1.21.4</code>) nếu admin muốn cố định phiên bản server.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>3. Quy Tắc Tương Thích Mod/Plugin Đa Thế Hệ &amp; Chặn Mod Bản Cao Hơn Server</h2>
+      <div class="alert ok">
+        <strong>Tương thích ngược tự động (<code>modMcVersion &lt;= serverMcVersion</code>):</strong>
+        Khi server chạy phiên bản Minecraft mới nhất (hoặc cao hơn bản của mod/plugin), <code>LiveJarBytecodeTransformingClassLoader</code> sẽ tự động nâng cấp bytecode trong RAM (ví dụ: đổi constructor <code>new ResourceLocation(...)</code> sang <code>ResourceLocation.fromNamespaceAndPath(...)</code>, đổi field <code>Entity.level</code> sang method <code>Entity.level()</code>, nâng <code>INVOKEVIRTUAL InventoryView</code> của Bukkit cũ lên <code>INVOKEINTERFACE</code> cho 1.21+, và nâng schema DataPack <code>loot_tables/</code> &rarr; <code>loot_table/</code>).
+      </div>
+      <div class="alert warn">
+        <strong>Từ chối thẳng nếu Server chạy bản thấp hơn Mod (<code>modMcVersion &gt; serverMcVersion</code>):</strong>
+        Nếu server đang chạy phiên bản Minecraft <strong>thấp hơn</strong> phiên bản mà mod/plugin yêu cầu (ví dụ server chạy <code>1.20.1</code> nhưng bỏ mod yêu cầu <code>1.21.4</code> vào), <code>ForwardVersionModRejectionGuard</code> sẽ <strong>từ chối load thẳng mod/plugin đó ngay lập tức</strong> và hiển thị thông báo rõ ràng:
+        <br/><em>"Yêu cầu cài đặt bản thấp hơn của mod/plugin hỗ trợ phiên bản server hiện tại, hoặc nâng cấp server lên phiên bản Minecraft cao hơn (<code>--vessel-version=&lt;ver&gt;</code> hoặc mặc định <code>latest.release</code>)."</em>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4. Auto-Update Từ GitHub Mỗi 1 Tiếng (Không Lag, Staged Patches, Bảo Vệ 100% Dữ Liệu User)</h2>
+      <ul>
+        <li><strong>Quét tự động mỗi 1 tiếng (<code>3600s</code>):</strong> <code>HourlyGitHubAutoUpdateDaemon</code> chạy trên một Daemon Thread có độ ưu tiên thấp tách biệt hoàn toàn khỏi Main Tick Thread (<strong>0.00 ms lag</strong>).</li>
+        <li><strong>Chuỗi mã định danh <code>VesselBuildVersionCode</code>:</strong> Có định dạng <code>VESSEL-&lt;semver&gt;-rev&lt;build&gt;+mc&lt;mcVer&gt;-geyser&lt;geyserVer&gt;-spark&lt;sparkVer&gt;</code>. VESSEL giải mã chuỗi này để biết chính xác bản hiện tại đang <strong>thấp hơn (<code>&lt;</code>)</strong>, <strong>bằng (<code>==</code> bản mới nhất)</strong>, hay <strong>cao hơn (<code>&gt;</code>)</strong> bản trên GitHub.</li>
+        <li><strong>Cập nhật ngay khi đang chạy &amp; Apply Patches khi Restart:</strong> Khi phát hiện bản mới hơn trên GitHub, VESSEL tải gói cập nhật về vùng đệm <code>cache/updates/staged/</code> đồng thời cập nhật ngay phiên bản <strong>Geyser</strong>, <strong>Spark</strong> và <strong>Minecraft <code>latest.release</code></strong> mới nhất mà không làm gián đoạn server đang chạy. Các bản vá nhân (kernel patches) sẽ tự động được áp dụng (apply) ngay ở giây đầu tiên khi admin restart server.</li>
+        <li><strong>Bảo vệ 100% dữ liệu người dùng (<code>UserDataPreservationSnapshotGuard</code>):</strong> Mọi thư mục và tệp riêng của user gồm <code>mods/</code>, <code>plugins/</code>, <code>config/</code>, <code>vessel.yml</code>, <code>server.properties</code>, <code>eula.txt</code>, <code>world/</code> được khóa bảo vệ bằng chữ ký SHA-256 — <strong>không bao giờ bị xóa hay ghi đè khi auto-update</strong>.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>5. Tích Hợp Sẵn GeyserMC &amp; Spark Bản Mới Nhất — Ghi Nhận Bản Quyền (Credits)</h2>
+      <p>
+        Mỗi lần khởi chạy hoặc cập nhật mã nguồn, VESSEL tự động kiểm tra và tích hợp sẵn bản release mới nhất của <strong>GeyserMC</strong> và <strong>spark</strong> (cùng tệp <code>CREDITS.md</code> tự động sinh tại thư mục gốc server):
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Dự Án Tích Hợp</th>
+            <th>Tác Giả &amp; Đội Ngũ Phát Triển</th>
+            <th>Giấy Phép</th>
+            <th>Vai Trò Trong VESSEL &amp; Liên Kết Gốc</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>GeyserMC (Geyser &amp; Floodgate)</strong></td>
+            <td>GeyserMC Team &amp; Contributors</td>
+            <td>MIT License</td>
+            <td>Hỗ trợ người chơi Minecraft: Bedrock Edition kết nối trực tiếp vào server VESSEL Java Edition.<br/><a href="https://geysermc.org" target="_blank">https://geysermc.org</a> | <a href="https://github.com/GeyserMC/Geyser" target="_blank">GitHub</a></td>
+          </tr>
+          <tr>
+            <td><strong>spark Performance Profiler</strong></td>
+            <td>Lucko (<code>lucko</code>) &amp; Contributors</td>
+            <td>GPL-3.0 (Standalone Agent/Plugin)</td>
+            <td>Phân tích hiệu năng CPU, MSPT, GC và bộ nhớ Heap chuyên sâu kết hợp cùng bộ đo vi nhân của VESSEL.<br/><a href="https://spark.lucko.me" target="_blank">https://spark.lucko.me</a> | <a href="https://github.com/lucko/spark" target="_blank">GitHub</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    VESSEL Sovereign Server Microkernel &bull; Repository: <a href="https://github.com/VesselLoader/Vessel">github.com/VesselLoader/Vessel</a>
+  </footer>
+
+  <script>
+    fetch('./vessel-update-manifest.json')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.versionCode) {
+          document.getElementById('live-version-badge').textContent = 'Latest: ' + data.versionCode;
+        }
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>
