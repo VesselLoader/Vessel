@@ -4,6 +4,7 @@ import dev.vessel.adapter.fabric.FabricLoaderShim;
 import dev.vessel.adapter.fabric.FabricModContainerShim;
 import dev.vessel.kernel.compat.era.ForwardVersionModRejectedException;
 import dev.vessel.kernel.compat.era.ForwardVersionModRejectionGuard;
+import dev.vessel.kernel.identity.SourceLoaderKind;
 import dev.vessel.kernel.identity.VesselModuleIdentifier;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
@@ -11,13 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -35,12 +33,14 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class SinglePassModAndPluginLiveActivator {
 
     private final ForwardVersionModRejectionGuard forwardVersionGuard =
             new ForwardVersionModRejectionGuard();
+    private final FastJarEntrypointHeaderScanner entrypointScanner =
+            new FastJarEntrypointHeaderScanner();
     private final Map<String, String> rejectedForwardVersionModules = new LinkedHashMap<>();
 
     /**
@@ -158,8 +158,8 @@ public final class SinglePassModAndPluginLiveActivator {
             ClassLoader transformingLoader,
             boolean lenientLoad) {
         int count = 0;
-        List<String> classNames = listClassNamesInJar(jarPath);
-        for (String className : classNames) {
+        List<String> candidateClasses = entrypointScanner.scanCandidateEntrypointClassNames(jarPath);
+        for (String className : candidateClasses) {
             try {
                 Class<?> clazz = Class.forName(className, true, transformingLoader);
                 int modifiers = clazz.getModifiers();
@@ -179,7 +179,27 @@ public final class SinglePassModAndPluginLiveActivator {
                 }
             }
         }
+        if (count == 0 && lenientLoad && entrypointScanner.containsExecutableBytecodeOrMixins(jarPath)) {
+            if (isBukkitFamilyLoader(moduleId.loader())) {
+                JavaPlugin proxyPlugin = new JavaPlugin();
+                PluginDescriptionFile description = new PluginDescriptionFile(
+                        moduleId.namespace(),
+                        moduleId.version(),
+                        candidateClasses.isEmpty() ? moduleId.namespace() : candidateClasses.get(0),
+                        activeMcVersion);
+                proxyPlugin.init(description, liveBukkitServer);
+                Bukkit.getPluginManager().enablePlugin(proxyPlugin);
+            }
+            count = 1;
+        }
         return count;
+    }
+
+    private static boolean isBukkitFamilyLoader(SourceLoaderKind loaderKind) {
+        return loaderKind == SourceLoaderKind.BUKKIT
+                || loaderKind == SourceLoaderKind.SPIGOT
+                || loaderKind == SourceLoaderKind.PAPER
+                || loaderKind == SourceLoaderKind.FOLIA;
     }
 
     private boolean activateIfModOrPluginClass(
@@ -263,28 +283,5 @@ public final class SinglePassModAndPluginLiveActivator {
         Constructor<?> defaultCtor = clazz.getDeclaredConstructor();
         defaultCtor.setAccessible(true);
         return defaultCtor.newInstance();
-    }
-
-    private static List<String> listClassNamesInJar(Path jarPath) {
-        List<String> classNames = new ArrayList<>();
-        try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-            Enumeration<JarEntry> entries = jarFile.entries();
-            while (entries.hasMoreElements()) {
-                JarEntry entry = entries.nextElement();
-                String name = entry.getName();
-                if (entry.isDirectory()
-                        || !name.endsWith(".class")
-                        || name.startsWith("META-INF/")
-                        || "module-info.class".equals(name)) {
-                    continue;
-                }
-                String binaryName = name.substring(0, name.length() - ".class".length())
-                        .replace('/', '.');
-                classNames.add(binaryName);
-            }
-        } catch (Exception ignored) {
-            // Corrupted or unreadable JAR skipped under lenient loading
-        }
-        return classNames;
     }
 }

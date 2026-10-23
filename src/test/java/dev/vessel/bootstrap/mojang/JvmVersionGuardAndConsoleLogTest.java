@@ -41,7 +41,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class JvmVersionGuardAndConsoleLogTest {
 
@@ -196,6 +196,47 @@ public final class JvmVersionGuardAndConsoleLogTest {
         assertThat(logs).anyMatch(l -> l.contains("[VESSEL/MODS] Loaded Mods"));
         assertThat(logs).anyMatch(l -> l.contains("[VESSEL/TOP] Per-Tick Module CPU Profiler"));
         assertThat(logs).anyMatch(l -> l.contains("Console screen cleared"));
+    }
+
+    @Test
+    void shouldEnforceIpv4ForMojangServicesAndFastScanEntrypointsInMilliseconds() throws Exception {
+        Path serverRoot = tempDir.resolve("fast-entrypoint-server");
+        Path modsDir = serverRoot.resolve("mods");
+        Path pluginsDir = serverRoot.resolve("plugins");
+        Files.createDirectories(modsDir);
+        Files.createDirectories(pluginsDir);
+
+        // 1. Mixin-based Fabric mod (like Lithium 0.26.2+mc26.3)
+        Path lithiumJar = modsDir.resolve("lithium-fabric-0.26.2+mc26.3.jar");
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(lithiumJar))) {
+            writeEntry(jos, "fabric.mod.json",
+                    "{\"id\":\"lithium\",\"version\":\"0.26.2+mc26.3\",\"mixins\":[\"lithium.mixins.json\"]}"
+                            .getBytes(StandardCharsets.UTF_8));
+            writeEntry(jos, "lithium.mixins.json",
+                    "{\"package\":\"net.caffeinemc.mods.lithium.mixin\"}".getBytes(StandardCharsets.UTF_8));
+        }
+
+        // 2. Bukkit plugin with main: in plugin.yml (like EssentialsX 2.22.0)
+        Path essentialsJar = pluginsDir.resolve("EssentialsX-2.22.0.jar");
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(essentialsJar))) {
+            writeEntry(jos, "plugin.yml",
+                    "name: Essentials\nmain: com.earth2me.essentials.Essentials\nversion: 2.22.0\n"
+                            .getBytes(StandardCharsets.UTF_8));
+            writeEntry(jos, "com/earth2me/essentials/Helper.class",
+                    createMainClassBytes("com/earth2me/essentials/Helper", 65));
+        }
+
+        FastJarEntrypointHeaderScanner headerScanner = new FastJarEntrypointHeaderScanner();
+        assertThat(headerScanner.scanCandidateEntrypointClassNames(essentialsJar))
+                .containsExactly("com.earth2me.essentials.Essentials");
+        assertThat(headerScanner.containsExecutableBytecodeOrMixins(lithiumJar)).isTrue();
+
+        VesselServerLauncher launcher = new VesselServerLauncher(serverRoot);
+        int exitCode = launcher.executeBootSequence(new String[]{"--nogui"});
+        assertThat(exitCode).isEqualTo(0);
+        assertThat(System.getProperty("java.net.preferIPv4Stack")).isEqualTo("true");
+        assertThat(System.getProperty("java.net.preferIPv6Addresses")).isEqualTo("false");
+        assertThat(launcher.getActivatedEntrypointsCount()).isEqualTo(2);
     }
 
     private static byte[] createInnerServerJarWithClassVersion(

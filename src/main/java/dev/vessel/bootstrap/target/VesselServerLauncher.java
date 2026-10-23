@@ -38,7 +38,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.9
+ * @version 1.0.10
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -73,6 +73,10 @@ public final class VesselServerLauncher {
      * @param args command-line arguments
      */
     public static void main(String[] args) {
+        // Force IPv4 stack before any JVM networking class initializes so Mojang's authlib
+        // (https://api.minecraftservices.com/publickeys) never stalls on broken IPv6 routes.
+        System.setProperty("java.net.preferIPv4Stack", "true");
+        System.setProperty("java.net.preferIPv6Addresses", "false");
         String[] safeArgs = args != null ? args : new String[0];
         boolean hasManifestFlag = false;
         for (String arg : safeArgs) {
@@ -102,6 +106,8 @@ public final class VesselServerLauncher {
      */
     public int executeBootSequence(String[] args) {
         Objects.requireNonNull(args, "args cannot be null");
+        System.setProperty("java.net.preferIPv4Stack", "true");
+        System.setProperty("java.net.preferIPv6Addresses", "false");
         long bootStartMillis = System.currentTimeMillis();
         completedBootSteps = 0;
         jvmVersionMismatchHalted = false;
