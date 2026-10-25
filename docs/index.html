@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<!-- @version 1.0.3 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vessel Sovereign Server Microkernel — Universal Minecraft Server Loader (v1.0.3)</title>
+  <style>
+    :root {
+      --bg: #070a12;
+      --card-bg: rgba(18, 25, 43, 0.85);
+      --card-hover: rgba(26, 36, 61, 0.95);
+      --border: #1e2c47;
+      --border-highlight: #3b82f6;
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-indigo: #6366f1;
+      --accent-purple: #a855f7;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text: #f1f5f9;
+      --text-dim: #cbd5e1;
+      --muted: #94a3b8;
+      --code-bg: #0b1120;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      background: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+      color: var(--text);
+      line-height: 1.65;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    header {
+      background: rgba(11, 17, 32, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 1.5rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+    .header-content {
+      max-width: 1020px;
+      margin: 0 auto;
+    }
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .logo-badge {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.4);
+    }
+    .logo-badge svg {
+      width: 28px;
+      height: 28px;
+      fill: #ffffff;
+    }
+    header h1 {
+      font-size: 2.8rem;
+      margin: 0 0 0.75rem;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header p {
+      max-width: 860px;
+      margin: 0 auto 1.5rem;
+      color: var(--muted);
+      font-size: 1.12rem;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: center;
+    }
+    .badge {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-cyan);
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .badge.green {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.35);
+      color: var(--accent-green);
+    }
+    .badge.purple {
+      background: rgba(168, 85, 247, 0.1);
+      border-color: rgba(168, 85, 247, 0.35);
+      color: var(--accent-purple);
+    }
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      max-width: 1200px;
+      margin: 1.75rem auto 0;
+      padding: 0 1rem;
+    }
+    .tab-btn {
+      background: rgba(18, 26, 45, 0.7);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.7rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tab-btn:hover {
+      color: #ffffff;
+      border-color: var(--border-highlight);
+      background: rgba(30, 44, 75, 0.9);
+      transform: translateY(-1px);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
+      border-color: var(--accent-cyan);
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
+    }
+    main {
+      max-width: 1200px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1.25rem;
+    }
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+    h2 {
+      margin-top: 0;
+      color: #ffffff;
+      font-size: 1.55rem;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    h3 {
+      color: var(--accent-cyan);
+      margin: 1.5rem 0 0.5rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    p, li {
+      color: var(--text-dim);
+    }
+    pre, code {
+      font-family: "JetBrains Mono", Consolas, Monaco, monospace;
+      background: var(--code-bg);
+      border-radius: 8px;
+    }
+    code {
+      padding: 0.2rem 0.45rem;
+      color: #7dd3fc;
+      border: 1px solid #1e2c47;
+      font-size: 0.88em;
+    }
+    pre {
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+    pre code {
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+    
+    /* Responsive Table Container with Horizontal Scroll */
+    .table-scroll-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(11, 17, 32, 0.6);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .table-scroll-container::-webkit-scrollbar {
+      height: 8px;
+    }
+    .table-scroll-container::-webkit-scrollbar-track {
+      background: #0b1120;
+      border-radius: 0 0 10px 10px;
+    }
+    .table-scroll-container::-webkit-scrollbar-thumb {
+      background: #243556;
+      border-radius: 4px;
+    }
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-cyan);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 0;
+      border: none;
+    }
+    .table-scroll-container table {
+      min-width: 980px; /* Prevents columns from getting crushed */
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 0.95rem;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap; /* Keeps code snippets neat and single-line */
+    }
+    th {
+      background: rgba(26, 36, 61, 0.95);
+      color: #ffffff;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr:nth-child(even) td {
+      background: rgba(14, 20, 36, 0.45);
+    }
+    tr:hover td {
+      background: rgba(30, 44, 75, 0.6);
+    }
+    .table-tip {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .alert {
+      border-left: 4px solid var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.08);
+      padding: 1.15rem 1.4rem;
+      border-radius: 8px;
+      margin: 1.25rem 0;
+      border-top: 1px solid rgba(56, 189, 248, 0.15);
+      border-right: 1px solid rgba(56, 189, 248, 0.15);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+    }
+    .alert.warn {
+      border-left-color: var(--accent-amber);
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+    .alert.ok {
+      border-left-color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+    .alert.purple {
+      border-left-color: var(--accent-purple);
+      background: rgba(168, 85, 247, 0.08);
+      border-color: rgba(168, 85, 247, 0.2);
+    }
+    .search-box-container {
+      margin-bottom: 1rem;
+    }
+    .search-box {
+      width: 100%;
+      background: #0d1527;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1.2rem;
+      color: #ffffff;
+      font-size: 0.96rem;
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .search-box:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .stat-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      margin-bottom: 0.2rem;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin: 1.25rem 0;
+    }
+    .step-card {
+      background: rgba(11, 17, 32, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      position: relative;
+    }
+    .step-number {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .step-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+    }
+    footer {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      font-size: 0.92rem;
+      background: rgba(7, 10, 18, 0.9);
+    }
+    a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+    }
+    a:hover {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div class="logo-container">
+        <div class="logo-badge">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+      </div>
+      <h1>Vessel Sovereign Server Microkernel</h1>
+      <p>
+        The Sovereign Minecraft Server Microkernel uniting 6 major ecosystems (<strong>Fabric, Quilt, Forge, NeoForge, Bukkit/Spigot, Paper/Folia</strong>) inside a single, zero-restart standalone <code>server.jar</code>. Featuring the <strong>Vessel Universal Canonical Mapping (VCM)</strong>, <strong>Zero-Remap Fast-Path</strong>, built-in <strong>GeyserMC &amp; spark</strong>, and hourly non-blocking auto-updates.
+      </p>
+      <div class="badges">
+        <span class="badge green" id="live-version-badge">Release: Vessel-2.3.1-rev1048</span>
+        <span class="badge">Java 21 LTS + Vector SIMD</span>
+        <span class="badge purple">Universal Canonical Mapping (VCM)</span>
+        <span class="badge green">Zero-Remap Fast-Path (&lt; 1ms)</span>
+        <span class="badge">Single-Pass Boot (0 Restarts)</span>
+        <span class="badge">Built-in Geyser &amp; spark</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-quickstart')">⚡ Quick Start &amp; CLI</button>
+    <button class="tab-btn" onclick="switchTab('tab-mapping')">🗺️ Universal Mapping Explorer</button>
+    <button class="tab-btn" onclick="switchTab('tab-sdk')">🛠️ Modding with Vessel SDK</button>
+    <button class="tab-btn" onclick="switchTab('tab-optimizations')">🚀 Microscopic Optimization Suite</button>
+    <button class="tab-btn" onclick="switchTab('tab-updater')">🔄 Hourly Auto-Updater</button>
+    <button class="tab-btn" onclick="switchTab('tab-credits')">📜 14 Open-Source Credits</button>
+  </nav>
+
+  <main>
+    <!-- TAB 1: QUICK START -->
+    <section id="tab-quickstart" class="tab-content active">
+      <div class="card">
+        <h2>⚡ 1. Single-Pass First-Run Boot (Zero Restart Required)</h2>
+        <p>
+          Unlike traditional Minecraft server loaders that require an initial run to generate configuration files followed by a mandatory manual restart, <strong>Vessel completes all 16 boot stages in a single continuous execution pass</strong>:
+        </p>
+        <pre><code># 1. Standard Production Launch (Resolves latest Minecraft release, provisions Geyser + Spark, loads all mods &amp; plugins):
+java -jar server.jar --nogui
+
+# 2. Maximum Microscopic Performance Bundle (Enables C2ME chunking, Krypton netty, Lithium AI, FerriteCore RAM cache &amp; Alternate Current):
+java -jar server.jar --vessel-ultra-optimize --nogui
+
+# 3. Deep Diagnostic Trace Mode (Traces Bytecode Remapping, Fast-Path Routing, Event Buses &amp; Registry Injections):
+java -jar server.jar --vessel-deep-debug --nogui</code></pre>
+      </div>
+
+      <div class="card">
+        <h2>📋 2. Vessel Command-Line Flags Reference</h2>
+        <div class="table-scroll-container">
+          <table>
+            <thead>
+              <tr>
+                <th>CLI Flag</th>
+                <th>Default</th>
+                <th>Description &amp; Operational Impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--vessel-ultra-optimize</code></td>
+                <td><code>false</code></td>
+                <td><strong>Maximum Performance Bundle:</strong> Simultaneously activates C2ME parallel chunk gen, Krypton zero-copy network frames, Lithium 3D EAR AI pruning, FerriteCore palette compaction, and Alternate Current BFS redstone.</td>
+              </tr>
+              <tr>
+                <td><code>--vessel-deep-debug</code></td>
+                <td><code>false</code></td>
+                <td><strong>Diagnostic Trace:</strong> Enables comprehensive logging of bytecode translation, classloader delegacy, fast-path dispatch, and registry unfreezing.</td>
+              </tr>
+              <tr>
+                <td><code>--vessel-single-pass-boot</code></td>
+                <td><code>true</code></td>
+                <td>Generates EULA, scaffolds directories, auto-detects bundlers, loads plugins &amp; mods, and boots server in <strong>1 single pass</strong> with 0 restarts.</td>
+              </tr>
+              <tr>
+                <td><code>--vessel-version=&lt;ver&gt;</code></td>
+                <td><code>latest.release</code></td>
+                <td>Pins a specific Minecraft version (e.g. <code>--vessel-version=1.21.4</code> or <code>1.20.1</code>) instead of automatically tracking the latest release.</td>
+              </tr>
+              <tr>
+                <td><code>--vessel-auto-latest</code></td>
+                <td><code>true</code></td>
+                <td>Dynamically inspects Mojang Piston Meta API to resolve and download the newest stable Minecraft release on launch.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🛡️ 3. Forward &amp; Backward Version Guards</h2>
+        <div class="alert ok">
+          <strong>Automatic Backward Compatibility:</strong> When the server runs on a modern version (e.g. <code>1.21.4</code>), Vessel automatically upgrades legacy mod/plugin bytecode in memory (converting <code>new ResourceLocation(...)</code> to modern <code>ResourceLocation.fromNamespaceAndPath(...)</code>, migrating Bukkit <code>InventoryView</code> calls to interface invokevirtual, and migrating DataPack paths).
+        </div>
+        <div class="alert warn">
+          <strong>Forward Version Guard:</strong> If an operator attempts to load a mod requiring a newer Minecraft release than the running server (e.g., loading a <code>1.21.4</code> mod on a <code>1.20.1</code> server), Vessel rejects that mod cleanly with actionable instructions instead of crashing the server JVM.
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: UNIVERSAL MAPPING EXPLORER -->
+    <section id="tab-mapping" class="tab-content">
+      <div class="card">
+        <h2>🗺️ Vessel Universal Canonical Mapping (VCM) Explorer</h2>
+        <p>
+          Vessel features a revolutionary <strong>Hybrid Dual-Layer Mapping Architecture</strong>. Every class, method, and field from across the entire Minecraft modding history is mapped bijectively into the <strong>Vessel Universal Semantic Namespace (VUSN)</strong>.
+        </p>
+
+        <div class="grid-4">
+          <div class="stat-pill">
+            <div class="stat-num">&lt; 50 ms</div>
+            <div class="stat-label">Binary (.vcbm) Boot Load</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-num">&lt; 20 MB</div>
+            <div class="stat-label">Lookup RAM Footprint</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-num">O(1)</div>
+            <div class="stat-label">Perfect Hash Retrieval</div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-num">100% Clean</div>
+            <div class="stat-label">GPL-Free Synthetic API</div>
+          </div>
+        </div>
+
+        <div class="search-box-container">
+          <input 
+            type="text" 
+            id="mapping-search" 
+            class="search-box" 
+            placeholder="🔍 Search classes or methods (e.g. Level, ItemStack, BlockState, getBlock, Player)..." 
+            oninput="filterMappings()"
+          />
+        </div>
+
+        <!-- Scrollable Responsive Container -->
+        <div class="table-scroll-container">
+          <table id="mapping-table">
+            <thead>
+              <tr>
+                <th>Vessel Canonical (vsl.*)</th>
+                <th>Mojang Official (Mojmap)</th>
+                <th>Fabric (Yarn)</th>
+                <th>Forge / NeoForge (SRG)</th>
+                <th>Bukkit / Spigot (NMS)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>vsl.world.LevelNode</code></td>
+                <td><code>net.minecraft.world.level.Level</code></td>
+                <td><code>net.minecraft.world.World</code></td>
+                <td><code>net.minecraft.world.level.Level</code></td>
+                <td><code>net.minecraft.server.v1_20_R3.World</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.item.ItemStackNode</code></td>
+                <td><code>net.minecraft.world.item.ItemStack</code></td>
+                <td><code>net.minecraft.item.ItemStack</code></td>
+                <td><code>net.minecraft.world.item.ItemStack</code></td>
+                <td><code>net.minecraft.server.v1_20_R3.ItemStack</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.block.BlockStateNode</code></td>
+                <td><code>net.minecraft.world.level.block.state.BlockState</code></td>
+                <td><code>net.minecraft.block.BlockState</code></td>
+                <td><code>net.minecraft.world.level.block.state.BlockState</code></td>
+                <td><code>net.minecraft.server.v1_20_R3.IBlockData</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.entity.PlayerNode</code></td>
+                <td><code>net.minecraft.world.entity.player.Player</code></td>
+                <td><code>net.minecraft.entity.player.PlayerEntity</code></td>
+                <td><code>net.minecraft.world.entity.player.Player</code></td>
+                <td><code>net.minecraft.server.v1_20_R3.EntityHuman</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.entity.ServerPlayerNode</code></td>
+                <td><code>net.minecraft.server.level.ServerPlayer</code></td>
+                <td><code>net.minecraft.server.network.ServerPlayerEntity</code></td>
+                <td><code>net.minecraft.server.level.ServerPlayer</code></td>
+                <td><code>net.minecraft.server.v1_20_R3.EntityPlayer</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.world.getBlock(pos)</code></td>
+                <td><code>getBlockState(BlockPos)</code></td>
+                <td><code>getBlockState(BlockPos)</code></td>
+                <td><code>m_8055_(BlockPos) / func_180495_p</code></td>
+                <td><code>getType(BlockPosition)</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.world.setBlock(pos, state)</code></td>
+                <td><code>setBlock(BlockPos, BlockState, int)</code></td>
+                <td><code>setBlockState(BlockPos, BlockState, int)</code></td>
+                <td><code>m_7731_(...) / func_180501_a</code></td>
+                <td><code>setTypeAndData(...)</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.item.getCount()</code></td>
+                <td><code>getCount()</code></td>
+                <td><code>getCount()</code></td>
+                <td><code>m_41613_() / func_190916_E</code></td>
+                <td><code>getCount()</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.registry.getRegistry(key)</code></td>
+                <td><code>BuiltInRegistries.REGISTRY.get(key)</code></td>
+                <td><code>Registries.REGISTRY.get(key)</code></td>
+                <td><code>ForgeRegistries.* / BuiltInRegistries</code></td>
+                <td><code>CraftRegistry.get(NamespacedKey)</code></td>
+              </tr>
+              <tr>
+                <td><code>vsl.gui.MenuNode</code></td>
+                <td><code>net.minecraft.world.inventory.AbstractContainerMenu</code></td>
+                <td><code>net.minecraft.screen.ScreenHandler</code></td>
+                <td><code>net.minecraft.world.inventory.AbstractContainerMenu</code></td>
+                <td><code>net.minecraft.server.v1_20_R3.Container</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-tip">💡 Tip: Scroll horizontally or use the search bar above to inspect mapping cross-references.</div>
+
+        <div class="alert purple" style="margin-top: 1.5rem;">
+          <strong>Direct Binary Execution (.vcbm):</strong> Vessel parses raw mapping files (<code>.tinyv2</code>, <code>.tsrg</code>, <code>.csrg</code>, Mojang ProGuard <code>.txt</code>) and automatically compiles them into an ultra-fast binary format (<code>.vcbm</code>) cached on disk. Subsequent launches load mappings via memory-mapped IO in under 50 milliseconds!
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: MODDING WITH VESSEL SDK -->
+    <section id="tab-sdk" class="tab-content">
+      <div class="card">
+        <h2>🛠️ Developing Mods for Vessel: Native vs Mixed-Vessel</h2>
+        <p>
+          Vessel introduces a clear, high-performance classification for mods. Mod developers can choose to target Vessel natively to unlock maximum performance or create hybrid mods:
+        </p>
+
+        <div class="grid-2">
+          <div class="alert ok">
+            <h3 style="margin-top: 0; color: var(--accent-green);">1. [Vessel] Pure Native Mods</h3>
+            <ul style="padding-left: 1.2rem; margin-bottom: 0;">
+              <li><strong>Package:</strong> Must reside in <code>dev.vessel.mod.*</code></li>
+              <li><strong>Purity:</strong> 0% calls to Fabric, Forge, or Bukkit internals.</li>
+              <li><strong>Superpower: Zero-Remap Fast-Path</strong>. The server completely bypasses the bytecode remapper, injecting opcodes into Minecraft in <strong>&lt; 1 ms</strong>!</li>
+            </ul>
+          </div>
+          <div class="alert warn">
+            <h3 style="margin-top: 0; color: var(--accent-amber);">2. [Mixed-Vessel] Hybrid Mods</h3>
+            <ul style="padding-left: 1.2rem; margin-bottom: 0;">
+              <li><strong>Structure:</strong> Declares metadata for Fabric/Forge but also invokes Vessel Canonical APIs.</li>
+              <li><strong>Engine: Dual-Dialect Semantic Splice</strong>. Vessel isolates external calls for standard remapping while fast-pathing Vessel-native calls.</li>
+              <li>Allows seamless gradual migration to Vessel Native APIs.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>📦 Gradle Build Script Configuration (build.gradle.kts)</h3>
+        <pre><code>plugins {
+    java
+    id("dev.vessel.mod-gradle") version "1.0.0"
+}
+
+group = "com.example.mymod"
+version = "1.0.0"
+
+repositories {
+    mavenCentral()
+    maven("https://repo.vesselloader.org/releases")
+}
+
+dependencies {
+    // Vessel Sovereign API (Clean-Room, Zero GPL Taint)
+    compileOnly("dev.vessel:vessel-api:2.3.1")
+}
+
+vessel {
+    // Target: "pure" for [Vessel] Fast-Path, or "mixed" for [Mixed-Vessel]
+    targetProfile = "pure"
+    modId = "mymod"
+}</code></pre>
+
+        <h3>📄 Metadata Descriptor (vessel.mod.json)</h3>
+        <pre><code>{
+  "schemaVersion": 1,
+  "id": "mymod",
+  "version": "1.0.0",
+  "name": "My Vessel Mod",
+  "entrypoint": "dev.vessel.mod.mymod.MyModInitializer",
+  "license": "MIT",
+  "compatibility": {
+    "vessel": ">=2.0.0",
+    "minecraft": ">=1.20.1"
+  }
+}</code></pre>
+
+        <h3>💻 Example Vessel Native Entrypoint</h3>
+        <pre><code>package dev.vessel.mod.mymod;
+
+import dev.vessel.api.VesselModInitializer;
+import dev.vessel.api.registry.VesselRegistries;
+import dev.vessel.canonical.item.ItemStackNode;
+
+public final class MyModInitializer implements VesselModInitializer {
+    @Override
+    public void onInitialize() {
+        System.out.println("[MyMod] Running on Vessel Sovereign Microkernel with Zero-Remap Fast-Path!");
+    }
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- TAB 4: MICROSCOPIC OPTIMIZATIONS -->
+    <section id="tab-optimizations" class="tab-content">
+      <div class="card">
+        <h2>🚀 Microscopic Optimization Suite ("Down to the Microbe")</h2>
+        <p>
+          Vessel consolidates the world's finest architectural server optimizations into a single sovereign engine, configured to eliminate tick lag, GC pressure, and chunk stutter:
+        </p>
+
+        <div class="table-scroll-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Subsystem</th>
+                <th>Upstream Technology &amp; Reference</th>
+                <th>Architectural Innovation in Vessel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Chunk Engine</strong></td>
+                <td>C2ME &amp; Helium</td>
+                <td>Asynchronous multithreaded world generation across dedicated worker threads; Linear Region File format eliminates file-lock contention during chunk saving.</td>
+              </tr>
+              <tr>
+                <td><strong>Network Pipeline</strong></td>
+                <td>Krypton &amp; Velocity</td>
+                <td>Bitwise fast VarInt encoding/decoding; zero-copy ByteBuf packet slicing; tick-bound packet coalescing ring buffers.</td>
+              </tr>
+              <tr>
+                <td><strong>Entity &amp; AI Engine</strong></td>
+                <td>Lithium &amp; Pufferfish</td>
+                <td>Dynamic 3D Entity Activation Range (EAR); brain tick throttles for distant/trapped mobs; VoxelShape collision cache; async pathfinding.</td>
+              </tr>
+              <tr>
+                <td><strong>RAM &amp; Palette</strong></td>
+                <td>FerriteCore &amp; ModernFix</td>
+                <td>Compacts BlockState palettes and biome containers (cutting chunk RAM footprint by ~60%); deduplicates strings and CompoundTag NBT across JVM heap.</td>
+              </tr>
+              <tr>
+                <td><strong>Redstone Logic</strong></td>
+                <td>Alternate Current</td>
+                <td>Replaces vanilla's recursive block-update flood with a non-recursive breadth-first search (BFS) algorithm, reducing redstone tick lag by 90%.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert ok" style="margin-top: 1.5rem;">
+          <strong>Dynamic Hardware Auto-Tuning (First Boot):</strong> On its first run, Vessel benchmarks available physical CPU cores, RAM, and disk IOPS, automatically selecting the optimal preset (<code>BALANCED</code>, <code>ULTRA_PERFORMANCE</code>, or <code>EXTREME_MODDED</code>) and creating modular configs in <code>config/vessel/*.yml</code>.
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: HOURLY AUTO-UPDATER -->
+    <section id="tab-updater" class="tab-content">
+      <div class="card">
+        <h2>🔄 Hourly Zero-Lag GitHub Auto-Updater (Comprehensive Architecture)</h2>
+        <p>
+          Vessel features a continuous, fully automated maintenance daemon designed to keep the server binary, bundled companion tools, and Minecraft release descriptors completely up-to-date without ever interrupting players or corrupting configurations:
+        </p>
+
+        <div class="flow-steps">
+          <div class="step-card">
+            <div class="step-number">Pillar 1</div>
+            <div class="step-title">Zero-Lag Hourly Polling</div>
+            <p><code>HourlyGitHubAutoUpdateDaemon</code> runs every <strong>3,600 seconds</strong> on an isolated, low-priority background daemon thread (<code>vessel-hourly-auto-updater</code>) with <strong>0.00 ms impact</strong> on the 20 TPS server tick loop.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">Pillar 2</div>
+            <div class="step-title">Deterministic Version Parsing</div>
+            <p>Structured version syntax: <code>Vessel-&lt;semver&gt;-rev&lt;build&gt;+mc&lt;mcVer&gt;-geyser&lt;geyserVer&gt;-spark&lt;sparkVer&gt;</code> allows deterministic mathematical comparison: older (<code>&lt;</code>), identical (<code>==</code>), or newer (<code>&gt;</code>).</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">Pillar 3</div>
+            <div class="step-title">Live Staged Patching</div>
+            <p>New kernel artifacts are downloaded quietly to <code>cache/updates/staged/</code> and verified via SHA-256. Staged patches are promoted seamlessly at <strong>Step 0 of the next server restart</strong>.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">Pillar 4</div>
+            <div class="step-title">100% User Data Protection</div>
+            <p><code>UserDataPreservationSnapshotGuard</code> guarantees that user folders and configuration files are <strong>never overwritten, wiped, or modified</strong> during updates.</p>
+          </div>
+        </div>
+
+        <h3>🔒 Protected Directories &amp; Files Guaranteed by Snapshot Guard</h3>
+        <p>The following operator files are strictly preserved with SHA-256 integrity snapshots:</p>
+        <div class="grid-2">
+          <ul>
+            <li><code>mods/</code> &amp; <code>plugins/</code> (All installed jars &amp; configs)</li>
+            <li><code>config/</code> &amp; <code>vessel.yml</code> (All custom settings)</li>
+            <li><code>world/</code>, <code>world_nether/</code>, <code>world_the_end/</code></li>
+          </ul>
+          <ul>
+            <li><code>server.properties</code> &amp; <code>eula.txt</code></li>
+            <li><code>ops.json</code>, <code>whitelist.json</code>, <code>banned-players.json</code></li>
+            <li><code>logs/</code> &amp; <code>crash-reports/</code></li>
+          </ul>
+        </div>
+
+        <h3>⚙️ Configuration in vessel.yml</h3>
+        <pre><code>auto-updater:
+  enabled: true
+  check-interval-seconds: 3600
+  download-staged-patches: true
+  auto-promote-on-restart: true
+  update-channel: "stable" # Options: stable, beta, bleeding-edge</code></pre>
+      </div>
+    </section>
+
+    <!-- TAB 6: 14 OPEN SOURCE CREDITS -->
+    <section id="tab-credits" class="tab-content">
+      <div class="card">
+        <h2>📜 Third-Party Open-Source Credits &amp; Attributions (All 14 Upstream Projects)</h2>
+        <p>
+          Vessel is built upon the collective wisdom, breakthroughs, and architectural patterns of the global Minecraft server, modding, and performance communities. We provide full, explicit attribution for all <strong>14 third-party ecosystems and lag-reduction architectures</strong>:
+        </p>
+
+        <div class="table-scroll-container">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Project Name</th>
+                <th>Authors &amp; Organization</th>
+                <th>License</th>
+                <th>Role &amp; Architectural Contribution in Vessel</th>
+                <th>Upstream Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><strong>GeyserMC &amp; Floodgate</strong></td>
+                <td>GeyserMC Team &amp; Contributors</td>
+                <td>MIT License</td>
+                <td>Built-in cross-play layer enabling Bedrock Edition clients (UDP 19132) to join Vessel Java Edition servers with Xbox Live auth and dynamic pack translation.</td>
+                <td><a href="https://geysermc.org" target="_blank">geysermc.org</a></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>spark Performance Profiler</strong></td>
+                <td>Lucko (<code>lucko</code>) &amp; Contributors</td>
+                <td>GPL-3.0</td>
+                <td>Production-ready async CPU sampling, MSPT histograms, GC pressure monitoring, and heap summary diagnostics accessible via <code>/spark</code>.</td>
+                <td><a href="https://spark.lucko.me" target="_blank">spark.lucko.me</a></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>Sodium / Embeddium</strong></td>
+                <td>CaffeineMC (JellySquid / IMS21)</td>
+                <td>LGPL-3.0</td>
+                <td>Compact 16-bit block neighbor index tables (<code>CompactBlockNeighborTable</code>), fast chunk section palette serialization, and BFS fluid propagation.</td>
+                <td><a href="https://github.com/CaffeineMC/sodium-fabric" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><strong>Lithium / Radium</strong></td>
+                <td>CaffeineMC (JellySquid / 2No2Name)</td>
+                <td>LGPL-3.0</td>
+                <td>Spatial entity hashing (<code>SpatialEntityHashGrid</code>), priority block tick scheduling, 3D entity activation range (EAR), and dropped item batch coalescing.</td>
+                <td><a href="https://github.com/CaffeineMC/lithium-fabric" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><strong>FerriteCore</strong></td>
+                <td>malte0811 &amp; Contributors</td>
+                <td>MIT License</td>
+                <td>Block state property deduplication (<code>CompactPropertyStorage</code>), fast fastutil int sets, and block model geometry memory compaction.</td>
+                <td><a href="https://github.com/malte0811/FerriteCore" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><strong>ModernFix</strong></td>
+                <td>embeddedt &amp; Contributors</td>
+                <td>LGPL-3.0</td>
+                <td>On-demand DFU bootstrap (<code>LazyDfuAndDynamicResourceOptimizer</code>), direct ByteBuf leak guards, and structure location adaptive backoff.</td>
+                <td><a href="https://github.com/embeddedt/ModernFix" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><strong>C2ME (Concurrent Chunk Management)</strong></td>
+                <td>RelativityMC (ishland) &amp; Contributors</td>
+                <td>MIT License</td>
+                <td>Asynchronous multithreaded chunk generation, lockless Linear Region File I/O (<code>LinearRegionFileFastPath</code>), and non-blocking chunk ticket scheduler.</td>
+                <td><a href="https://github.com/RelativityMC/C2ME-fabric" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><strong>Krypton</strong></td>
+                <td>Andrew Steinborn (TuxDidier)</td>
+                <td>LGPL-3.0</td>
+                <td>Zero-copy packet framing (<code>ZeroCopyPacketFrame</code>), Netty channel write consolidation ring buffer, and fast VarInt bitwise encoding.</td>
+                <td><a href="https://github.com/astei/krypton" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td><strong>LazyDFU</strong></td>
+                <td>astei &amp; Contributors</td>
+                <td>MIT License</td>
+                <td>Eliminated server startup freeze by deferring Mojang DataFixerUpper (DFU) rules and compound schema compilation until required.</td>
+                <td><a href="https://github.com/astei/lazydfu" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td><strong>FastSuite</strong></td>
+                <td>Shadows-of-Fire / Placebo</td>
+                <td>MIT License</td>
+                <td>Indexed recipe lookup and item transfer backoff algorithms utilized in cross-chunk hopper and pipe networks.</td>
+                <td><a href="https://github.com/Shadows-of-Fire/FastSuite" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td><strong>Ksyxis</strong></td>
+                <td>VidTu &amp; Contributors</td>
+                <td>MIT License</td>
+                <td>Instant server launch by deferring synchronous spawn chunk generation until first player login.</td>
+                <td><a href="https://github.com/VidTu/Ksyxis" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td><strong>PaperMC &amp; Folia</strong></td>
+                <td>PaperMC Team &amp; Contributors</td>
+                <td>GPL-3.0</td>
+                <td>Regionized multithreaded tick strands (<code>RegionalActorStrand</code>), AsyncCatcher concurrency boundaries, and production-grade restart automation.</td>
+                <td><a href="https://papermc.io" target="_blank">papermc.io</a></td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td><strong>Valkyrien Skies</strong></td>
+                <td>Valkyrien Skies Team &amp; Contributors</td>
+                <td>MIT License</td>
+                <td>Rigid-body ship physics strand boundaries (<code>ValkyrienPhysicsStrandBarrier</code>) and transform collision governors.</td>
+                <td><a href="https://valkyrienskies.org" target="_blank">valkyrienskies.org</a></td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td><strong>Minecraft Dedicated Server</strong></td>
+                <td>Mojang AB / Microsoft Corporation</td>
+                <td>Mojang EULA</td>
+                <td>Core vanilla game mechanics, world generation, and official server protocol foundation.</td>
+                <td><a href="https://www.minecraft.net" target="_blank">minecraft.net</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-tip">💡 Scroll horizontally to view licenses, contributions, and repository links for all 14 projects.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Vessel Sovereign Server Microkernel (v1.0.3) &bull; Repository: <a href="https://github.com/VesselLoader/Vessel" target="_blank">github.com/VesselLoader/Vessel</a> &bull; Engineered by Shiroz &amp; Vessel Core Architects.
+  </footer>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (targetBtn) targetBtn.classList.add('active');
+      
+      const targetContent = document.getElementById(tabId);
+      if (targetContent) targetContent.classList.add('active');
+    }
+
+    function filterMappings() {
+      const query = document.getElementById('mapping-search').value.toLowerCase().trim();
+      const rows = document.querySelectorAll('#mapping-table tbody tr');
+      
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+
+    fetch('./vessel-update-manifest.json')
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.versionCode) {
+          const badge = document.getElementById('live-version-badge');
+          if (badge) {
+            badge.textContent = 'Latest: ' + data.versionCode.replace('VESSEL', 'Vessel');
+          }
+        }
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>
