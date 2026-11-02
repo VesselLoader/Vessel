@@ -23,17 +23,18 @@ connect to or interact with the instance):
      prominently linked to connecting users.
   c. Private, internal, or undisclosed patches running on public networks are strictly prohibited.
 
-3. COMMERCIAL USAGE RESTRICTIONS & COMMERCIAL LICENSING GATE
-Direct or indirect monetization using this Software without an explicit Commercial License 
-Agreement signed by the copyright holders is strictly prohibited.
-Commercial use includes, but is not limited to:
-  a. Running public servers generating revenue via virtual stores, rank purchases, subscriptions, 
-     or paywalled in-game features.
-  b. Bundling, pre-installing, or distributing the Software as a service (Game Server Hosting/PaaS).
-  c. Proprietary closed-source commercial forks.
+3. COMMERCIAL USAGE & REVENUE THRESHOLD EXEMPTION
+Any individual, community, or commercial server generating revenue (via in-game stores, 
+virtual items, ranks, donations, or subscription fees) is AUTOMATICALLY PERMITTED to use 
+this Software without prior written authorization, provided that:
+  a. The server or operating entity generates LESS THAN $1,000 USD (or equivalent in local 
+     currency) in gross revenue per calendar month (or less than $12,000 USD per calendar year); AND
+  b. The engine brand identifier, contributor credits, and original notices remain visible, 
+     unaltered, and unmodified in all startup logs, console outputs, and network query responses.
 
-Any commercial entity exceeding these bounds must negotiate and execute a separate Commercial 
-License with the VesselLoader maintainers prior to public deployment.
+Any entity whose gross revenue EXCEEDS this threshold, or any entity wishing to deploy closed-source 
+commercial forks or whitelabel deployments (removing Vessel branding), must negotiate and execute 
+a formal Commercial License Agreement with the VesselLoader maintainers.
 
 4. MOD & PLUGIN INDEPENDENCE (ECOSYSTEM SAFE HARBOR)
 Mods, plugins, datapacks, and addons designed to run ON TOP of this Software via public APIs, 
