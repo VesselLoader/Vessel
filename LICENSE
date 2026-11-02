@@ -1,21 +1,57 @@
-MIT License
+# VESSEL SOVEREIGN KERNEL LICENSE & ECOSYSTEM AGREEMENT (VSK-EA v1.0)
+Copyright (c) 2026 VesselLoader Team. All rights reserved.
 
-Copyright (c) 2026 VesselLoader
+Preamble:
+This License governs the use, reproduction, modification, and distribution of the VESSEL 
+server microkernel engine. By downloading, compiling, running, or interacting with this 
+Software, you agree to be bound by the terms below.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. PERMITTED PERSONAL & NON-COMMERCIAL USE
+You are granted a non-exclusive, royalty-free license to inspect, compile, run, and host 
+this Software strictly for personal enjoyment, private non-commercial communities, educational 
+use, or academic research, provided that:
+  a. All copyright notices, author credits, and original trademarks remain intact.
+  b. The engine brand identifier is not obscured or spoofed in network responses.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. RECIPROCAL DISCLOSURE OBLIGATION (STRONG COPYLEFT ON KERNEL FORKS)
+If you modify, patch, enhance, or create derivative works of this Software's core codebases, 
+and deploy or host such modified software over a computer network (enabling third parties to 
+connect to or interact with the instance):
+  a. You MUST make the complete, machine-readable source code of your modifications publicly 
+     available under this identical License without additional terms.
+  b. The source code must be hosted in a publicly accessible version control repository and 
+     prominently linked to connecting users.
+  c. Private, internal, or undisclosed patches running on public networks are strictly prohibited.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. COMMERCIAL USAGE RESTRICTIONS & COMMERCIAL LICENSING GATE
+Direct or indirect monetization using this Software without an explicit Commercial License 
+Agreement signed by the copyright holders is strictly prohibited.
+Commercial use includes, but is not limited to:
+  a. Running public servers generating revenue via virtual stores, rank purchases, subscriptions, 
+     or paywalled in-game features.
+  b. Bundling, pre-installing, or distributing the Software as a service (Game Server Hosting/PaaS).
+  c. Proprietary closed-source commercial forks.
+
+Any commercial entity exceeding these bounds must negotiate and execute a separate Commercial 
+License with the VesselLoader maintainers prior to public deployment.
+
+4. MOD & PLUGIN INDEPENDENCE (ECOSYSTEM SAFE HARBOR)
+Mods, plugins, datapacks, and addons designed to run ON TOP of this Software via public APIs, 
+the Universal Typed Semantic IR (UIR), or bytecode translation adapters are legally deemed 
+"Independent Works" and NOT derivative works.
+  a. Authors of plugins/mods retain full intellectual property rights over their own creations.
+  b. Creators may release their plugins under any license (commercial, proprietary, open-source).
+  c. Nothing in this License obligates plugin/mod developers to disclose their private source code.
+
+5. INTELLECTUAL PROPERTY & DEFENSIVE PATENT PROTECTION
+The foundational microkernel systems—including Single-Pass Bytecode Weaving, VSTM Transmutation 
+Matrix (.vstmb), Asymmetric Heterogeneous Computing (dGPU/iGPU pipelines), and Regional Actor 
+Concurrency—remain the sole intellectual property of the VesselLoader authors.
+No patents, trademarks, or proprietary architectures are transferred or sub-licensable under 
+this agreement.
+
+6. TERMINATION & VIOLATIONS
+Any failure to comply with the reciprocal disclosure requirements (Section 2) or commercial 
+restrictions (Section 3) results in IMMEDIATE, AUTOMATIC TERMINATION of your license.
+Upon termination, continued operation, hosting, or execution of the binary constitutes willful 
+copyright infringement subject to statutory damages, DMCA hosting takedowns, and legal proceedings.
