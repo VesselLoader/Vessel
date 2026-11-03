@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="vesselGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+  </defs>
+  <!-- Squircle Base with 25% corner radius on 100% transparent canvas -->
+  <rect x="0" y="0" width="1024" height="1024" rx="256" ry="256" fill="url(#vesselGradient)" />
+  <!-- Centered Sovereign 3-Layer Microkernel Geometry -->
+  <g transform="translate(256, 256) scale(21.333333333333332)">
+    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+          fill="none"
+          stroke="#ffffff"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round" />
+  </g>
+</svg>

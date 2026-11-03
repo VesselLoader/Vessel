@@ -32,7 +32,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 class GeyserSparkAndForwardVersionGuardTest {
 
@@ -140,6 +140,15 @@ class GeyserSparkAndForwardVersionGuardTest {
         assertTrue(creditsContent.contains("Ksyxis"));
         assertTrue(creditsContent.contains("PaperMC & Folia"));
         assertTrue(creditsContent.contains("Valkyrien Skies"));
+        assertTrue(creditsContent.contains("MemoryLeakFix & AllTheLeaks"));
+        assertTrue(creditsContent.contains("Starlight & Moonrise"));
+        assertTrue(creditsContent.contains("Alternate Current"));
+        assertTrue(creditsContent.contains("Clumps, ServerCore & EntityCulling"));
+        assertTrue(creditsContent.contains("FabricMC"));
+        assertTrue(creditsContent.contains("QuiltMC"));
+        assertTrue(creditsContent.contains("MinecraftForge"));
+        assertTrue(creditsContent.contains("NeoForged"));
+        assertTrue(creditsContent.contains("OW2 ASM"));
         assertTrue(creditsContent.contains("Minecraft Dedicated Server"));
     }
 
@@ -149,14 +158,20 @@ class GeyserSparkAndForwardVersionGuardTest {
         assertTrue(registry.getSodiumAttributionNotice().contains("Sodium / Embeddium"));
         assertTrue(registry.getLithiumAttributionNotice().contains("Lithium / Radium"));
         assertTrue(registry.getFerriteCoreAttributionNotice().contains("FerriteCore"));
+        assertTrue(registry.getMemoryLeakFixAttributionNotice().contains("MemoryLeakFix & AllTheLeaks"));
         assertTrue(registry.getModernFixAttributionNotice().contains("ModernFix"));
+        assertTrue(registry.getStarlightAttributionNotice().contains("Starlight & Moonrise"));
         assertTrue(registry.getC2meAttributionNotice().contains("C2ME"));
         assertTrue(registry.getKryptonAttributionNotice().contains("Krypton"));
+        assertTrue(registry.getAlternateCurrentAttributionNotice().contains("Alternate Current"));
+        assertTrue(registry.getClumpsAndServerCoreAttributionNotice().contains("Clumps, ServerCore & EntityCulling"));
         assertTrue(registry.getLazyDfuAttributionNotice().contains("LazyDFU"));
         assertTrue(registry.getFastSuiteAttributionNotice().contains("FastSuite"));
         assertTrue(registry.getKsyxisAttributionNotice().contains("Ksyxis"));
         assertTrue(registry.getPaperFoliaAttributionNotice().contains("PaperMC & Folia"));
         assertTrue(registry.getValkyrienSkiesAttributionNotice().contains("Valkyrien Skies"));
+        assertTrue(registry.getSupportedLoadersAttributionNotice().contains("FabricMC"));
+        assertTrue(registry.getCoreLibrariesAttributionNotice().contains("OW2 ASM"));
         assertTrue(registry.getFloodgateAttributionNotice("2.2.7-b69").contains("Floodgate"));
         assertTrue(registry.getGeyserAttributionNotice("2.6.1-b756").contains("GeyserMC"));
         assertTrue(registry.getSparkAttributionNotice("1.10.119").contains("spark"));

@@ -1,9 +1,11 @@
 package dev.vessel.kernel.compat.era;
 
 import dev.vessel.kernel.identity.SourceLoaderKind;
+import dev.vessel.kernel.mixin.weaver.RuntimeMixinTargetRegistry;
 import dev.vessel.kernel.remap.DualSidedModEnvironmentSplitter;
 import dev.vessel.kernel.remap.ReflectionCallCacheJitHarmonizer;
 import dev.vessel.kernel.remap.ThreadCreationInterceptionTrap;
+import dev.vessel.kernel.remap.runtime.CanonicalMojMapSymbolRemapper;
 import java.util.Objects;
 
 /**
@@ -13,7 +15,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.4
  */
 public final class MultiEraBytecodeTransformationPipeline {
 
@@ -27,6 +29,10 @@ public final class MultiEraBytecodeTransformationPipeline {
             new ReflectionCallCacheJitHarmonizer();
     private final ThreadCreationInterceptionTrap concurrencyTrap =
             new ThreadCreationInterceptionTrap();
+    private final CanonicalMojMapSymbolRemapper mojMapRemapper =
+            new CanonicalMojMapSymbolRemapper();
+    private final RuntimeMixinTargetRegistry mixinTargetRegistry =
+            new RuntimeMixinTargetRegistry();
 
     /**
      * Transforms a class file from a lower-version mod or plugin into bytecode compatible with
@@ -61,6 +67,18 @@ public final class MultiEraBytecodeTransformationPipeline {
 
         transformed = reflectionTrap.rewriteReflectiveCallsToMethodHandles(transformed);
         transformed = concurrencyTrap.interceptRawThreadInstantiations(transformed);
+        transformed = mojMapRemapper.remapToMojMapIfNecessary(transformed);
+        mixinTargetRegistry.inspectAndRegisterIfMixin(transformed);
+        transformed = mixinTargetRegistry.applyRegisteredWidenersIfTarget(transformed);
         return transformed;
+    }
+
+    /**
+     * Returns the runtime Mixin target registry wired into this transformation pipeline.
+     *
+     * @return runtime mixin target registry
+     */
+    public RuntimeMixinTargetRegistry getMixinTargetRegistry() {
+        return mixinTargetRegistry;
     }
 }

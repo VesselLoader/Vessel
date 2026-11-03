@@ -1,5 +1,7 @@
 package dev.vessel.bootstrap.mojang;
 
+import dev.vessel.bootstrap.classloading.UnifiedGameAndModClassLoaderBridge;
+
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -13,19 +15,28 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class TierOneGameTransformingClassLoader extends URLClassLoader {
 
     private final VesselServerBrandTransformer brandTransformer = new VesselServerBrandTransformer();
     private final VesselServerLifecycleTransformer lifecycleTransformer = new VesselServerLifecycleTransformer();
     private final VesselCommandsTransformer commandsTransformer = new VesselCommandsTransformer();
+    private volatile UnifiedGameAndModClassLoaderBridge unifiedBridge;
 
     public TierOneGameTransformingClassLoader(
             String name,
             URL[] urls,
             ClassLoader parent) {
         super(name, urls, parent);
+    }
+
+    public void setUnifiedClassLoaderBridge(UnifiedGameAndModClassLoaderBridge unifiedBridge) {
+        this.unifiedBridge = unifiedBridge;
+    }
+
+    public UnifiedGameAndModClassLoaderBridge getUnifiedClassLoaderBridge() {
+        return unifiedBridge;
     }
 
     @Override
@@ -72,6 +83,16 @@ public final class TierOneGameTransformingClassLoader extends URLClassLoader {
             }
         }
 
-        return super.findClass(name);
+        try {
+            return super.findClass(name);
+        } catch (ClassNotFoundException e) {
+            if (unifiedBridge != null) {
+                Class<?> modLoaded = unifiedBridge.tryLoadFromModClassLoader(name);
+                if (modLoaded != null) {
+                    return modLoaded;
+                }
+            }
+            throw e;
+        }
     }
 }

@@ -4,6 +4,7 @@ import dev.vessel.adapter.fabric.FabricLoaderShim;
 import dev.vessel.adapter.fabric.FabricModContainerShim;
 import dev.vessel.kernel.compat.era.ForwardVersionModRejectedException;
 import dev.vessel.kernel.compat.era.ForwardVersionModRejectionGuard;
+import dev.vessel.kernel.event.orchestration.ForgeAndNeoForgeLifecycleSequenceDispatcher;
 import dev.vessel.kernel.identity.SourceLoaderKind;
 import dev.vessel.kernel.identity.VesselModuleIdentifier;
 import java.lang.reflect.Constructor;
@@ -16,12 +17,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -33,7 +36,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.4
+ * @version 1.0.6
  */
 public final class SinglePassModAndPluginLiveActivator {
 
@@ -41,6 +44,8 @@ public final class SinglePassModAndPluginLiveActivator {
             new ForwardVersionModRejectionGuard();
     private final FastJarEntrypointHeaderScanner entrypointScanner =
             new FastJarEntrypointHeaderScanner();
+    private final ForgeAndNeoForgeLifecycleSequenceDispatcher forgeLifecycleDispatcher =
+            new ForgeAndNeoForgeLifecycleSequenceDispatcher();
     private final Map<String, String> rejectedForwardVersionModules = new LinkedHashMap<>();
     private volatile LiveJarBytecodeTransformingClassLoader activeTransformingClassLoader;
 
@@ -139,6 +144,7 @@ public final class SinglePassModAndPluginLiveActivator {
                         transformingLoader,
                         customFlags.isLenientLoadEnabled());
             }
+            Bukkit.getPluginManager().callEvent(new ServerLoadEvent(ServerLoadEvent.STARTUP_TYPE));
         } catch (Exception ignored) {
         }
         return activatedCount;
@@ -162,6 +168,25 @@ public final class SinglePassModAndPluginLiveActivator {
      */
     public Map<String, String> getRejectedForwardVersionModules() {
         return Collections.unmodifiableMap(rejectedForwardVersionModules);
+    }
+
+    /**
+     * Activates a single pre-loaded mod or plugin class directly using the live multi-ecosystem
+     * activation pipeline.
+     *
+     * @param clazz            loaded candidate class
+     * @param moduleId         canonical module identifier
+     * @param activeMcVersion  active Minecraft server version
+     * @param liveBukkitServer active Bukkit server instance
+     * @return {@code true} if the class matched and activated at least one mod or plugin contract
+     * @throws Exception if instantiation or entrypoint invocation fails
+     */
+    public boolean activateModOrPluginClassDirectly(
+            Class<?> clazz,
+            VesselModuleIdentifier moduleId,
+            String activeMcVersion,
+            Server liveBukkitServer) throws Exception {
+        return activateIfModOrPluginClass(clazz, moduleId, activeMcVersion, liveBukkitServer);
     }
 
     private int activateJarEntrypoints(
@@ -223,7 +248,7 @@ public final class SinglePassModAndPluginLiveActivator {
             Server liveBukkitServer) throws Exception {
         boolean activated = false;
 
-        // A. Fabric / Quilt ModInitializer & DedicatedServerModInitializer
+        // A. Fabric ModInitializer & DedicatedServerModInitializer
         boolean isFabricMain = ModInitializer.class.isAssignableFrom(clazz);
         boolean isFabricServer = DedicatedServerModInitializer.class.isAssignableFrom(clazz);
         if (isFabricMain || isFabricServer) {
@@ -237,29 +262,69 @@ public final class SinglePassModAndPluginLiveActivator {
             activated = true;
         }
 
+        // A2. Quilt QSL ModInitializer & DedicatedServerModInitializer
+        boolean isQuiltMain = org.quiltmc.qsl.base.api.entrypoint.ModInitializer.class.isAssignableFrom(clazz);
+        boolean isQuiltServer =
+                org.quiltmc.qsl.base.api.entrypoint.server.DedicatedServerModInitializer.class.isAssignableFrom(clazz);
+        if (isQuiltMain || isQuiltServer) {
+            Optional<net.fabricmc.loader.api.ModContainer> opt =
+                    FabricLoader.getInstance().getModContainer(moduleId.namespace());
+            net.fabricmc.loader.api.ModContainer quiltContainer = opt.isPresent()
+                    ? opt.get()
+                    : FabricLoader.getInstance().registerModContainer(
+                            new FabricModContainerShim(
+                                    moduleId,
+                                    Map.of("name", moduleId.namespace()),
+                                    Path.of(".")));
+            Object instance = clazz.getDeclaredConstructor().newInstance();
+            if (isQuiltMain) {
+                ((org.quiltmc.qsl.base.api.entrypoint.ModInitializer) instance).onInitialize(quiltContainer);
+            }
+            if (isQuiltServer) {
+                ((org.quiltmc.qsl.base.api.entrypoint.server.DedicatedServerModInitializer) instance)
+                        .onInitializeServer(quiltContainer);
+            }
+            activated = true;
+        }
+
         // B. Forge @Mod("modid")
         if (clazz.isAnnotationPresent(net.minecraftforge.fml.common.Mod.class)) {
+            net.minecraftforge.fml.common.Mod forgeModAnnotation =
+                    clazz.getAnnotation(net.minecraftforge.fml.common.Mod.class);
+            String forgeModId = (forgeModAnnotation != null && !forgeModAnnotation.value().isBlank())
+                    ? forgeModAnnotation.value()
+                    : moduleId.namespace();
             net.minecraftforge.eventbus.api.IEventBus forgeBus =
                     new net.minecraftforge.eventbus.api.IEventBus();
+            net.minecraftforge.fml.ModLoadingContext.get().setActiveNamespace(forgeModId);
+            net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().setActiveModEventBus(forgeBus);
             Object forgeModInstance = instantiateForgeOrNeoForgeMod(
                     clazz,
                     net.minecraftforge.eventbus.api.IEventBus.class,
                     forgeBus);
             forgeBus.register(forgeModInstance);
-            forgeBus.post("FMLCommonSetupEvent");
+            forgeLifecycleDispatcher.dispatchForgeModLifecycleSequence(forgeModId, forgeBus);
             activated = true;
         }
 
         // C. NeoForge @Mod("modid")
         if (clazz.isAnnotationPresent(net.neoforged.fml.common.Mod.class)) {
+            net.neoforged.fml.common.Mod neoForgeModAnnotation =
+                    clazz.getAnnotation(net.neoforged.fml.common.Mod.class);
+            String neoForgeModId = (neoForgeModAnnotation != null && !neoForgeModAnnotation.value().isBlank())
+                    ? neoForgeModAnnotation.value()
+                    : moduleId.namespace();
             net.neoforged.bus.api.IEventBus neoForgeBus =
                     new net.neoforged.bus.api.IEventBus();
-            Object neoForgeModInstance = instantiateForgeOrNeoForgeMod(
+            net.neoforged.fml.ModContainer neoForgeContainer =
+                    new net.neoforged.fml.ModContainer(neoForgeModId, neoForgeBus);
+            net.neoforged.fml.ModLoadingContext.get().setActiveContainer(neoForgeContainer);
+            Object neoForgeModInstance = instantiateNeoForgeMod(
                     clazz,
-                    net.neoforged.bus.api.IEventBus.class,
-                    neoForgeBus);
+                    neoForgeBus,
+                    neoForgeContainer);
             neoForgeBus.register(neoForgeModInstance);
-            neoForgeBus.post("FMLCommonSetupEvent");
+            forgeLifecycleDispatcher.dispatchNeoForgeModLifecycleSequence(neoForgeModId, neoForgeBus);
             activated = true;
         }
 
@@ -292,6 +357,28 @@ public final class SinglePassModAndPluginLiveActivator {
                     && ctor.getParameterTypes()[0].isAssignableFrom(eventBusClass)) {
                 ctor.setAccessible(true);
                 return ctor.newInstance(eventBusInstance);
+            }
+        }
+        Constructor<?> defaultCtor = clazz.getDeclaredConstructor();
+        defaultCtor.setAccessible(true);
+        return defaultCtor.newInstance();
+    }
+
+    private static Object instantiateNeoForgeMod(
+            Class<?> clazz,
+            net.neoforged.bus.api.IEventBus neoForgeBus,
+            net.neoforged.fml.ModContainer neoForgeContainer) throws Exception {
+        for (Constructor<?> ctor : clazz.getDeclaredConstructors()) {
+            if (ctor.getParameterCount() == 1) {
+                Class<?> paramType = ctor.getParameterTypes()[0];
+                if (paramType.isAssignableFrom(net.neoforged.bus.api.IEventBus.class)) {
+                    ctor.setAccessible(true);
+                    return ctor.newInstance(neoForgeBus);
+                }
+                if (paramType.isAssignableFrom(net.neoforged.fml.ModContainer.class)) {
+                    ctor.setAccessible(true);
+                    return ctor.newInstance(neoForgeContainer);
+                }
             }
         }
         Constructor<?> defaultCtor = clazz.getDeclaredConstructor();

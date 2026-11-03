@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/vessel-logo.svg" width="96" height="96" alt="VESSEL Official Logo" />
+
 # VESSEL
 ### Sovereign Universal Standalone Microkernel Server Engine
 

@@ -4,6 +4,7 @@ import dev.vessel.adapter.forge.SovereignEventBusShim;
 import dev.vessel.kernel.event.EventExecutionPhase;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -18,7 +19,7 @@ import java.util.function.Consumer;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public class IEventBus {
 
@@ -87,6 +88,33 @@ public class IEventBus {
     }
 
     /**
+     * Registers a functional event consumer with an explicit {@link EventPriority}, cancellation filter,
+     * and event class token.
+     *
+     * @param priority        NeoForge execution priority
+     * @param receiveCanceled whether to invoke the listener even if the event was cancelled
+     * @param eventClass      event class token
+     * @param consumer        callback consumer
+     * @param <T>             event payload type
+     */
+    @SuppressWarnings("unchecked")
+    public <T> void addListener(
+            EventPriority priority,
+            boolean receiveCanceled,
+            Class<T> eventClass,
+            Consumer<T> consumer) {
+        Objects.requireNonNull(priority, "priority must not be null");
+        Objects.requireNonNull(eventClass, "eventClass must not be null");
+        Objects.requireNonNull(consumer, "consumer must not be null");
+        EventExecutionPhase executionPhase = EventExecutionPhase.fromForge(priority.name());
+        underlyingShim.registerListener(
+                eventClass.getSimpleName(),
+                executionPhase,
+                receiveCanceled,
+                (Consumer<Object>) consumer);
+    }
+
+    /**
      * Posts an event across all functional listeners and registered object handlers.
      *
      * @param event non-null event payload
@@ -96,9 +124,22 @@ public class IEventBus {
     public <T> T post(T event) {
         Objects.requireNonNull(event, "event must not be null");
         underlyingShim.postEvent(event.getClass().getSimpleName(), event);
-        underlyingShim.postEvent("*", event);
+        try {
+            underlyingShim.postEvent("*", event);
+        } catch (ClassCastException ignored) {
+            // Wildcard consumer registered via addListener(Consumer<T>) had a non-matching generic type
+        }
         dispatchToRegisteredObjects(event);
         return event;
+    }
+
+    /**
+     * Returns an unmodifiable view of all listener instances and classes registered via {@link #register(Object)}.
+     *
+     * @return unmodifiable list of registered listener objects
+     */
+    public List<Object> getRegisteredListeners() {
+        return Collections.unmodifiableList(registeredListenerInstances);
     }
 
     /**
@@ -111,25 +152,34 @@ public class IEventBus {
     }
 
     private void dispatchToRegisteredObjects(Object event) {
-        for (Object target : registeredListenerInstances) {
-            boolean isClassTarget = target instanceof Class<?>;
-            Class<?> targetClass = isClassTarget ? (Class<?>) target : target.getClass();
-            Object invokeTarget = isClassTarget ? null : target;
-            Method[] methods = targetClass.getDeclaredMethods();
-            for (Method method : methods) {
-                if (method.getParameterCount() != 1) {
-                    continue;
-                }
-                if (isClassTarget && !Modifier.isStatic(method.getModifiers())) {
-                    continue;
-                }
-                Class<?> paramType = method.getParameterTypes()[0];
-                if (paramType.isAssignableFrom(event.getClass())) {
-                    try {
-                        method.setAccessible(true);
-                        method.invoke(invokeTarget, event);
-                    } catch (ReflectiveOperationException ignored) {
-                        // Guard against faulty third-party listener methods
+        for (EventPriority currentPriority : EventPriority.values()) {
+            for (Object target : registeredListenerInstances) {
+                boolean isClassTarget = target instanceof Class<?>;
+                Class<?> targetClass = isClassTarget ? (Class<?>) target : target.getClass();
+                Object invokeTarget = isClassTarget ? null : target;
+                Method[] methods = targetClass.getDeclaredMethods();
+                for (Method method : methods) {
+                    if (method.getParameterCount() != 1) {
+                        continue;
+                    }
+                    if (isClassTarget && !Modifier.isStatic(method.getModifiers())) {
+                        continue;
+                    }
+                    SubscribeEvent subscribeAnnotation = method.getAnnotation(SubscribeEvent.class);
+                    EventPriority effectivePriority = subscribeAnnotation != null
+                            ? subscribeAnnotation.priority()
+                            : EventPriority.NORMAL;
+                    if (effectivePriority != currentPriority) {
+                        continue;
+                    }
+                    Class<?> paramType = method.getParameterTypes()[0];
+                    if (paramType.isAssignableFrom(event.getClass())) {
+                        try {
+                            method.setAccessible(true);
+                            method.invoke(invokeTarget, event);
+                        } catch (ReflectiveOperationException ignored) {
+                            // Guard against faulty third-party listener methods
+                        }
                     }
                 }
             }

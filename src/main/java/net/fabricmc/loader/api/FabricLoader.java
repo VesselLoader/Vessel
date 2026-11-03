@@ -7,11 +7,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Canonical Fabric/Quilt runtime loader singleton ({@code net.fabricmc.loader.api.FabricLoader})
@@ -23,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public class FabricLoader {
 
@@ -36,6 +38,9 @@ public class FabricLoader {
     private final FabricLoaderShim underlyingShim;
     private final boolean developmentEnvironment;
     private final Map<String, ModContainer> liveContainers = new ConcurrentHashMap<>();
+    private final ObjectShare objectShare = new ObjectShare();
+    private final MappingResolver mappingResolver = new MappingResolver();
+    private final Map<String, List<EntrypointContainer<?>>> entrypointContainers = new ConcurrentHashMap<>();
 
     /**
      * Constructs a live {@code FabricLoader} backed by the specified {@link FabricLoaderShim}.
@@ -162,6 +167,91 @@ public class FabricLoader {
      */
     public boolean isDevelopmentEnvironment() {
         return developmentEnvironment;
+    }
+
+    /**
+     * Returns the global inter-mod {@link ObjectShare} registry.
+     *
+     * @return shared object registry
+     */
+    public ObjectShare getObjectShare() {
+        return objectShare;
+    }
+
+    /**
+     * Returns the active runtime {@link MappingResolver}.
+     *
+     * @return mapping resolver
+     */
+    public MappingResolver getMappingResolver() {
+        return mappingResolver;
+    }
+
+    /**
+     * Registers an instantiated entrypoint and its owning {@link ModContainer} under the specified key.
+     *
+     * @param key        non-null entrypoint key (e.g., {@code "main"}, {@code "server"})
+     * @param entrypoint non-null entrypoint instance
+     * @param provider   non-null providing {@link ModContainer}
+     * @param <T>        entrypoint type
+     */
+    public <T> void registerEntrypoint(String key, T entrypoint, ModContainer provider) {
+        Objects.requireNonNull(key, "key must not be null");
+        Objects.requireNonNull(entrypoint, "entrypoint must not be null");
+        Objects.requireNonNull(provider, "provider must not be null");
+        String normalizedKey = key.trim();
+        List<EntrypointContainer<?>> list = entrypointContainers.get(normalizedKey);
+        if (list == null) {
+            List<EntrypointContainer<?>> created = new CopyOnWriteArrayList<>();
+            List<EntrypointContainer<?>> raced = entrypointContainers.putIfAbsent(normalizedKey, created);
+            list = raced != null ? raced : created;
+        }
+        list.add(new EntrypointContainer<>(entrypoint, provider));
+    }
+
+    /**
+     * Retrieves all registered entrypoint instances for the specified key assignable to {@code type}.
+     *
+     * @param key  entrypoint key
+     * @param type expected entrypoint contract class
+     * @param <T>  entrypoint type
+     * @return unmodifiable list of matching entrypoint instances
+     */
+    public <T> List<T> getEntrypoints(String key, Class<T> type) {
+        Objects.requireNonNull(key, "key must not be null");
+        Objects.requireNonNull(type, "type must not be null");
+        List<EntrypointContainer<T>> containers = getEntrypointContainers(key, type);
+        List<T> results = new ArrayList<>(containers.size());
+        for (EntrypointContainer<T> container : containers) {
+            results.add(container.getEntrypoint());
+        }
+        return Collections.unmodifiableList(results);
+    }
+
+    /**
+     * Retrieves all registered {@link EntrypointContainer} instances for the specified key
+     * whose entrypoint is assignable to {@code type}.
+     *
+     * @param key  entrypoint key
+     * @param type expected entrypoint contract class
+     * @param <T>  entrypoint type
+     * @return unmodifiable list of matching entrypoint containers
+     */
+    @SuppressWarnings("unchecked")
+    public <T> List<EntrypointContainer<T>> getEntrypointContainers(String key, Class<T> type) {
+        Objects.requireNonNull(key, "key must not be null");
+        Objects.requireNonNull(type, "type must not be null");
+        List<EntrypointContainer<?>> rawList = entrypointContainers.get(key.trim());
+        if (rawList == null || rawList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<EntrypointContainer<T>> matching = new ArrayList<>();
+        for (EntrypointContainer<?> container : rawList) {
+            if (type.isInstance(container.getEntrypoint())) {
+                matching.add((EntrypointContainer<T>) container);
+            }
+        }
+        return Collections.unmodifiableList(matching);
     }
 
     /**

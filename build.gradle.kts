@@ -1,6 +1,6 @@
 // ==============================================================================
 // VESSEL — Build Gradle (Kotlin DSL)
-// Version: 1.0.5
+// Version: 1.0.9
 // Description: Core build configuration for VESSEL Microkernel Engine.
 // Architecture: Sovereign Standalone Server (Java 21 LTS Toolchain).
 // ==============================================================================
@@ -42,6 +42,7 @@ java {
 sourceSets {
     main {
         java.srcDir("vstm-distribution/cli/src/main/java")
+        java.srcDir("examples/example-vessel-mod/src/main/java")
     }
     test {
         java.srcDir("vstm-distribution/cli/src/test/java")
@@ -53,6 +54,9 @@ repositories {
 }
 
 dependencies {
+    // Public Developer Contracts & Symmetry Bridge (Interconnected via Gradle Composite Build)
+    api("dev.vessel:vessel-api:1.0.0-SNAPSHOT")
+
     // ASM 9.7 — Bytecode Manipulation & ASM Tree for VesselModuleIR
     implementation("org.ow2.asm:asm:9.7")
     implementation("org.ow2.asm:asm-tree:9.7")
@@ -88,6 +92,10 @@ tasks.withType<Test>().configureEach {
 tasks.jar {
     archiveFileName.set("server.jar")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(listOf("CREDITS.md", "NOTICE")) {
+        into("META-INF")
+    }
 
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
         exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "module-info.class", "org/slf4j/**")
@@ -173,6 +181,10 @@ tasks.register<Jar>("vstmCliJar") {
     archiveFileName.set("vstm-cli.jar")
     destinationDirectory.set(file("vstm-distribution/cli/build"))
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(listOf("CREDITS.md", "NOTICE")) {
+        into("META-INF")
+    }
 
     from(sourceSets.main.get().output)
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {

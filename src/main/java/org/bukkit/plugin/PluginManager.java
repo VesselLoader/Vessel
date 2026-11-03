@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -20,7 +22,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public class PluginManager {
 
@@ -91,22 +93,24 @@ public class PluginManager {
             if (!Event.class.isAssignableFrom(paramType)) {
                 continue;
             }
-            method.setAccessible(true);
+            EventHandler annotation = method.getAnnotation(EventHandler.class);
+            EventPriority bukkitPriority =
+                    (annotation != null) ? annotation.priority() : EventPriority.NORMAL;
+            boolean ignoreCancelled = (annotation != null) && annotation.ignoreCancelled();
+            EventExecutionPhase executionPhase =
+                    EventExecutionPhase.fromBukkit(bukkitPriority.name());
             String eventName = paramType.getSimpleName();
+            ReflectiveBukkitEventConsumer consumer = new ReflectiveBukkitEventConsumer(
+                    listener,
+                    method,
+                    paramType,
+                    ignoreCancelled,
+                    bukkitPriority == EventPriority.MONITOR);
             delegateShim.registerPluginListener(
                     plugin.getName(),
                     eventName,
-                    EventExecutionPhase.NORMAL,
-                    eventObj -> {
-                        if (paramType.isInstance(eventObj)) {
-                            try {
-                                method.invoke(listener, eventObj);
-                            } catch (Exception e) {
-                                throw new IllegalStateException(
-                                        "Failed to invoke Bukkit event handler " + method, e);
-                            }
-                        }
-                    });
+                    executionPhase,
+                    consumer);
         }
     }
 

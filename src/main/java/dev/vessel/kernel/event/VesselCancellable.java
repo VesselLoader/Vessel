@@ -6,9 +6,9 @@ package dev.vessel.kernel.event;
  * Unifies Bukkit {@code Cancellable} and Forge/NeoForge {@code ICancellableEvent}.
  * When cancelled, subsequent non-monitor listeners may be skipped based on registration flags.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
-public interface VesselCancellable {
+public interface VesselCancellable extends dev.vessel.api.event.VesselCancellable {
 
     /**
      * Checks if this event has been cancelled by an earlier listener.

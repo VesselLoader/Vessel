@@ -1,6 +1,8 @@
 # Gradle & Build artifacts
 .gradle/
+**/.gradle/
 build/
+**/build/
 out/
 bin/
 *.class
@@ -9,8 +11,6 @@ bin/
 *.ear
 
 # IDE & Environment configurations
-VESSEL-docs/
-/test/
 .idea/
 .vscode/
 *.iml
@@ -24,24 +24,57 @@ VESSEL-docs/
 .DS_Store
 Thumbs.db
 ehthumbs.db
-Ddesktop.ini
+Desktop.ini
+desktop.ini
 
 # Temporary files & Scratch
 scratch/
 spec/
 trash/
 Temp/
-Ddone/
+done/
 build-diagnostics/
 artifacts/
 *.tmp
 *.log
 
-# Sensitive environment configuration
+# Sensitive environment configuration, keys & credentials
 *.local.properties
+gradle.local.properties
+local.properties
 .env
 credentials/
 .secrets/
+*.key
+*.gpg
+*.asc
 
-# VSTM Local Distribution & Upload Ecosystem (Internal Only - Do Not Upload to GitHub)
+# Internal documentation, specifications & development changelogs
+VESSEL-docs/
+spec/
+governance/
+LOG.md
+CHANGELOG.md
+DESCRIPTION.md
+
+# Large archives & local distribution staging (Maven Central & VSTM packages)
+VESSEL.zip
+*.zip
 vstm-distribution/
+release-distribution/
+
+# Live Minecraft server test runtime & execution environments
+test-server/
+run/
+server/
+cache/
+libraries/
+logs/
+world/
+world_nether/
+world_the_end/
+eula.txt
+server.properties
+
+# Official Branding multi-resolution icon assets (local generation suite)
+assets/branding/icons/

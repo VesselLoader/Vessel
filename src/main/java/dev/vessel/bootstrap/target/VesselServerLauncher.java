@@ -1,5 +1,7 @@
 package dev.vessel.bootstrap.target;
 
+import dev.vessel.bootstrap.classloading.BootPhaseLifecycleCoordinator;
+import dev.vessel.bootstrap.classloading.UnifiedGameAndModClassLoaderBridge;
 import dev.vessel.bootstrap.ecosystem.BuiltInGeyserAndSparkProvisioner;
 import dev.vessel.bootstrap.ecosystem.BuiltInGeyserBedrockBridgeService;
 import dev.vessel.bootstrap.mojang.JvmVersionCompatibilityGuard;
@@ -9,6 +11,7 @@ import dev.vessel.bootstrap.mojang.MojangVersionManifestResolver;
 import dev.vessel.bootstrap.mojang.RealDirectoryModAndPluginScanner;
 import dev.vessel.bootstrap.mojang.ServerEulaAndPropertiesBootstrap;
 import dev.vessel.bootstrap.mojang.SinglePassModAndPluginLiveActivator;
+import dev.vessel.bootstrap.mojang.TierOneGameTransformingClassLoader;
 import dev.vessel.bootstrap.mojang.TierOneVanillaGameLauncher;
 import dev.vessel.bootstrap.mojang.VesselCustomFlagsProfile;
 import dev.vessel.bootstrap.updater.StagedKernelPatchManager;
@@ -42,7 +45,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.16
+ * @version 1.0.17
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -50,6 +53,10 @@ public final class VesselServerLauncher {
     private final Path serverRoot;
     private final dev.vessel.command.VesselBukkitCommandBridge bukkitCommandBridge =
             new dev.vessel.command.VesselBukkitCommandBridge();
+    private final UnifiedGameAndModClassLoaderBridge classLoaderBridge =
+            new UnifiedGameAndModClassLoaderBridge();
+    private final BootPhaseLifecycleCoordinator bootPhaseCoordinator =
+            new BootPhaseLifecycleCoordinator();
     private volatile int completedBootSteps;
     private volatile String resolvedActiveMcVersion = MojangVersionManifestResolver.FALLBACK_LATEST_RELEASE;
     private volatile Map<Path, VesselModuleIdentifier> discoveredModules = Map.of();
@@ -130,6 +137,7 @@ public final class VesselServerLauncher {
         long bootStartMillis = System.currentTimeMillis();
         completedBootSteps = 0;
         jvmVersionMismatchHalted = false;
+        bootPhaseCoordinator.reset();
 
         // Step 0: Apply any pending staged kernel patches from a previous live hourly auto-update
         StagedKernelPatchManager patchManager = new StagedKernelPatchManager();
@@ -263,6 +271,7 @@ public final class VesselServerLauncher {
                     + " [" + entry.getValue().loader() + "]");
         }
 
+        bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_PRE_MAIN_MOD_INIT);
         SinglePassModAndPluginLiveActivator liveActivator = new SinglePassModAndPluginLiveActivator();
         activatedEntrypointsCount = liveActivator.activateAllDiscoveredModsAndPlugins(
                 serverRoot,
@@ -270,6 +279,9 @@ public final class VesselServerLauncher {
                 discoveredModules,
                 customFlags,
                 VesselServerLauncher.class.getClassLoader());
+        if (liveActivator.getActiveTransformingClassLoader() != null) {
+            classLoaderBridge.bindTierTwoModClassLoader(liveActivator.getActiveTransformingClassLoader());
+        }
         consoleLogger.logInfo("Single-pass module activation complete: "
                 + activatedEntrypointsCount + " entrypoint(s) activated across "
                 + discoveredModules.size() + " module(s)");
@@ -406,9 +418,15 @@ public final class VesselServerLauncher {
                 TierOneVanillaGameLauncher vanillaLauncher = new TierOneVanillaGameLauncher();
                 // Keep activeTierOneClassLoader open for the entire lifetime of the server process
                 // so the background Minecraft "Server thread" never loses access to its JARs.
+                bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_VANILLA_BOOTSTRAP_ACTIVE);
                 activeTierOneClassLoader = vanillaLauncher.createTierOneGameClassLoader(
                         extractedClasspath,
                         VesselServerLauncher.class.getClassLoader());
+                classLoaderBridge.bindTierOneGameClassLoader(activeTierOneClassLoader);
+                if (activeTierOneClassLoader instanceof TierOneGameTransformingClassLoader tierOneTransforming) {
+                    tierOneTransforming.setUnifiedClassLoaderBridge(classLoaderBridge);
+                }
+                bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_SERVER_STARTING);
                 try {
                     vanillaMainInvoked = vanillaLauncher.invokeMinecraftServerMain(
                             activeTierOneClassLoader,
@@ -424,11 +442,30 @@ public final class VesselServerLauncher {
             }
         }
         dfuOptimizer.evictTransientBuildStageModels(1024L * 1024L);
+        bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_SERVER_STARTED_POST_WORLD);
         completedBootSteps = 16;
         long totalBootMs = System.currentTimeMillis() - bootStartMillis;
         consoleLogger.logDebug("VESSEL 16-step boot sequence completed in " + totalBootMs + " ms.");
         lastBootConsoleLogs = consoleLogger.getRecordedLines();
         return 0;
+    }
+
+    /**
+     * Returns the unified classloader bridge linking Tier-1 and Tier-2 classloaders.
+     *
+     * @return unified game and mod classloader bridge
+     */
+    public UnifiedGameAndModClassLoaderBridge getClassLoaderBridge() {
+        return classLoaderBridge;
+    }
+
+    /**
+     * Returns the boot phase lifecycle coordinator tracking the 4-phase boot transition sequence.
+     *
+     * @return boot phase lifecycle coordinator
+     */
+    public BootPhaseLifecycleCoordinator getBootPhaseCoordinator() {
+        return bootPhaseCoordinator;
     }
 
     /**

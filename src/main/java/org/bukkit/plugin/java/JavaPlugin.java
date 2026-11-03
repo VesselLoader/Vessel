@@ -1,10 +1,19 @@
 package org.bukkit.plugin.java;
 
 import dev.vessel.kernel.config.yaml.MemoryConfigurationSection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 
@@ -14,15 +23,16 @@ import org.bukkit.plugin.PluginDescriptionFile;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
-public class JavaPlugin implements Plugin {
+public class JavaPlugin implements Plugin, CommandExecutor, TabCompleter {
 
     private PluginDescriptionFile description;
     private MemoryConfigurationSection config;
     private Server server;
     private Logger logger;
     private boolean enabled;
+    private final Map<String, PluginCommand> commands = new ConcurrentHashMap<>();
 
     /**
      * Default constructor invoked by the plugin classloader when instantiating a plugin main class.
@@ -123,5 +133,29 @@ public class JavaPlugin implements Plugin {
     @Override
     public Logger getLogger() {
         return logger;
+    }
+
+    public PluginCommand getCommand(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        String key = name.trim().toLowerCase(Locale.ROOT);
+        PluginCommand existing = commands.get(key);
+        if (existing != null) {
+            return existing;
+        }
+        PluginCommand created = new PluginCommand(key, this);
+        PluginCommand prior = commands.putIfAbsent(key, created);
+        return prior != null ? prior : created;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        return List.of();
     }
 }
