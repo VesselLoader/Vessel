@@ -12,11 +12,12 @@
 ---
 
 [![Java](https://img.shields.io/badge/Java-21%20LTS-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
-[![Gradle](https://img.shields.io/badge/Gradle-8.8-02303A?style=for-the-badge&logo=gradle&logoColor=white)](https://gradle.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.3%2B-green?style=for-the-badge&logo=minecraft&logoColor=white)](https://www.minecraft.net/)
+[![License: VSK-EA v1.0](https://img.shields.io/badge/License-VSK--EA%20v1.0-blue.svg?style=for-the-badge)](LICENSE)
+[![Ecosystem](https://img.shields.io/badge/Ecosystem-Fabric%20%E2%80%A2%20Quilt%20%E2%80%A2%20Forge%20%E2%80%A2%20NeoForge%20%E2%80%A2%20Paper-00DC82?style=for-the-badge)](#)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.vesselloader/vessel-api.svg?style=for-the-badge&logo=apache-maven)](https://central.sonatype.com/artifact/io.github.vesselloader/vessel-api)
 [![Architecture: Sovereign Microkernel](https://img.shields.io/badge/Architecture-Sovereign%20Microkernel-brightgreen?style=for-the-badge)](#)
 [![Client Support](https://img.shields.io/badge/Client%20Support-Vanilla%20Java%20%2B%20Bedrock%20Crossplay-blueviolet?style=for-the-badge)](#)
-[![Architectural Radar](https://img.shields.io/badge/Preemptive%20Radar-55%2C014%20Hardened%20Points-orange?style=for-the-badge)](#)
 
 </div>
 
@@ -28,15 +29,13 @@ For over a decade, Minecraft server administration has been trapped in walled ga
 
 **VESSEL takes a fundamentally different path.**
 
-VESSEL is not a mod, not a plugin, and not a wrapper. It is an **independent, sovereign server microkernel** engineered from the ground up. Instead of emulating alien runtime environments, VESSEL ingests mods and plugins from any ecosystem, breaks them down into a unified **Universal Typed Semantic Intermediate Representation (UIR)**, and weaves them directly into a high-performance multithreaded game engine.
+VESSEL is not a mod, not a plugin, and not a wrapper. It is an **independent, sovereign server microkernel** engineered from the ground up. Instead of emulating alien runtime environments, VESSEL ingests mods and plugins from any ecosystem (Fabric, Quilt, Forge, NeoForge, Bukkit, Spigot, Paper, Folia), breaks them down into a unified **Universal Typed Semantic Intermediate Representation (UIR)**, and weaves them directly into a high-performance multithreaded game engine.
 
 The result? **A server that runs your favorite mods and plugins simultaneously with unmatched performance, while allowing players on standard, unmodded Vanilla Java and Bedrock clients to join without installing a single mod.**
 
 ---
 
 ## 🌟 The Game-Changing Advantages of VESSEL
-
-Why choose VESSEL over traditional server platforms? Here is how VESSEL redefines what a server engine can do:
 
 ### 1. True Ecosystem Unity without Parasitic Wrappers
 * **Traditional Platforms:** Force server owners to pick a side. Hybrid server attempts bolt two full modding engines together inside one JVM, causing constant Mixin conflicts, Metaspace memory leaks, and unpredictable crashes.
@@ -69,9 +68,9 @@ Why choose VESSEL over traditional server platforms? Here is how VESSEL redefine
 * **Traditional Platforms:** Require administrators to boot the server, wait for files to generate, edit configs, accept EULAs, and manually restart multiple times.
 * **The VESSEL Advantage:** Boots and launches in **1 single pass** on a brand-new directory. Furthermore, the built-in background update daemon downloads and stages updates seamlessly without lagging the active tick thread.
 
-### 8. Fortress-Grade Security & 55,014-Point Preemptive Radar
+### 8. Fortress-Grade Security & Zero-Trust Bytecode Sandbox
 * **Traditional Platforms:** Any downloaded mod runs with unrestricted permissions, capable of executing arbitrary native code, accessing host files, or exploiting known deserialization vulnerabilities.
-* **The VESSEL Advantage:** Armed with a **Zero-Trust Bytecode Capability Sandbox** and Linux `seccomp-BPF` system call filtering, preventing unauthorized native calls. The entire architecture is hardened against a verified radar of **55,014 fatal edge-cases, race conditions, and microarchitectural bottlenecks**.
+* **The VESSEL Advantage:** Armed with a **Zero-Trust Bytecode Capability Sandbox**, memory leak sanitizers, and Linux `seccomp-BPF` system call filtering. Malicious or poorly written mods are quarantined in RAM, preventing unauthorized system calls, thread deadlocks, and container desync exploits.
 
 ---
 
@@ -116,66 +115,136 @@ Launching VESSEL is as straightforward as running a standard server jar.
 
 ### 1. Requirements
 * **Operating System:** Linux (Ubuntu/Debian, RHEL/Rocky), Windows Server, or macOS.
-* **Runtime:** **Java 21 LTS** or newer (Eclipse Temurin recommended).
-* **Hardware:** From a modest $5/month cloud VPS up to enterprise multi-socket Bare-Metal servers with dedicated GPUs.
+* **Runtime:** **Java 21 LTS** or newer (Eclipse Temurin 21+ recommended).
+* **Target Minecraft Releases:** Fully compatible with **Minecraft 26.3+** and all legacy versions (1.12.2 to 1.21.4).
 
-### 2. Launching the Server
+### 2. Directory Layout
+
+Place your server executable in an empty directory. VESSEL auto-generates the required folders on first boot:
+
+```text
+server-root/
+├── server.jar              # VESSEL Sovereign Microkernel
+├── eula.txt                # eula=true
+├── mods/                   # Fabric, Quilt, Forge, NeoForge mods (.jar)
+└── plugins/                # Bukkit, Spigot, Paper, Folia plugins (.jar)
+```
+
+### 3. Launching the Server
 
 ```bash
 # Standard Launch:
 # Automatically resolves server assets, sets up networking, and starts in 1 single pass
-java -jar vessel-server.jar --nogui
+java -jar server.jar --nogui
 
 # Maximum Performance Mode:
 # Enables SIMD vectorization, zero-copy networking, aggressive LOD, and hardware compute
-java -jar vessel-server.jar --vessel-ultra-optimize --nogui
+java -jar server.jar --vessel-ultra-optimize --nogui
+
+# Pin Specific Minecraft Release:
+# Runs a specific vanilla game version (e.g., 26.3 or 1.21.4)
+java -jar server.jar --vessel-version=26.3 --nogui
 
 # Diagnostic Tracing Mode:
 # Prints detailed bytecode weaving and classloader dispatch telemetry
-java -jar vessel-server.jar --vessel-deep-debug --nogui
+java -jar server.jar --vessel-deep-debug --nogui
 ```
 
 ---
 
-## ⚙️ Key CLI Flags
+## ⚙️ Key CLI Flags & Tooling
+
+### Server Runtime Flags (`VesselServerLauncher`)
 
 | CLI Flag | Default | Description |
 | :--- | :---: | :--- |
 | `--vessel-ultra-optimize` | `false` | Enables the full hardware optimization suite (SIMD Vector Physics, Zero-Copy Netty, Lockless Strands, Lazy DFU, and GPU offloading). |
 | `--vessel-single-pass-boot` | `true` | Completes folder scaffolding, EULA agreement, and ecosystem initialization in a single boot cycle with no restart required. |
 | `--vessel-deep-debug` | `false` | Activates granular diagnostic tracing for bytecode transformations, classloading, and actor thread dispatches. |
-| `--vessel-version=<ver>` | `latest.release` | Pins a specific game release version (e.g., `--vessel-version=1.21.4`). |
+| `--vessel-version=<ver>` | `latest.release` | Pins a specific game release version (e.g., `--vessel-version=26.3` or `--vessel-version=1.21.4`). |
 | `--vessel-universal-compat` | `true` | Automatically upgrades legacy bytecode signatures in RAM for older mod and plugin compatibility. |
 | `--vessel-enforce-client-mods` | `false` | Bypasses server-side virtual rendering and enforces that connecting clients have matching mods installed via native handshake audit. |
+| `--nogui` | `false` | Runs the server in headless terminal mode without opening the Swing GUI window. |
+
+### VSTM CLI Standalone Tool (`vstm-cli`)
+
+VESSEL provides a dedicated command-line tool for developers and administrators to compile, verify, and inspect binary transmutation packages (`.vstmb`):
+
+```bash
+# Compile a mod or plugin JAR into a VSTM binary matrix:
+java -jar vstm-cli.jar compile my-mod.jar -o my-mod.vstmb
+
+# Verify cryptographic signatures and structural integrity:
+java -jar vstm-cli.jar verify my-mod.vstmb
+
+# Inspect bytecode opcode mappings and metadata:
+java -jar vstm-cli.jar inspect my-mod.vstmb
+```
 
 ---
 
-## 📊 Current Verification & Quality Assurance
+## 💻 Developer API: VESSEL Universal Super-API (VUSA)
 
-Every build of VESSEL undergoes rigorous automated testing to ensure 100% production readiness:
-* **Single Responsibility Architecture (Rule 17):** Clean, modular codebase where every distinct business function resides in its own isolated class.
-* **Automated Unit & Integration Tests:** 100% passing test suites verifying lock-free concurrency, memory cleanup, network protocol bridges, and bytecode transformations.
-* **Clean-Room Verification:** Synthesized from mathematical first principles and standard JVM specifications with zero copyleft licensing contamination.
+For mod and plugin creators building cross-ecosystem addons, the official public API is distributed via **Maven Central**:
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly("io.github.vesselloader:vessel-api:1.0.0")
+}
+```
+
+### Gradle (Groovy DSL)
+
+```groovy
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'io.github.vesselloader:vessel-api:1.0.0'
+}
+```
+
+### Maven
+
+```xml
+<dependency>
+    <groupId>io.github.vesselloader</groupId>
+    <artifactId>vessel-api</artifactId>
+    <version>1.0.0</version>
+    <scope>provided</scope>
+</dependency>
+```
 
 ---
 
 ## 🤝 Ecosystem Credits & Acknowledgments
 
-VESSEL honors the incredible work of the broader Minecraft engineering community. Built-in integrations include:
-* **GeyserMC & Floodgate:** Cross-platform bridging for Bedrock players (MIT License) — [geysermc.org](https://geysermc.org)
-* **spark Profiler:** High-precision performance profiling agent by Lucko (GPL-3.0 License) — [spark.lucko.me](https://spark.lucko.me)
+VESSEL stands on the shoulders of giants. We honor and credit the breakthroughs of the open-source Minecraft server, modding, and performance communities:
+
+- **Bedrock Crossplay:** [GeyserMC](https://geysermc.org) & [Floodgate](https://github.com/GeyserMC/Floodgate) (MIT License).
+- **Diagnostics & Profiling:** [spark](https://spark.lucko.me) by Lucko (GPL-3.0 License).
+- **Performance & Memory Leak Research:** Clean-room algorithmic adaptations credited to [Sodium/Embeddium](https://github.com/CaffeineMC/sodium-fabric), [Lithium/Radium](https://github.com/CaffeineMC/lithium-fabric), [FerriteCore](https://github.com/malte0811/FerriteCore), [MemoryLeakFix](https://github.com/fxmorin/MemoryLeakFix), [ModernFix](https://github.com/embeddedt/ModernFix), [Starlight/Moonrise](https://github.com/PaperMC/Starlight), [C2ME](https://github.com/RelativityMC/C2ME-fabric), [Krypton](https://github.com/astei/krypton), [Alternate Current](https://github.com/SpaceWalkerRS/alternate-current), [Clumps/ServerCore](https://github.com/jaredlll08/Clumps), [LazyDFU](https://github.com/astei/lazydfu), [FastSuite](https://github.com/Shadows-of-Fire/FastSuite), and [Ksyxis](https://github.com/VidTu/Ksyxis).
+- **Server Architectures & APIs:** [PaperMC, Folia & Purpur](https://github.com/PaperMC/Paper), [Fabric Loader & Fabric API](https://github.com/FabricMC/fabric), [Quilt Loader & QSL](https://github.com/QuiltMC/quilt-loader), [MinecraftForge](https://github.com/MinecraftForge/MinecraftForge), [NeoForge](https://github.com/neoforged/NeoForge), and [SpongePowered Mixin / MixinExtras](https://github.com/SpongePowered/Mixin).
+- **Runtime Foundations:** [OW2 ASM 9.7](https://asm.ow2.io) (BSD-3-Clause) and [Kyori Adventure](https://github.com/KyoriPowered/adventure) (MIT License).
+
+*For detailed license notices, copyright holders, and clean-room implementation disclosures across all 28 upstream projects, see [CREDITS.md](CREDITS.md) and [NOTICE](NOTICE).*
 
 ---
 
-## 📜 Specifications & Trademark Policy
+## 📄 License & Commercial Exemption
 
-- **VSTM Binary Specification:** [spec/VSTMB-SPECIFICATION-v1.0.md](spec/VSTMB-SPECIFICATION-v1.0.md) &mdash; Canonical binary layout and memory-mapped transmutation matrix (`.vstmb`).
-- **Strict Client-Modded Peer Mode:** [spec/VESSEL-CLIENT-MODDED-PEER-MODE-SPEC.md](spec/VESSEL-CLIENT-MODDED-PEER-MODE-SPEC.md) &mdash; Native client-side mod enforcement and handshake pipeline (`--vessel-enforce-client-mods`).
-- **Trademark & Brand Policy:** [TRADEMARK.md](TRADEMARK.md) &mdash; Official guidelines on brand usage, file format protection, and defensive patent clauses.
+VESSEL is licensed under the **[VESSEL Sovereign Kernel License & Ecosystem Agreement (VSK-EA v1.0)](LICENSE)**.
 
----
+- **Personal & Educational Use:** Free to inspect, compile, run, and host for personal enjoyment, private non-commercial communities, and academic research.
+- **Commercial Revenue Exemption:** Any server or operator generating **less than $1,000 USD/month** (or less than $12,000 USD/year) in gross revenue is automatically permitted to use VESSEL royalty-free without prior written authorization, provided original brand credits remain intact.
+- **Mod & Plugin Independence:** Mods, plugins, and addons created for VESSEL are legally deemed "Independent Works." Creators retain 100% intellectual property rights over their plugins and are free to license them under any open-source or commercial terms.
+- **Reciprocal Disclosure (Strong Copyleft on Forks):** Any public modifications or forks of the core engine deployed on public networks must publish their full source code under the identical VSK-EA v1.0 terms.
 
-## 📄 License
-
-VESSEL is licensed under the **[MIT License](LICENSE)**.  
-Copyright &copy; 2026 VesselLoader Team.
+Copyright &copy; 2026 VesselLoader Team. All rights reserved.

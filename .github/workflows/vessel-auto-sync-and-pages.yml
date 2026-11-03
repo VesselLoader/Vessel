@@ -1,4 +1,4 @@
-# @version 1.0.1
+# @version 1.0.2
 name: VESSEL Ecosystem Sync, Build & GitHub Pages Deploy
 
 on:
@@ -24,6 +24,12 @@ jobs:
     steps:
       - name: Checkout VESSEL Repository
         uses: actions/checkout@v4
+
+      - name: Checkout Vessel-api Repository
+        uses: actions/checkout@v4
+        with:
+          repository: VesselLoader/Vessel-api
+          path: Vessel-api
 
       - name: Set up Python 3.11 for Ecosystem Auto-Sync
         uses: actions/setup-python@v5

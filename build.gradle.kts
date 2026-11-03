@@ -1,6 +1,6 @@
 // ==============================================================================
 // VESSEL — Build Gradle (Kotlin DSL)
-// Version: 1.0.9
+// Version: 1.0.10
 // Description: Core build configuration for VESSEL Microkernel Engine.
 // Architecture: Sovereign Standalone Server (Java 21 LTS Toolchain).
 // ==============================================================================
@@ -97,7 +97,9 @@ tasks.jar {
         into("META-INF")
     }
 
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+    from({
+        configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }
+    }) {
         exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "module-info.class", "org/slf4j/**")
     }
 
@@ -187,7 +189,9 @@ tasks.register<Jar>("vstmCliJar") {
     }
 
     from(sourceSets.main.get().output)
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+    from({
+        configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }
+    }) {
         exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
     }
 

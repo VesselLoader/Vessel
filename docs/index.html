@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- @version 1.0.6 -->
+<!-- @version 1.0.7 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vessel Sovereign Server Microkernel — Universal Minecraft Server Loader (v1.0.6)</title>
+  <title>Vessel Sovereign Server Microkernel — Universal Minecraft Server Loader (v1.0.7)</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="icon" type="image/svg+xml" href="vessel-logo.svg" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
@@ -442,7 +442,7 @@
     <button class="tab-btn" onclick="switchTab('tab-sdk')">🛠️ Modding with Vessel SDK</button>
     <button class="tab-btn" onclick="switchTab('tab-optimizations')">🚀 Microscopic Optimization Suite</button>
     <button class="tab-btn" onclick="switchTab('tab-updater')">🔄 Hourly Auto-Updater</button>
-    <button class="tab-btn" onclick="switchTab('tab-credits')">📜 14 Open-Source Credits</button>
+    <button class="tab-btn" onclick="switchTab('tab-credits')">📜 28 Open-Source Credits &amp; Attributions</button>
   </nav>
 
   <main>
@@ -801,7 +801,7 @@ repositories {
 
 dependencies {
     // Vessel Sovereign API (Clean-Room, Zero GPL Taint)
-    compileOnly("dev.vessel:vessel-api:2.3.1")
+    compileOnly("io.github.vesselloader:vessel-api:1.0.0")
 }
 
 vessel {
@@ -817,7 +817,7 @@ vessel {
   "version": "1.0.0",
   "name": "My Vessel Mod",
   "entrypoint": "dev.vessel.mod.mymod.MyModInitializer",
-  "license": "MIT",
+  "license": "VSK-EA v1.0",
   "compatibility": {
     "vessel": ">=2.0.0",
     "minecraft": ">=1.20.1"
@@ -952,9 +952,9 @@ public final class MyModInitializer implements VesselModInitializer {
     <!-- TAB 6: 14 OPEN SOURCE CREDITS -->
     <section id="tab-credits" class="tab-content">
       <div class="card">
-        <h2>📜 Third-Party Open-Source Credits &amp; Attributions (All 14 Upstream Projects)</h2>
+        <h2>📜 Third-Party Open-Source Credits &amp; Attributions (All 28 Upstream Projects)</h2>
         <p>
-          Vessel is built upon the collective wisdom, breakthroughs, and architectural patterns of the global Minecraft server, modding, and performance communities. We provide full, explicit attribution for all <strong>14 third-party ecosystems and lag-reduction architectures</strong>:
+          Vessel is built upon the collective wisdom, breakthroughs, and architectural patterns of the global Minecraft server, modding, and performance communities. We provide full, explicit attribution for all <strong>28 third-party ecosystems and lag-reduction architectures</strong>:
         </p>
 
         <div class="table-scroll-container">
@@ -1082,16 +1082,129 @@ public final class MyModInitializer implements VesselModInitializer {
                 <td>Core vanilla game mechanics, world generation, and official server protocol foundation.</td>
                 <td><a href="https://www.minecraft.net" target="_blank">minecraft.net</a></td>
               </tr>
+              <tr>
+                <td>15</td>
+                <td><strong>MemoryLeakFix &amp; AllTheLeaks</strong></td>
+                <td>FX - PR0CESS &amp; Uncandango</td>
+                <td>LGPL-3.0 / MIT</td>
+                <td>Automatic static ServerLevel/Entity reference scrubbing on world unload, ThreadLocal buffer cleanup, and native memory recycling.</td>
+                <td><a href="https://github.com/fxmorin/MemoryLeakFix" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>16</td>
+                <td><strong>Starlight &amp; Moonrise</strong></td>
+                <td>Spottedleaf &amp; Contributors</td>
+                <td>LGPL-3.0 / GPL-3.0</td>
+                <td>Zero-copy nibble-packed voxel sky/block light BFS propagation engine.</td>
+                <td><a href="https://github.com/PaperMC/Starlight" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>17</td>
+                <td><strong>Alternate Current</strong></td>
+                <td>SpaceWalkerRS &amp; Contributors</td>
+                <td>MIT License</td>
+                <td>Deterministic breadth-first redstone wire network power solver.</td>
+                <td><a href="https://github.com/SpaceWalkerRS/alternate-current" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>18</td>
+                <td><strong>Clumps, ServerCore &amp; EntityCulling</strong></td>
+                <td>Jaredlll08, Wesley1808, tr7zw</td>
+                <td>MIT License</td>
+                <td>Item/XP orb spatial merging, villager brain tick throttle, and delta movement acoustic culling.</td>
+                <td><a href="https://github.com/jaredlll08/Clumps" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td><strong>Create, Botania &amp; GeckoLib</strong></td>
+                <td>Simibubi, Vazkii, Gecko/Tslat</td>
+                <td>MIT / MPL-2.0 / LGPL-3.0</td>
+                <td>Kinetic network graph caching, mana burst coalescing, and animated entity runtime adapters.</td>
+                <td><a href="https://github.com/Creators-of-Create/Create" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>20</td>
+                <td><strong>Fabric Loader &amp; Fabric API</strong></td>
+                <td>FabricMC Team &amp; Contributors</td>
+                <td>Apache-2.0</td>
+                <td>Clean-room implementation of FabricLoader, ModContainer, ModInitializer, and event callbacks.</td>
+                <td><a href="https://github.com/FabricMC/fabric" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>21</td>
+                <td><strong>Quilt Loader, QSL &amp; QFAPI</strong></td>
+                <td>QuiltMC Team &amp; Contributors</td>
+                <td>Apache-2.0 / CC0-1.0</td>
+                <td>Clean-room quilt.mod.json parser, FlexVer versioning, and QSL bytecode transmutation.</td>
+                <td><a href="https://github.com/QuiltMC/quilt-loader" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>22</td>
+                <td><strong>MinecraftForge (FML &amp; EventBus)</strong></td>
+                <td>MinecraftForge Team</td>
+                <td>LGPL-2.1</td>
+                <td>Clean-room @Mod, IEventBus, DeferredRegister, and Capability routing with zero copied LGPL code.</td>
+                <td><a href="https://github.com/MinecraftForge/MinecraftForge" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>23</td>
+                <td><strong>NeoForge (FancyModLoader &amp; Bus)</strong></td>
+                <td>NeoForged Team &amp; Contributors</td>
+                <td>LGPL-2.1</td>
+                <td>Clean-room neoforge.mods.toml, event bus, attachments, and data maps.</td>
+                <td><a href="https://github.com/neoforged/NeoForge" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>24</td>
+                <td><strong>Bukkit, Spigot &amp; Paper API</strong></td>
+                <td>Bukkit Team, SpigotMC, PaperMC</td>
+                <td>GPL-3.0 / MIT</td>
+                <td>Clean-room public API surface (JavaPlugin, PluginDescriptionFile, Schedulers).</td>
+                <td><a href="https://papermc.io" target="_blank">papermc.io</a></td>
+              </tr>
+              <tr>
+                <td>25</td>
+                <td><strong>SpongePowered Mixin &amp; MixinExtras</strong></td>
+                <td>SpongePowered &amp; LlamaLad7</td>
+                <td>MIT License</td>
+                <td>Clean-room Mixin annotation parsing, AccessWidener, and runtime call-site inlining.</td>
+                <td><a href="https://github.com/SpongePowered/Mixin" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>26</td>
+                <td><strong>OW2 ASM 9.7</strong></td>
+                <td>INRIA, France Telecom</td>
+                <td>BSD-3-Clause</td>
+                <td>Core bytecode manipulation, analysis, and single-pass weaving.</td>
+                <td><a href="https://asm.ow2.io" target="_blank">asm.ow2.io</a></td>
+              </tr>
+              <tr>
+                <td>27</td>
+                <td><strong>Kyori Adventure</strong></td>
+                <td>KyoriPowered &amp; Contributors</td>
+                <td>MIT License</td>
+                <td>Modern rich text component and chat audience formatting.</td>
+                <td><a href="https://github.com/KyoriPowered/adventure" target="_blank">GitHub</a></td>
+              </tr>
+              <tr>
+                <td>28</td>
+                <td><strong>Netty, Fastutil, Guava &amp; Log4j2</strong></td>
+                <td>Netty Project, Sebastiano Vigna, Google, Apache</td>
+                <td>Apache-2.0 / MIT</td>
+                <td>Low-level network I/O, fast primitive collections, and high-performance logging.</td>
+                <td><a href="https://netty.io" target="_blank">netty.io</a></td>
+              </tr>
+
             </tbody>
           </table>
         </div>
-        <div class="table-tip">💡 Scroll horizontally to view licenses, contributions, and repository links for all 14 projects.</div>
+        <div class="table-tip">💡 Scroll horizontally to view licenses, contributions, and repository links for all 28 projects.</div>
       </div>
     </section>
   </main>
 
   <footer>
-    Vessel Sovereign Server Microkernel (v1.0.3) &bull; Repository: <a href="https://github.com/VesselLoader/Vessel" target="_blank">github.com/VesselLoader/Vessel</a> &bull; Engineered by Shiroz &amp; Vessel Core Architects.
+    Vessel Sovereign Server Microkernel (v1.0.7) &bull; Licensed under VSK-EA v1.0 &bull; Repository: <a href="https://github.com/VesselLoader/Vessel" target="_blank">github.com/VesselLoader/Vessel</a> &bull; Engineered by Shiroz &amp; Vessel Core Architects.
   </footer>
 
   <script>

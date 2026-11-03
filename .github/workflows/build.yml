@@ -1,3 +1,4 @@
+# @version 1.0.1
 name: Build VESSEL Engine
 
 on:
@@ -18,6 +19,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Checkout Vessel-api repository
+        uses: actions/checkout@v4
+        with:
+          repository: VesselLoader/Vessel-api
+          path: Vessel-api
 
       - name: Setup Java 21 LTS (Temurin)
         uses: actions/setup-java@v4
