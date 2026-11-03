@@ -1,0 +1,41 @@
+package org.bukkit.event.server;
+
+import java.util.Objects;
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.Plugin;
+
+/**
+ * Bukkit event fired when a plugin is enabled ({@code org.bukkit.event.server.PluginEnableEvent}).
+ *
+ * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
+ *
+ * @version 1.0.0
+ */
+public final class PluginEnableEvent extends Event {
+
+    private static final HandlerList HANDLERS = new HandlerList();
+
+    private final Plugin plugin;
+
+    /**
+     * Constructs a new {@code PluginEnableEvent} for the specified enabled plugin.
+     *
+     * @param plugin enabled plugin
+     */
+    public PluginEnableEvent(Plugin plugin) {
+        this.plugin = Objects.requireNonNull(plugin, "plugin must not be null");
+    }
+
+    public Plugin getPlugin() {
+        return plugin;
+    }
+
+    public HandlerList getHandlers() {
+        return HANDLERS;
+    }
+
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
+    }
+}

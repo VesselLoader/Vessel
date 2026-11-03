@@ -63,18 +63,18 @@ VESSEL.zip
 vstm-distribution/
 release-distribution/
 
-# Live Minecraft server test runtime & execution environments
-test-server/
-run/
-server/
-cache/
-libraries/
-logs/
-world/
-world_nether/
-world_the_end/
-eula.txt
-server.properties
+# Live Minecraft server test runtime & execution environments (Root-only anchors)
+/test-server/
+/run/
+/server/
+/cache/
+/libraries/
+/logs/
+/world/
+/world_nether/
+/world_the_end/
+/eula.txt
+/server.properties
 
 # Official Branding multi-resolution icon assets (local generation suite)
 assets/branding/icons/

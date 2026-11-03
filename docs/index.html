@@ -568,8 +568,17 @@ java -jar server.jar --vessel-deep-debug --nogui</code></pre>
 
       <div class="card">
         <h2>📊 19 Row Families Parity Matrix (100% Coverage Certified)</h2>
+        <div class="search-box-container">
+          <input 
+            type="text" 
+            id="superapi-search" 
+            class="search-box" 
+            placeholder="🔍 Search Super-API domains, subsystems, or supported ecosystems (e.g. event, actor, storage, block, Folia, Fabric, energy)..." 
+            oninput="filterSuperApi()"
+          />
+        </div>
         <div class="table-scroll-container">
-          <table>
+          <table id="superapi-table">
             <thead>
               <tr>
                 <th>Family #</th>
@@ -603,6 +612,72 @@ java -jar server.jar --vessel-deep-debug --nogui</code></pre>
             </tbody>
           </table>
         </div>
+      </div>
+
+            <div class="card">
+        <h2>🔍 Universal Super-API Class &amp; Contract Explorer (io.github.vesselloader:vessel-api)</h2>
+        <p>
+          Instant search across the published <strong>VESSEL Universal Super-API (VUSA)</strong> classes, symmetry adapters, and bytecode contracts:
+        </p>
+        <div class="search-box-container">
+          <input 
+            type="text" 
+            id="api-class-search" 
+            class="search-box" 
+            placeholder="🔍 Search API class names, packages, or interfaces (e.g. FoliaRegionExecutionBridge, SovereignEventBus, WeakCapabilitySentinel, StorageTransferBridge, VstmTransmutationPipeline)..." 
+            oninput="filterApiClasses()"
+          />
+        </div>
+        <div class="table-scroll-container">
+          <table id="api-classes-table">
+            <thead>
+              <tr>
+                <th>Class / Interface Name</th>
+                <th>Package Domain</th>
+                <th>Role &amp; Architectural Capability</th>
+                <th>Cross-Ecosystem Target</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>FoliaRegionExecutionBridge</code></td><td><code>dev.vessel.api.actor</code></td><td>Executes tasks on owning regional strand with cancellation support</td><td>Folia, Paper, Bukkit</td></tr>
+              <tr><td><code>RegionalActorStrand</code></td><td><code>dev.vessel.api.actor</code></td><td>16x16 chunk regionized actor strand with MPSC lock-free ring buffer</td><td>Folia, Paper</td></tr>
+              <tr><td><code>GlobalRegionSyncBarrier</code></td><td><code>dev.vessel.api.actor</code></td><td>Cross-region work synchronization with 25ms timeout circuit breaker</td><td>Folia, Paper</td></tr>
+              <tr><td><code>LockFreeMailboxRingBuffer</code></td><td><code>dev.vessel.api.actor</code></td><td>Zero-allocation thread-safe message passing between worker threads</td><td>Core Microkernel</td></tr>
+              <tr><td><code>BlockHarvestGovernor</code></td><td><code>dev.vessel.api.block</code></td><td>Evaluates tool types, mining tiers, and harvestability</td><td>Bukkit, Forge, NeoForge</td></tr>
+              <tr><td><code>ExplosionResistanceCache</code></td><td><code>dev.vessel.api.block</code></td><td>Sub-nanosecond L1 cache array for blast resistance</td><td>Vanilla, Forge, Fabric</td></tr>
+              <tr><td><code>BukkitBlockSymmetryAdapter</code></td><td><code>dev.vessel.api.block</code></td><td>Bridges Bukkit Block/BlockData state calls without proxy objects</td><td>Bukkit, Paper, Spigot</td></tr>
+              <tr><td><code>ForgeBlockSymmetryAdapter</code></td><td><code>dev.vessel.api.block</code></td><td>Routes Forge IForgeBlock opcode invocations into universal view</td><td>Forge, NeoForge</td></tr>
+              <tr><td><code>VesselUnifiedCapability</code></td><td><code>dev.vessel.api.capability</code></td><td>Cross-loader unified capability token with automatic revocation</td><td>Forge, NeoForge, Fabric</td></tr>
+              <tr><td><code>WeakCapabilitySentinel</code></td><td><code>dev.vessel.api.capability</code></td><td>Weak-reference capability sentinel evicting on chunk unload</td><td>MemoryLeak Sanitizer</td></tr>
+              <tr><td><code>CapabilityTransactionSimulator</code></td><td><code>dev.vessel.api.capability</code></td><td>Nested capability rollback simulation journal with zero heap allocation</td><td>Fabric Transfer, Forge</td></tr>
+              <tr><td><code>PreflightBytecodeTaxonomyScanner</code></td><td><code>dev.vessel.api.classification</code></td><td>Preflight mod scanner classifying Pure-Vessel vs Mixed-Vessel tiers</td><td>All 8 Loaders</td></tr>
+              <tr><td><code>PureVesselComplianceValidator</code></td><td><code>dev.vessel.api.classification</code></td><td>Strict Rule 17 single-responsibility and clean-room audit validator</td><td>All Ecosystems</td></tr>
+              <tr><td><code>VesselCommandHub</code></td><td><code>dev.vessel.api.command</code></td><td>Unifies Brigadier and Bukkit commands into a single dispatch tree</td><td>Brigadier, Bukkit</td></tr>
+              <tr><td><code>BukkitToBrigadierTranspiler</code></td><td><code>dev.vessel.api.command</code></td><td>Transpiles Bukkit CommandMap commands into native Brigadier trees</td><td>Bukkit -> Brigadier</td></tr>
+              <tr><td><code>TabCompletionCache</code></td><td><code>dev.vessel.api.command</code></td><td>Trie-based prefix caching for sub-microsecond command autocompletion</td><td>Vanilla, Bukkit</td></tr>
+              <tr><td><code>VesselConfigurationTree</code></td><td><code>dev.vessel.api.config</code></td><td>Flat off-heap token array backed by Java 21 MemorySegment (-85% RAM)</td><td>YAML, TOML, JSON5</td></tr>
+              <tr><td><code>ForgeConfigSpecSymmetryAdapter</code></td><td><code>dev.vessel.api.config</code></td><td>Bridges ForgeConfigSpec into flat Vessel token tree</td><td>Forge, NeoForge</td></tr>
+              <tr><td><code>VesselDataPackHub</code></td><td><code>dev.vessel.api.datapack</code></td><td>In-memory virtual datapack registry with instant reloading</td><td>Vanilla, Fabric, Forge</td></tr>
+              <tr><td><code>LootModifierPipeline</code></td><td><code>dev.vessel.api.datapack</code></td><td>Bridges Forge Global Loot Modifiers and Fabric LootTableEvents</td><td>Forge, Fabric</td></tr>
+              <tr><td><code>ZeroAllocEnergyBridge</code></td><td><code>dev.vessel.api.energy</code></td><td>64-bit primitive long ALU energy math with zero garbage collection</td><td>Forge FE, TechReborn, NeoForge</td></tr>
+              <tr><td><code>PrimitiveLongAtomicEnergyCell</code></td><td><code>dev.vessel.api.energy</code></td><td>Atomic CAS loop energy storage cell for multi-threaded transfer</td><td>Universal Energy</td></tr>
+              <tr><td><code>SpatialEntityGrid</code></td><td><code>dev.vessel.api.entity</code></td><td>O(1) spatial cell hashing for radial entity lookup</td><td>Lithium, Folia</td></tr>
+              <tr><td><code>EntityActivationRangeLOD</code></td><td><code>dev.vessel.api.entity</code></td><td>3D spatial distance entity tick throttle (LOD)</td><td>Paper, Purpur</td></tr>
+              <tr><td><code>SovereignEventBus</code></td><td><code>dev.vessel.api.event</code></td><td>MethodHandle-based ultra-fast event bus (< 1.2 ns dispatch)</td><td>Forge, Fabric, Bukkit</td></tr>
+              <tr><td><code>DynamicEventSubscriptionRouter</code></td><td><code>dev.vessel.api.event</code></td><td>Routes events across @EventHandler and @SubscribeEvent annotations</td><td>Multi-Loader</td></tr>
+              <tr><td><code>ItemStackSnapshot</code></td><td><code>dev.vessel.api.item</code></td><td>Immutable primitive item representation with component patches</td><td>1.20.5+ Components</td></tr>
+              <tr><td><code>IndexedRecipeLookupAccelerator</code></td><td><code>dev.vessel.api.item</code></td><td>O(1) indexed recipe matching cache for crafting and smelting</td><td>FastSuite, Vanilla</td></tr>
+              <tr><td><code>VesselNetworkChannelMultiplex</code></td><td><code>dev.vessel.api.network</code></td><td>Multiplexes Forge SimpleChannel and Fabric payload packets</td><td>Forge, Fabric, Geyser</td></tr>
+              <tr><td><code>VesselUniversalRegistry</code></td><td><code>dev.vessel.api.registry</code></td><td>Unified registration table supporting DeferredRegister and Fabric Registry</td><td>Vanilla, Forge, Fabric</td></tr>
+              <tr><td><code>StorageTransferBridge</code></td><td><code>dev.vessel.api.storage</code></td><td>Fluid and item transaction bridge with droplet-to-millibucket conversion</td><td>Fabric Transfer, Forge</td></tr>
+              <tr><td><code>VesselStorageView</code></td><td><code>dev.vessel.api.storage</code></td><td>Virtualized storage view for slots and tanks</td><td>Bukkit, Forge</td></tr>
+              <tr><td><code>VesselComponentSnapshot</code></td><td><code>dev.vessel.api.text</code></td><td>Adventure Component & Bedrock chat translation snapshot</td><td>Adventure, Bedrock</td></tr>
+              <tr><td><code>VstmTransmutationPipeline</code></td><td><code>dev.vessel.api.transmutation</code></td><td>VSTM bytecode matrix compiler and runtime JIT remapper</td><td>Binary Matrix (.vstmb)</td></tr>
+              <tr><td><code>CrossLoaderOpcodeTransmutator</code></td><td><code>dev.vessel.api.transmutation</code></td><td>ASM opcode transmutator weaving foreign calls into Vessel Super-API</td><td>ASM 9.7</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-tip">💡 Tip: Use the search box above to instantly filter through all 35+ core public API classes.</div>
       </div>
 
       <div class="card">
@@ -1217,6 +1292,25 @@ public final class MyModInitializer implements VesselModInitializer {
       
       const targetContent = document.getElementById(tabId);
       if (targetContent) targetContent.classList.add('active');
+    }
+
+    
+    function filterSuperApi() {
+      const query = document.getElementById('superapi-search').value.toLowerCase().trim();
+      const rows = document.querySelectorAll('#superapi-table tbody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+
+    function filterApiClasses() {
+      const query = document.getElementById('api-class-search').value.toLowerCase().trim();
+      const rows = document.querySelectorAll('#api-classes-table tbody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
     }
 
     function filterMappings() {
