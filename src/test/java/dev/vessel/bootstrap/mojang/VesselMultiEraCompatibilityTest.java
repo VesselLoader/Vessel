@@ -32,7 +32,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes, and zero lambdas.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class VesselMultiEraCompatibilityTest {
 
@@ -222,8 +222,9 @@ public final class VesselMultiEraCompatibilityTest {
         assertThat(factory.resolveItemClass(getClass().getClassLoader())).isNull();
 
         VesselItemRegistryInjector injector = new VesselItemRegistryInjector();
-        assertThat(injector.resolveItemRegistry(getClass().getClassLoader())).isNull();
-        assertThat(injector.isAlreadyRegistered(null, "cogwheel", "create:cogwheel")).isFalse();
+        Object registry = injector.resolveItemRegistry(getClass().getClassLoader());
+        assertThat(registry).isNotNull();
+        assertThat(injector.isAlreadyRegistered(registry, "cogwheel", "create:cogwheel")).isFalse();
     }
 
     @Test
