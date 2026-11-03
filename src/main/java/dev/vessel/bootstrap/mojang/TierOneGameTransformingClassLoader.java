@@ -15,13 +15,14 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.3
+ * @version 1.0.4
  */
 public final class TierOneGameTransformingClassLoader extends URLClassLoader {
 
     private final VesselServerBrandTransformer brandTransformer = new VesselServerBrandTransformer();
     private final VesselServerLifecycleTransformer lifecycleTransformer = new VesselServerLifecycleTransformer();
     private final VesselCommandsTransformer commandsTransformer = new VesselCommandsTransformer();
+    private final TierOneGamePackageFilter gamePackageFilter = new TierOneGamePackageFilter();
     private volatile UnifiedGameAndModClassLoaderBridge unifiedBridge;
 
     public TierOneGameTransformingClassLoader(
@@ -42,14 +43,43 @@ public final class TierOneGameTransformingClassLoader extends URLClassLoader {
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         Objects.requireNonNull(name, "name must not be null");
-        // Always prioritize parent classloader for VESSEL core classes to guarantee class identity
-        if (name.startsWith("dev.vessel.") && getParent() != null) {
-            try {
-                return getParent().loadClass(name);
-            } catch (ClassNotFoundException ignored) {
+        synchronized (getClassLoadingLock(name)) {
+            Class<?> loaded = findLoadedClass(name);
+            if (loaded != null) {
+                if (resolve) {
+                    resolveClass(loaded);
+                }
+                return loaded;
             }
+
+            // Always prioritize parent classloader for VESSEL core classes to guarantee class identity
+            if (name.startsWith("dev.vessel.") && getParent() != null) {
+                try {
+                    Class<?> kernelClass = getParent().loadClass(name);
+                    if (resolve) {
+                        resolveClass(kernelClass);
+                    }
+                    return kernelClass;
+                } catch (ClassNotFoundException ignored) {
+                }
+            }
+
+            // Child-First (Self-First) for Minecraft vanilla game and Mojang library packages:
+            // Always prioritize the real Minecraft server JAR and library classpath over kernel stubs.
+            if (gamePackageFilter.isGameOrMojangClass(name)) {
+                try {
+                    Class<?> gameClass = findClass(name);
+                    if (resolve) {
+                        resolveClass(gameClass);
+                    }
+                    return gameClass;
+                } catch (ClassNotFoundException ignored) {
+                    // Fall back to parent if not found directly in game classpath
+                }
+            }
+
+            return super.loadClass(name, resolve);
         }
-        return super.loadClass(name, resolve);
     }
 
     @Override
@@ -58,28 +88,30 @@ public final class TierOneGameTransformingClassLoader extends URLClassLoader {
 
         if (VesselServerBrandTransformer.isServerClass(name)) {
             String resPath = name.replace('.', '/') + ".class";
-            try (InputStream in = getResourceAsStream(resPath)) {
-                if (in != null) {
+            URL selfRes = findResource(resPath);
+            if (selfRes != null) {
+                try (InputStream in = selfRes.openStream()) {
                     byte[] raw = in.readAllBytes();
                     byte[] branded = brandTransformer.transformServerBrand(raw);
                     byte[] hooked = lifecycleTransformer.transformServerLifecycle(branded);
                     return defineClass(name, hooked, 0, hooked.length);
+                } catch (Exception ignored) {
+                    // Fall back to standard definition
                 }
-            } catch (Exception ignored) {
-                // Fall back to standard definition
             }
         }
 
         if (VesselCommandsTransformer.isCommandsClass(name)) {
             String resPath = name.replace('.', '/') + ".class";
-            try (InputStream in = getResourceAsStream(resPath)) {
-                if (in != null) {
+            URL selfRes = findResource(resPath);
+            if (selfRes != null) {
+                try (InputStream in = selfRes.openStream()) {
                     byte[] raw = in.readAllBytes();
                     byte[] hooked = commandsTransformer.transformCommands(raw);
                     return defineClass(name, hooked, 0, hooked.length);
+                } catch (Exception ignored) {
+                    // Fall back to standard definition
                 }
-            } catch (Exception ignored) {
-                // Fall back to standard definition
             }
         }
 
