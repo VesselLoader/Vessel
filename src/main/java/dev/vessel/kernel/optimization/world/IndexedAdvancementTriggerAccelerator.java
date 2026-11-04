@@ -15,7 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * BlazeandCave) with an inverted {@code rawItemId -> List<AdvancementId>} index evaluated
  * solely on the single inventory slot that actually changed.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class IndexedAdvancementTriggerAccelerator {
 
@@ -80,5 +80,18 @@ public final class IndexedAdvancementTriggerAccelerator {
             }
         }
         return Collections.unmodifiableList(newlyTriggered);
+    }
+
+    /**
+     * Unregisters and purges cached slot state and granted advancement records for a disconnected player.
+     *
+     * @param playerUuid UUID of the player disconnecting
+     */
+    public void unregisterPlayer(UUID playerUuid) {
+        if (playerUuid != null) {
+            String prefix = playerUuid + ":";
+            lastSeenItemInPlayerSlot.keySet().removeIf(k -> k.startsWith(prefix));
+            grantedAdvancementsByPlayer.remove(playerUuid);
+        }
     }
 }

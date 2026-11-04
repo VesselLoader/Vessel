@@ -11,7 +11,7 @@ import java.util.Objects;
  * <p>Coordinates fast-path $O(1)$ off-heap lookups with dialect bridge routing
  * and synthetic fallback chains, maintaining thread-safe immutable context per module (Catalog ref: FOL-0040).</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @since 1.0.0 (Wave 1)
  */
 public final class VstmTransmutationContext {
@@ -127,5 +127,29 @@ public final class VstmTransmutationContext {
 
     public VstmDialectBridgeRouter getBridgeRouter() {
         return bridgeRouter;
+    }
+
+    /**
+     * Creates an empty transmutation context that performs identity mappings without off-heap buffers.
+     *
+     * @return empty transmutation context
+     */
+    public static VstmTransmutationContext empty() {
+        byte[] emptyBinary = VstmbBinaryWriter.writeToByteArray(
+                (short) 767,
+                0,
+                java.util.List.of(),
+                java.util.List.of(),
+                java.util.List.of()
+        );
+        java.lang.foreign.MemorySegment segment = dev.vessel.kernel.vstm.binary.VstmbMemorySegmentMapper.mapFromByteArray(emptyBinary);
+        return new VstmTransmutationContext(
+                "vessel:empty",
+                0,
+                0,
+                new VstmTransmutationFastLookup(segment),
+                new VstmResolutionFallbackChain(),
+                new VstmDialectBridgeRouter()
+        );
     }
 }

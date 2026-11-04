@@ -1,5 +1,6 @@
 package dev.vessel.bootstrap.mojang;
 
+import dev.vessel.kernel.compat.bytecode.AsmClassReaderBytecodeSanitizer;
 import java.util.Objects;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -10,12 +11,14 @@ import org.objectweb.asm.ClassWriter;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.3
  */
 public final class VesselCommandsTransformer {
 
     public static final String TARGET_INTERNAL_NAME = "net/minecraft/commands/Commands";
     public static final String TARGET_CLASS_NAME = "net.minecraft.commands.Commands";
+
+    private final AsmClassReaderBytecodeSanitizer sanitizer = new AsmClassReaderBytecodeSanitizer();
 
     public VesselCommandsTransformer() {
     }
@@ -46,11 +49,13 @@ public final class VesselCommandsTransformer {
     public byte[] transformCommands(byte[] originalBytes) {
         Objects.requireNonNull(originalBytes, "originalBytes must not be null");
         try {
-            ClassReader reader = new ClassReader(originalBytes);
+            int originalMajor = sanitizer.extractMajorVersion(originalBytes);
+            ClassReader reader = sanitizer.createSafeClassReader(originalBytes);
             ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
             VesselCommandsClassVisitor visitor = new VesselCommandsClassVisitor(writer);
             reader.accept(visitor, 0);
-            return writer.toByteArray();
+            byte[] transformed = writer.toByteArray();
+            return sanitizer.restoreOriginalMajorVersion(transformed, originalMajor);
         } catch (Exception e) {
             return originalBytes;
         }

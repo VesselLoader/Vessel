@@ -5,8 +5,12 @@ package dev.vessel.kernel.optimization.entity;
  * Adjusts brain ticking frequency based on entity proximity to the nearest active player,
  * preventing server tick rate degradation in crowded mob farms while preserving responsive
  * behavior for nearby interactions.
+ * <p>
+ * Employs bitwise stride masks for powers-of-two throttling intervals to eliminate CPU division
+ * instructions across thousands of ticking entities.
+ * </p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class EntityBrainTickThrottle {
@@ -63,7 +67,12 @@ public final class EntityBrainTickThrottle {
         if (interval == 1) {
             return true;
         }
-        // Stagger execution using entityId offset so all mobs don't tick on the same frame
-        return (currentTick + (entityId & 0x7FFF)) % interval == 0;
+        long offsetTick = currentTick + (entityId & 0x7FFF);
+        if (interval == 2) {
+            return (offsetTick & 1L) == 0L;
+        } else if (interval == 4) {
+            return (offsetTick & 3L) == 0L;
+        }
+        return offsetTick % interval == 0L;
     }
 }

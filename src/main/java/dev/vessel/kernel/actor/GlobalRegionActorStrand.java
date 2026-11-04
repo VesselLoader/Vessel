@@ -16,10 +16,10 @@ import java.util.function.Supplier;
  * and Paper plugins that have not declared Folia multi-threading support.
  * </p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-4)
  */
-public class GlobalRegionActorStrand implements AutoCloseable {
+public final class GlobalRegionActorStrand implements AutoCloseable {
 
     private final ActorMailboxQueue<Runnable> mailbox = new ActorMailboxQueue<>();
     private final ExecutorService executor;

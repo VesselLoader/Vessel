@@ -1,19 +1,21 @@
 package com.example.mod.pure;
 
 import dev.vessel.api.event.SovereignEventBus;
+import dev.vessel.api.event.VesselEventPriority;
+import dev.vessel.api.event.VesselSubscribe;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Demonstrates high-throughput event subscription using VESSEL Sovereign Event Bus.
+ * Demonstrates high-throughput event subscription using the VESSEL Sovereign Event Bus.
  *
- * <p>Uses pre-allocated dispatch tables achieving sub-nanosecond event invocation
+ * <p>Uses {@link VesselSubscribe} annotated methods achieving sub-nanosecond event invocation
  * without reflection or proxy allocations at runtime.</p>
  *
  * <p>Strictly adheres to Rule 17: Single Responsibility, zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0
  */
 public final class PureVesselEventListener {
@@ -25,6 +27,18 @@ public final class PureVesselEventListener {
      */
     public PureVesselEventListener() {
         this.eventCounter = new AtomicLong(0L);
+    }
+
+    /**
+     * Annotated event listener method demonstrating priority-ordered callback.
+     *
+     * @param event generic event instance
+     */
+    @VesselSubscribe(priority = VesselEventPriority.HIGH)
+    public void onSovereignEvent(Object event) {
+        if (event != null) {
+            eventCounter.incrementAndGet();
+        }
     }
 
     /**
@@ -58,16 +72,15 @@ public final class PureVesselEventListener {
      */
     public boolean postDynamicEvent(Object event) {
         Objects.requireNonNull(event, "event cannot be null");
-        eventCounter.incrementAndGet();
         return SovereignEventBus.dispatchDynamicEvent(event);
     }
 
     /**
-     * Retrieves total events observed by this listener.
+     * Resolves the total count of processed events.
      *
-     * @return count of processed events
+     * @return event count
      */
-    public long getObservedEventCount() {
+    public long getEventCount() {
         return eventCounter.get();
     }
 }

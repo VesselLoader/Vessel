@@ -8,7 +8,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @param <T> referenced registry or entry type
  */
 public final class ResourceKey<T> {
@@ -42,6 +42,14 @@ public final class ResourceKey<T> {
     }
 
     /**
+     * SRG alias for {@link #create(ResourceKey, ResourceLocation)}.
+     */
+    public static <T> ResourceKey<T> m_135785_(
+            ResourceKey<? extends Object> registryKey, ResourceLocation location) {
+        return create(registryKey, location);
+    }
+
+    /**
      * Creates a root registry {@code ResourceKey} for the given registry location.
      *
      * @param registryName registry location (e.g. {@code minecraft:item})
@@ -50,6 +58,13 @@ public final class ResourceKey<T> {
      */
     public static <T> ResourceKey<T> createRegistryKey(ResourceLocation registryName) {
         return new ResourceKey<>(new ResourceLocation("minecraft", "root"), registryName);
+    }
+
+    /**
+     * SRG alias for {@link #createRegistryKey(ResourceLocation)}.
+     */
+    public static <T> ResourceKey<T> m_135788_(ResourceLocation registryName) {
+        return createRegistryKey(registryName);
     }
 
     /**
@@ -62,11 +77,25 @@ public final class ResourceKey<T> {
     }
 
     /**
+     * SRG alias for {@link #registry()}.
+     */
+    public ResourceLocation m_135780_() {
+        return registryName;
+    }
+
+    /**
      * Returns the target entry or registry {@link ResourceLocation}.
      *
      * @return target location
      */
     public ResourceLocation location() {
+        return location;
+    }
+
+    /**
+     * SRG alias for {@link #location()}.
+     */
+    public ResourceLocation m_135782_() {
         return location;
     }
 

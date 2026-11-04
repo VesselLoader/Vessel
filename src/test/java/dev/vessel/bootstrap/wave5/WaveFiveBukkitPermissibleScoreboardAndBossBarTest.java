@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -35,7 +36,7 @@ final class WaveFiveBukkitPermissibleScoreboardAndBossBarTest {
 
     @Test
     void testBukkitPermissionsPotionEffectsScoreboardAndBossBar() {
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Location location = new Location(world, 0.0, 64.0, 0.0);
         Player player = new Player("Shiroz", location);
 

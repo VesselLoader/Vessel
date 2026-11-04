@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class ConsoleCommandSender implements CommandSender {
 
@@ -25,6 +25,16 @@ public final class ConsoleCommandSender implements CommandSender {
     public void sendMessage(String message) {
         if (message != null) {
             sentMessages.add(message);
+            System.out.println(message);
+        }
+    }
+
+    @Override
+    public void sendMessage(String[] messages) {
+        if (messages != null) {
+            for (String m : messages) {
+                sendMessage(m);
+            }
         }
     }
 

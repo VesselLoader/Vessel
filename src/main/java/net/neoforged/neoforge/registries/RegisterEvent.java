@@ -3,6 +3,7 @@ package net.neoforged.neoforge.registries;
 import dev.vessel.adapter.forge.DeferredRegisterBridge;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -13,7 +14,7 @@ import java.util.function.Supplier;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class RegisterEvent {
 
@@ -52,7 +53,7 @@ public final class RegisterEvent {
 
     /**
      * Evaluates {@code valueSupplier}, records the entry in the underlying VESSEL bridge, and
-     * stores the resolved object in this event's registered value map.
+     * stores the resolved object in this event's registered value map and {@link dev.vessel.kernel.registry.VesselModRegistryHolder}.
      *
      * @param entryName     entry identifier ({@code namespace:path} or {@code path})
      * @param valueSupplier supplier producing the entry value
@@ -66,7 +67,19 @@ public final class RegisterEvent {
         int colonIdx = entryName.indexOf(':');
         String namespace = colonIdx >= 0 ? entryName.substring(0, colonIdx) : "minecraft";
         String path = colonIdx >= 0 ? entryName.substring(colonIdx + 1) : entryName;
-        bridge.registerBlockEntry(namespace, path, 1);
+        String fullKey = namespace + ":" + path;
+        boolean isItem = registryKey.toLowerCase(Locale.ROOT).contains("item");
+        if (isItem) {
+            bridge.registerItemEntry(namespace, path, Collections.emptyMap());
+            if (value != null) {
+                dev.vessel.kernel.registry.VesselModRegistryHolder.registerModItem(fullKey, value);
+            }
+        } else {
+            bridge.registerBlockEntry(namespace, path, 1);
+            if (value != null) {
+                dev.vessel.kernel.registry.VesselModRegistryHolder.registerModBlock(fullKey, value);
+            }
+        }
         registeredValues.put(entryName, value);
         return value;
     }

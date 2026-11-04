@@ -1,5 +1,7 @@
 package dev.vessel.bootstrap.target;
 
+import dev.vessel.kernel.resourcepack.VesselResourcePackAssetPipeline;
+
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -8,25 +10,40 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.DigestOutputStream;
 import java.security.MessageDigest;
+import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Compiles the Universal Client Presentation Resource Pack ({@code vessel-pack.zip}) by aggregating
  * client assets (textures, block/item/entity models, blockstates, sounds, lang) across all discovered
  * mod and plugin JARs in {@code mods/} and {@code plugins/}.
+ * <p>
+ * Routes all aggregated assets through {@link VesselResourcePackAssetPipeline} for:
+ * <ul>
+ *   <li>POSIX lowercase normalization to prevent case-sensitivity crashes on Linux and Android</li>
+ *   <li>Shader safety filtering to prevent OptiFine/Iris/Sodium OpenGL crashes</li>
+ *   <li>Atlas seam protection and Power-of-Two verification for RenderDragon mobile GPUs</li>
+ *   <li>Audio streaming flags in {@code sounds.json} for large OGG tracks (>500KB or >5s)</li>
+ *   <li>Bedrock metadata synthesis ({@code item_texture.json}, {@code terrain_texture.json}, {@code texts/*.lang}, clean manifest)</li>
+ *   <li>Deterministic ZIP output with fixed epoch timestamps (1980-01-01 00:00:00 UTC) and alphabetical sorting</li>
+ * </ul>
+ * Computes the 40-character SHA-1 checksum on-the-fly in a single streaming pass using {@link DigestOutputStream},
+ * completely eliminating {@code Files.readAllBytes} heap allocations.
+ * </p>
+ * <p>
+ * Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.
+ * </p>
  *
- * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
- *
- * @version 1.0.2
+ * @version 1.0.3
+ * @author VESSEL Engine Team
  */
 public final class VesselUniversalResourcePackCompiler {
 
@@ -43,16 +60,17 @@ public final class VesselUniversalResourcePackCompiler {
     };
 
     private final VesselPackFormatResolver packFormatResolver = new VesselPackFormatResolver();
+    private final VesselResourcePackAssetPipeline assetPipeline = new VesselResourcePackAssetPipeline();
 
     public VesselUniversalResourcePackCompiler() {
     }
 
     /**
      * Compiles all assets found across {@code mods/} and {@code plugins/} into {@code packZip} and
-     * returns the SHA-1 hex hash of the resulting resource pack archive, targeting modern 1.21.4 / 26.3.
+     * returns the deterministic SHA-1 hex hash of the resulting resource pack archive, targeting 1.21.4 / 26.3.
      *
      * @param serverRoot the root server directory
-     * @param packZip    the target path for {@code vessel-pack.zip}
+     * @param packZip the target path for {@code vessel-pack.zip}
      * @return 40-character lowercase hexadecimal SHA-1 string
      * @throws IOException on I/O or archive writing errors
      */
@@ -65,8 +83,8 @@ public final class VesselUniversalResourcePackCompiler {
      * the canonical {@code pack_format} computed for the running Minecraft version.
      *
      * @param serverRoot the root server directory
-     * @param packZip    the target path for {@code vessel-pack.zip}
-     * @param mcVersion  active Minecraft version (e.g. {@code "1.12.2"}, {@code "1.20.1"}, {@code "26.3"})
+     * @param packZip the target path for {@code vessel-pack.zip}
+     * @param mcVersion active Minecraft version (e.g. {@code "1.12.2"}, {@code "1.20.1"}, {@code "26.3"})
      * @return 40-character lowercase hexadecimal SHA-1 string
      * @throws IOException on I/O or archive writing errors
      */
@@ -74,46 +92,42 @@ public final class VesselUniversalResourcePackCompiler {
         Objects.requireNonNull(serverRoot, "serverRoot must not be null");
         Objects.requireNonNull(packZip, "packZip must not be null");
 
-        Files.createDirectories(packZip.getParent());
-        Set<String> packagedEntries = new HashSet<>();
-        int packFormat = packFormatResolver.resolvePackFormat(mcVersion);
-
-        try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(packZip)))) {
-            // 1. pack.mcmeta with dynamic pack_format for the detected Minecraft version
-            ZipEntry mcmetaEntry = new ZipEntry("pack.mcmeta");
-            zos.putNextEntry(mcmetaEntry);
-            String mcmeta = "{\n  \"pack\": {\n    \"pack_format\": "
-                    + packFormat
-                    + ",\n    \"description\": \"VESSEL Sovereign Universal Mod Presentation Pack\"\n  }\n}\n";
-            zos.write(mcmeta.getBytes(StandardCharsets.UTF_8));
-            zos.closeEntry();
-            packagedEntries.add("pack.mcmeta");
-
-            // 2. assets/vessel/textures/item/vessel_core.png
-            ZipEntry defaultCore = new ZipEntry("assets/vessel/textures/item/vessel_core.png");
-            zos.putNextEntry(defaultCore);
-            zos.write(MINIMAL_PNG);
-            zos.closeEntry();
-            packagedEntries.add("assets/vessel/textures/item/vessel_core.png");
-
-            // 3. Scan serverRoot/mods and serverRoot/plugins for assets/
-            aggregateAssetsFromDirectory(serverRoot.resolve("mods"), zos, packagedEntries);
-            aggregateAssetsFromDirectory(serverRoot.resolve("plugins"), zos, packagedEntries);
+        Path parentDir = packZip.getParent();
+        if (parentDir != null) {
+            Files.createDirectories(parentDir);
         }
 
-        byte[] packBytes = Files.readAllBytes(packZip);
+        int packFormat = packFormatResolver.resolvePackFormat(mcVersion);
+        Map<String, byte[]> rawAssets = new LinkedHashMap<>();
+
+        // 1. pack.mcmeta with dynamic pack_format for the detected Minecraft version
+        String mcmeta = "{\n  \"pack\": {\n    \"pack_format\": "
+                + packFormat
+                + ",\n    \"description\": \"VESSEL Sovereign Universal Mod Presentation Pack\"\n  }\n}\n";
+        rawAssets.put("pack.mcmeta", mcmeta.getBytes(StandardCharsets.UTF_8));
+
+        // 2. assets/vessel/textures/item/vessel_core.png
+        rawAssets.put("assets/vessel/textures/item/vessel_core.png", MINIMAL_PNG);
+
+        // 3. Scan serverRoot/mods and serverRoot/plugins for JAR assets/
+        aggregateAssetsFromDirectory(serverRoot.resolve("mods"), rawAssets);
+        aggregateAssetsFromDirectory(serverRoot.resolve("plugins"), rawAssets);
+
+        // 4. Stream and pack deterministically while calculating SHA-1 on-the-fly
         try {
             MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
-            return HexFormat.of().formatHex(sha1Digest.digest(packBytes));
+            try (DigestOutputStream dos = new DigestOutputStream(
+                    new BufferedOutputStream(Files.newOutputStream(packZip)), sha1Digest)) {
+                assetPipeline.sanitizeAndPackToStream(rawAssets, Collections.emptyList(), mcVersion, dos);
+                dos.flush();
+            }
+            return HexFormat.of().formatHex(sha1Digest.digest());
         } catch (Exception e) {
-            throw new IOException("Failed to calculate SHA-1 of compiled resource pack", e);
+            throw new IOException("Failed to compile deterministic resource pack: " + e.getMessage(), e);
         }
     }
 
-    private static void aggregateAssetsFromDirectory(
-            Path dir,
-            ZipOutputStream zos,
-            Set<String> packagedEntries) {
+    private static void aggregateAssetsFromDirectory(Path dir, Map<String, byte[]> rawAssets) {
         if (!Files.isDirectory(dir)) {
             return;
         }
@@ -123,15 +137,12 @@ public final class VesselUniversalResourcePackCompiler {
         }
         for (File file : files) {
             if (file.isFile() && file.getName().toLowerCase().endsWith(".jar")) {
-                extractJarAssetsIntoPack(file, zos, packagedEntries);
+                extractJarAssetsIntoMap(file, rawAssets);
             }
         }
     }
 
-    private static void extractJarAssetsIntoPack(
-            File jarFile,
-            ZipOutputStream zos,
-            Set<String> packagedEntries) {
+    private static void extractJarAssetsIntoMap(File jarFile, Map<String, byte[]> rawAssets) {
         try (JarFile jar = new JarFile(jarFile)) {
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
@@ -143,15 +154,13 @@ public final class VesselUniversalResourcePackCompiler {
                 if (name.endsWith(".class") || name.endsWith(".DS_Store")) {
                     continue;
                 }
-                if (!packagedEntries.add(name)) {
+                if (rawAssets.containsKey(name.toLowerCase())) {
                     continue;
                 }
-                ZipEntry newEntry = new ZipEntry(name);
-                zos.putNextEntry(newEntry);
                 try (InputStream in = jar.getInputStream(entry)) {
-                    in.transferTo(zos);
+                    byte[] data = in.readAllBytes();
+                    rawAssets.put(name, data);
                 }
-                zos.closeEntry();
             }
         } catch (Exception ignored) {
         }

@@ -1,6 +1,5 @@
 package dev.vessel.kernel.optimization.crosschunk;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -11,16 +10,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * FastWorkbench style) using per-machine {@code lastMatchedRecipe} pointers, an $O(1)$
  * inverted hash index, a Negative Recipe Cache for invalid input combinations, and
  * RecipeBook packet payload stripping.
+ * <p>
+ * Employs zero-allocation 64-bit primitive composite keys to eliminate string concatenation
+ * garbage generation on recipe checking hot-paths.
+ * </p>
  *
- * @version 1.0.0
+ * @version 1.0.1
+ * @author VESSEL Engine Team
  */
 public final class IndexedRecipeLookupAccelerator {
 
-    private final Map<String, String> invertedRecipeIndex = new ConcurrentHashMap<>();
+    private final Map<Long, String> invertedRecipeIndex = new ConcurrentHashMap<>();
     private final Map<String, Long> recipeRequiredTagMask = new ConcurrentHashMap<>();
-    private final Map<Long, String> lastMatchedInputByMachine = new ConcurrentHashMap<>();
+    private final Map<Long, Long> lastMatchedInputByMachine = new ConcurrentHashMap<>();
     private final Map<Long, String> lastMatchedRecipeByMachine = new ConcurrentHashMap<>();
-    private final Set<String> negativeRecipeInputCache = ConcurrentHashMap.newKeySet();
+    private final Set<Long> negativeRecipeInputCache = ConcurrentHashMap.newKeySet();
 
     /**
      * Creates a new $O(1)$ indexed recipe lookup accelerator.
@@ -44,7 +48,7 @@ public final class IndexedRecipeLookupAccelerator {
             long ingredientTagBitmask) {
         Objects.requireNonNull(recipeId, "recipeId must not be null");
         Objects.requireNonNull(recipeType, "recipeType must not be null");
-        String signatureKey = composeSignatureKey(recipeType, primaryInputItemId, ingredientTagBitmask);
+        long signatureKey = composeSignatureKey(recipeType, primaryInputItemId, ingredientTagBitmask);
         invertedRecipeIndex.put(signatureKey, recipeId.trim());
         recipeRequiredTagMask.put(recipeId.trim(), ingredientTagBitmask);
         negativeRecipeInputCache.remove(signatureKey);
@@ -67,9 +71,9 @@ public final class IndexedRecipeLookupAccelerator {
             int primaryInputItemId,
             long inputTagBitmask) {
         Objects.requireNonNull(recipeType, "recipeType must not be null");
-        String signatureKey = composeSignatureKey(recipeType, primaryInputItemId, inputTagBitmask);
-        String previousSignature = lastMatchedInputByMachine.get(machineBlockPos);
-        if (signatureKey.equals(previousSignature)) {
+        long signatureKey = composeSignatureKey(recipeType, primaryInputItemId, inputTagBitmask);
+        Long previousSignature = lastMatchedInputByMachine.get(machineBlockPos);
+        if (previousSignature != null && signatureKey == previousSignature.longValue()) {
             return lastMatchedRecipeByMachine.get(machineBlockPos);
         }
         if (negativeRecipeInputCache.contains(signatureKey)) {
@@ -115,12 +119,10 @@ public final class IndexedRecipeLookupAccelerator {
         return stripUnlockedHistory ? Math.max(64, rawEstimate / 10) : rawEstimate;
     }
 
-    private static String composeSignatureKey(
+    private static long composeSignatureKey(
             String recipeType, int primaryInputItemId, long tagBitmask) {
-        return recipeType.trim().toLowerCase(Locale.ROOT)
-                + "|"
-                + primaryInputItemId
-                + "|"
-                + tagBitmask;
+        return (((long) recipeType.hashCode()) << 32)
+                ^ (((long) primaryInputItemId & 0xFFFFL) << 16)
+                ^ (tagBitmask * 31L);
     }
 }

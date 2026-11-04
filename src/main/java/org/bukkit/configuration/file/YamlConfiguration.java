@@ -13,15 +13,22 @@ import java.util.Map;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class YamlConfiguration extends FileConfiguration {
+
+    private final YamlConfigurationOptions options = new YamlConfigurationOptions();
 
     /**
      * Constructs an empty {@code YamlConfiguration}.
      */
     public YamlConfiguration() {
         super();
+    }
+
+    @Override
+    public YamlConfigurationOptions options() {
+        return options;
     }
 
     @Override

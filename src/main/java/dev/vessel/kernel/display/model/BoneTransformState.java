@@ -7,7 +7,7 @@ import java.util.Objects;
  * Tracks translation, rotation, and scaling with fine-grained dirty bitmasks
  * to eliminate redundant network synchronization packets during animation ticks.
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class BoneTransformState {

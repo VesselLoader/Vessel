@@ -14,6 +14,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +55,7 @@ final class WaveFourKyoriAdventureAndAsyncChatTest {
         assertEquals(NamedTextColor.GOLD, greeting.color());
         assertEquals(1, greeting.children().size());
 
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Player alex = new Player("Alex", new Location(world, 0.0, 64.0, 0.0));
         alex.setDisplayName("[Admin] Alex");
         assertEquals("[Admin] Alex", alex.displayName().toPlainText());

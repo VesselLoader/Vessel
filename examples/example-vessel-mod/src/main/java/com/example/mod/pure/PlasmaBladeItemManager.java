@@ -1,28 +1,48 @@
 package com.example.mod.pure;
 
+import dev.vessel.api.VesselAPI;
 import dev.vessel.api.item.ItemBurnTimeTable;
 import dev.vessel.api.item.ItemDurabilityTransmutator;
+import dev.vessel.api.item.VesselItem;
 
 import java.util.Objects;
 
 /**
- * Demonstrates high-speed item handling, durability management, and fuel burn lookup
- * using VESSEL Super-API.
+ * Demonstrates high-speed item handling, durability management, and custom item creation
+ * using the VESSEL Super-API.
  *
  * <p>Seamlessly unifies 1.20.5+ DataComponents with Bukkit ItemMeta and Forge ItemStack capabilities
  * without allocating wrapper objects during hot-path combat or inventory transfers.</p>
  *
  * <p>Strictly adheres to Rule 17: Single Responsibility, zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0
  */
 public final class PlasmaBladeItemManager {
 
+    private final VesselItem customItem;
+
     /**
-     * Constructs a new plasma blade item manager.
+     * Constructs a new plasma blade item manager and declares the custom item.
      */
     public PlasmaBladeItemManager() {
+        this.customItem = VesselAPI.createItem("vesselmod:plasma_blade")
+                .durability(1500)
+                .rarity("EPIC")
+                .fireResistant(true)
+                .energyCapacity(100_000L)
+                .onRightClick((player, world, hand) -> true)
+                .build();
+    }
+
+    /**
+     * Resolves the custom VesselItem definition.
+     *
+     * @return custom item
+     */
+    public VesselItem getCustomItem() {
+        return customItem;
     }
 
     /**
@@ -56,16 +76,5 @@ public final class PlasmaBladeItemManager {
      */
     public int getFuelBurnTime(int itemId) {
         return ItemBurnTimeTable.getBurnTime(itemId);
-    }
-
-    /**
-     * Repairs an item stack by reducing its damage value.
-     *
-     * @param itemStack    item stack handle
-     * @param repairAmount points of durability restored
-     */
-    public void repairBlade(Object itemStack, int repairAmount) {
-        Objects.requireNonNull(itemStack, "itemStack cannot be null");
-        ItemDurabilityTransmutator.repairItem(itemStack, repairAmount);
     }
 }

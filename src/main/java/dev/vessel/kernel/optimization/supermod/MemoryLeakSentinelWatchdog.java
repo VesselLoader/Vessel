@@ -2,16 +2,18 @@ package dev.vessel.kernel.optimization.supermod;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Tracks unloaded worlds, dimensions, and plugin/mod classloaders via {@link WeakReference}
  * sentinels to detect retained dead heap references after dimension or plugin unload.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class MemoryLeakSentinelWatchdog {
 
@@ -29,7 +31,7 @@ public final class MemoryLeakSentinelWatchdog {
         Objects.requireNonNull(ownerModuleId, "ownerModuleId must not be null");
         Objects.requireNonNull(resourceInstance, "resourceInstance must not be null");
         trackedResources
-                .computeIfAbsent(ownerModuleId, ignored -> new ArrayList<>())
+                .computeIfAbsent(ownerModuleId, ignored -> new CopyOnWriteArrayList<>())
                 .add(new WeakReference<>(resourceInstance));
     }
 
@@ -41,13 +43,35 @@ public final class MemoryLeakSentinelWatchdog {
      */
     public List<String> scanForRetainedDeadReferences() {
         List<String> retainedModules = new ArrayList<>();
-        for (Map.Entry<String, List<WeakReference<Object>>> entry : trackedResources.entrySet()) {
+        Iterator<Map.Entry<String, List<WeakReference<Object>>>> it = trackedResources.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, List<WeakReference<Object>>> entry = it.next();
             List<WeakReference<Object>> refs = entry.getValue();
             refs.removeIf(ref -> ref.get() == null);
             if (!refs.isEmpty()) {
                 retainedModules.add(entry.getKey());
+            } else {
+                it.remove();
             }
         }
         return List.copyOf(retainedModules);
+    }
+
+    /**
+     * Clears tracking for a specific module.
+     *
+     * @param ownerModuleId the mod or plugin identifier
+     */
+    public void clearModule(String ownerModuleId) {
+        if (ownerModuleId != null) {
+            trackedResources.remove(ownerModuleId);
+        }
+    }
+
+    /**
+     * Clears all tracked sentinels.
+     */
+    public void clearAll() {
+        trackedResources.clear();
     }
 }

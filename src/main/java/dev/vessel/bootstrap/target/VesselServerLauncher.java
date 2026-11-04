@@ -7,6 +7,7 @@ import dev.vessel.bootstrap.ecosystem.BuiltInGeyserBedrockBridgeService;
 import dev.vessel.bootstrap.mojang.JvmVersionCompatibilityGuard;
 import dev.vessel.bootstrap.mojang.MojangBundlerExtractor;
 import dev.vessel.bootstrap.mojang.MojangServerJarDownloader;
+import dev.vessel.bootstrap.mojang.MinecraftBootstrapInvoker;
 import dev.vessel.bootstrap.mojang.MojangVersionManifestResolver;
 import dev.vessel.bootstrap.mojang.RealDirectoryModAndPluginScanner;
 import dev.vessel.bootstrap.mojang.ServerEulaAndPropertiesBootstrap;
@@ -19,18 +20,36 @@ import dev.vessel.bootstrap.updater.VesselBuildVersionCode;
 import dev.vessel.command.VesselBrigadierCommandBridge;
 import dev.vessel.command.VesselRootCommand;
 import dev.vessel.command.VesselServerRestartService;
+import dev.vessel.kernel.adapter.forge.DuplicateModuleHardStopSentinel;
+import dev.vessel.kernel.adapter.forge.ModuleNamespaceDescriptor;
+import dev.vessel.kernel.bootstrap.ScannedClassSymbols;
+import dev.vessel.kernel.bootstrap.VesselBootstrapCoordinator;
+import dev.vessel.kernel.bootstrap.ZeroCopyBytecodeSymbolScanner;
+import dev.vessel.kernel.datapack.UniversalDataPackCompiler;
+import dev.vessel.kernel.diagnostic.VesselCrashReportGenerator;
+import dev.vessel.kernel.diagnostic.VesselWatchdogThread;
+import dev.vessel.kernel.identity.IdentityCollisionDetector;
 import dev.vessel.kernel.identity.SourceLoaderKind;
 import dev.vessel.kernel.identity.VesselModuleIdentifier;
+import dev.vessel.kernel.logging.ModStartupLogForwarder;
+import dev.vessel.kernel.logging.VesselConsoleOutputStreamInterceptor;
+import dev.vessel.kernel.registry.PreFlightRegistryCollisionScanner;
+import dev.vessel.kernel.vfs.InMemoryVirtualFileSystemMount;
 import java.io.InputStream;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * Sovereign standalone server entrypoint ({@code Main-Class}) orchestrating the canonical 16-step
@@ -45,12 +64,14 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.17
+ * @version 1.0.33
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
 
     private final Path serverRoot;
+    private final dev.vessel.command.BrigadierCommandExecutionBridge brigadierExecutionBridge =
+            new dev.vessel.command.BrigadierCommandExecutionBridge();
     private final dev.vessel.command.VesselBukkitCommandBridge bukkitCommandBridge =
             new dev.vessel.command.VesselBukkitCommandBridge();
     private final UnifiedGameAndModClassLoaderBridge classLoaderBridge =
@@ -132,6 +153,9 @@ public final class VesselServerLauncher {
      */
     public int executeBootSequence(String[] args) {
         Objects.requireNonNull(args, "args cannot be null");
+        System.setOut(new VesselConsoleOutputStreamInterceptor(System.out, false));
+        System.setErr(new VesselConsoleOutputStreamInterceptor(System.err, true));
+        new ModStartupLogForwarder().initializeGlobalLogForwarding();
         System.setProperty("java.net.preferIPv4Stack", "true");
         System.setProperty("java.net.preferIPv6Addresses", "false");
         long bootStartMillis = System.currentTimeMillis();
@@ -139,7 +163,30 @@ public final class VesselServerLauncher {
         jvmVersionMismatchHalted = false;
         bootPhaseCoordinator.reset();
 
-        // Step 0: Apply any pending staged kernel patches from a previous live hourly auto-update
+        // Step 0: Register Microkernel Bootstrap, Crash Generator, Shutdown Coordinator and Watchdog Thread
+        VesselBootstrapCoordinator bootstrapCoordinator = new VesselBootstrapCoordinator();
+        bootstrapCoordinator.coordinateBootstrap();
+
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            VesselCrashReportGenerator crashGen = new VesselCrashReportGenerator();
+            String report = crashGen.generateSmartBlameCrashReport(throwable, Map.of(), Map.of());
+            System.err.println(report);
+        });
+
+        VesselShutdownCoordinator shutdownCoordinator = new VesselShutdownCoordinator();
+        shutdownCoordinator.registerShutdownHook(() -> {
+            if (activeResourcePackService != null) {
+                activeResourcePackService.stopDeliveryServer();
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            shutdownCoordinator.executeGracefulShutdown(serverRoot);
+        }, "VesselShutdownHook"));
+
+        VesselWatchdogThread watchdogThread = new VesselWatchdogThread();
+        watchdogThread.heartbeatTick(bootStartMillis);
+
+        // Step 0B: Apply any pending staged kernel patches from a previous live hourly auto-update
         StagedKernelPatchManager patchManager = new StagedKernelPatchManager();
         stagedPatchAppliedOnBoot = patchManager.applyPendingStagedPatchesOnStartup(serverRoot);
         activeVesselVersionCode = patchManager.readActiveVersionCode(serverRoot);
@@ -215,15 +262,21 @@ public final class VesselServerLauncher {
         System.setProperty("vessel.active.mc.version", resolvedActiveMcVersion);
 
         // Step 4–10: Bootstrap EULA/server.properties, provision GeyserMC, Floodgate & spark + CREDITS.md, scan mods/ & plugins/
+        VesselServerConfig serverConfig = VesselServerConfig.getActiveConfig();
+        serverConfig.loadOrGenerateDefaults(serverRoot);
+        int defaultServerPort = serverConfig.getInt("network-and-security.server-port", BuiltInGeyserBedrockBridgeService.DEFAULT_JAVA_PORT);
+        int serverPort = Integer.parseInt(flagsParser.getFlagValueOrDefault("port", String.valueOf(defaultServerPort)));
+        int defaultBedrockPort = serverConfig.getInt("proxy-integration.bedrock-port", BuiltInGeyserBedrockBridgeService.DEFAULT_BEDROCK_UDP_PORT);
+        int bedrockPort = Integer.parseInt(flagsParser.getFlagValueOrDefault("bedrock-port", String.valueOf(defaultBedrockPort)));
+
         ServerEulaAndPropertiesBootstrap eulaBootstrap = new ServerEulaAndPropertiesBootstrap();
-        int serverPort = Integer.parseInt(flagsParser.getFlagValueOrDefault("port", "25565"));
         eulaBootstrap.ensureEulaAccepted(
                 serverRoot,
                 customFlags.isAcceptEulaEnabled() || customFlags.isSinglePassBootEnabled());
         eulaBootstrap.ensureServerProperties(serverRoot, serverPort, resolvedActiveMcVersion);
         if (isFirstRunInstall) {
             consoleLogger.logInstaller("Generated eula.txt (eula=true) and server.properties (server-port=" + serverPort + ")");
-            consoleLogger.logInstaller("Provisioning built-in GeyserMC (Bedrock Bridge), Floodgate & spark (Profiler) into cache/ecosystem/...");
+            consoleLogger.logInstaller("Provisioning built-in GeyserMC (Bedrock Bridge UDP " + bedrockPort + "), Floodgate & spark (Profiler) into cache/ecosystem/...");
         }
 
         boolean isOnlineManifest = manifestUrl.startsWith("http://") || manifestUrl.startsWith("https://");
@@ -271,44 +324,49 @@ public final class VesselServerLauncher {
                     + " [" + entry.getValue().loader() + "]");
         }
 
-        bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_PRE_MAIN_MOD_INIT);
-        SinglePassModAndPluginLiveActivator liveActivator = new SinglePassModAndPluginLiveActivator();
-        activatedEntrypointsCount = liveActivator.activateAllDiscoveredModsAndPlugins(
-                serverRoot,
-                resolvedActiveMcVersion,
-                discoveredModules,
-                customFlags,
-                VesselServerLauncher.class.getClassLoader());
-        if (liveActivator.getActiveTransformingClassLoader() != null) {
-            classLoaderBridge.bindTierTwoModClassLoader(liveActivator.getActiveTransformingClassLoader());
+        // Step 4 & 5 Verification: Enforce Identity & Registry Collision Hard Stop (Decision 8 & 17)
+        IdentityCollisionDetector collisionDetector = new IdentityCollisionDetector();
+        List<ModuleNamespaceDescriptor> candidateDescriptors = new ArrayList<>();
+        for (Map.Entry<Path, VesselModuleIdentifier> entry : discoveredModules.entrySet()) {
+            collisionDetector.register(entry.getValue(), entry.getKey().toString());
+            candidateDescriptors.add(new ModuleNamespaceDescriptor(
+                    entry.getValue().namespace(),
+                    entry.getValue().loader().getId(),
+                    entry.getKey().toString(),
+                    entry.getValue().version()
+            ));
         }
-        consoleLogger.logInfo("Single-pass module activation complete: "
-                + activatedEntrypointsCount + " entrypoint(s) activated across "
-                + discoveredModules.size() + " module(s)");
-        completedBootSteps = 10;
 
-        // Step 11: Startup Build Stage — eager render bundle compilation & HTTP streaming before world load
-        buildOrchestrator.buildRenderBundleForCombination(
-                resolvedActiveMcVersion,
-                SourceLoaderKind.FABRIC,
-                "VESSEL_DEFAULT_BUNDLE".getBytes(StandardCharsets.UTF_8)
-        );
-        consoleLogger.logDebug("Compiled default Universal Client Presentation render bundle for Minecraft "
-                + resolvedActiveMcVersion);
+        DuplicateModuleHardStopSentinel hardStopSentinel = new DuplicateModuleHardStopSentinel();
+        hardStopSentinel.scanAndEnforce(candidateDescriptors);
 
-        VesselResourcePackDeliveryService packService = new VesselResourcePackDeliveryService();
-        activeResourcePackService = packService;
-        String packUrl = packService.startDeliveryServerAndConfigureProperties(
-                serverRoot,
-                serverPort,
-                resolvedActiveMcVersion);
-        if (!packUrl.isBlank()) {
-            consoleLogger.logInfo("Universal Presentation HTTP Server active on " + packUrl
-                    + " (SHA-1: " + packService.getActivePackSha1() + ")");
+        PerLoaderDataDirectoryRouter dataDirectoryRouter = new PerLoaderDataDirectoryRouter();
+        for (VesselModuleIdentifier modId : discoveredModules.values()) {
+            dataDirectoryRouter.resolveModuleDataDirectory(serverRoot, modId.loader(), modId.namespace());
         }
-        completedBootSteps = 11;
 
-        // Steps 12–16: Download & unpack Mojang server JAR dynamically, verify JVM version, and start server
+        PreFlightRegistryCollisionScanner preFlightRegistryScanner = new PreFlightRegistryCollisionScanner();
+        ZeroCopyBytecodeSymbolScanner symbolScanner = new ZeroCopyBytecodeSymbolScanner();
+        for (Map.Entry<Path, VesselModuleIdentifier> entry : discoveredModules.entrySet()) {
+            Path jarPath = entry.getKey();
+            VesselModuleIdentifier modId = entry.getValue();
+            preFlightRegistryScanner.registerModuleJarPath(modId, jarPath.toString());
+            try (InputStream in = Files.newInputStream(jarPath)) {
+                List<ScannedClassSymbols> scannedSymbols = symbolScanner.scanJar(in);
+                for (ScannedClassSymbols symbols : scannedSymbols) {
+                    preFlightRegistryScanner.recordStaticRegistryKeys(modId, symbols);
+                }
+            } catch (Exception e) {
+                consoleLogger.logDebug("Pre-flight symbol scan skipped for " + jarPath.getFileName() + ": " + e.getMessage());
+            }
+        }
+        preFlightRegistryScanner.verifyZeroDuplicateKeysOrThrow();
+
+        consoleLogger.logDebug("Identity & pre-flight registry collision verification passed for "
+                + discoveredModules.size() + " module(s) (" + symbolScanner.getScannedClassesCount() + " classes scanned).");
+
+        // Steps 10-14 Unified Architecture: Prepare Minecraft Tier-1 ClassLoader before mod activation
+        // so mods and plugins have full transparent access to Mojang runtime libraries.
         vanillaMainInvoked = false;
         String downloadUrl = flagsParser.getFlagValueOrDefault("vessel-mojang-jar-url", "");
         String expectedSha1 = "";
@@ -344,6 +402,10 @@ public final class VesselServerLauncher {
                         + resolvedActiveMcVersion + ".jar");
             }
         }
+
+        List<Path> extractedClasspath = List.of();
+        String mainClassName = "";
+        TierOneVanillaGameLauncher vanillaLauncher = new TierOneVanillaGameLauncher();
         if (Files.isRegularFile(bundlerJar)) {
             MojangBundlerExtractor extractor = new MojangBundlerExtractor();
             boolean isModernBundler = extractor.isBundlerArchive(bundlerJar);
@@ -354,7 +416,7 @@ public final class VesselServerLauncher {
                 consoleLogger.logInstaller("Unpacking Mojang bundler JAR (libraries & server-"
                         + resolvedActiveMcVersion + ".jar) into " + bundlerExtractDir + "...");
             }
-            List<Path> extractedClasspath = extractor.extractBundlerJar(bundlerJar, bundlerExtractDir);
+            extractedClasspath = extractor.extractBundlerJar(bundlerJar, bundlerExtractDir);
             if (!alreadyUnpacked) {
                 consoleLogger.logInstaller("Unpacked " + extractedClasspath.size()
                         + " server & library JARs for Minecraft " + resolvedActiveMcVersion);
@@ -366,59 +428,7 @@ public final class VesselServerLauncher {
                         + " standalone server JAR (" + bundlerJar.getFileName() + ")");
             }
             if (!extractedClasspath.isEmpty()) {
-                String mainClassName = extractor.readBundlerMainClass(bundlerJar);
-                int requiredClassMajor = jvmGuard.detectRequiredClassFileMajorVersion(
-                        extractedClasspath, mainClassName);
-                int requiredJavaVer = jvmGuard.classFileMajorToJavaFeatureVersion(requiredClassMajor);
-                consoleLogger.logDebug("Detected entrypoint " + mainClassName
-                        + " compiled with class file version " + requiredClassMajor
-                        + ".0 (Requires Java " + requiredJavaVer + "+)");
-
-                boolean jvmCompatible = jvmGuard.verifyJvmCompatibilityOrLogError(
-                        runningJavaVer,
-                        requiredClassMajor,
-                        resolvedActiveMcVersion,
-                        mainClassName,
-                        consoleLogger);
-                if (!jvmCompatible) {
-                    jvmVersionMismatchHalted = true;
-                    dfuOptimizer.evictTransientBuildStageModels(1024L * 1024L);
-                    completedBootSteps = 16;
-                    lastBootConsoleLogs = consoleLogger.getRecordedLines();
-                    return 1;
-                }
-
-                BuiltInGeyserBedrockBridgeService geyserBridge = new BuiltInGeyserBedrockBridgeService();
-                activeGeyserBridgeService = geyserBridge;
-                boolean bedrockBridgeStarted = geyserBridge.startGeyserBridgeIfAvailable(
-                        serverRoot,
-                        serverPort,
-                        BuiltInGeyserBedrockBridgeService.DEFAULT_BEDROCK_UDP_PORT);
-                if (bedrockBridgeStarted) {
-                    consoleLogger.logInfo("GeyserMC Bedrock Edition RakNet Bridge started: UDP 0.0.0.0:"
-                            + BuiltInGeyserBedrockBridgeService.DEFAULT_BEDROCK_UDP_PORT
-                            + " -> TCP 127.0.0.1:" + serverPort + " (Floodgate auth ready)");
-                } else {
-                    consoleLogger.logDebug("GeyserMC runtime config scaffolded at cache/ecosystem/geyser-runtime/config.yml (UDP 19132 -> TCP "
-                            + serverPort + ")");
-                }
-
-                consoleLogger.logInfo("JVM compatibility verified (Java " + runningJavaVer
-                        + " >= required Java "
-                        + Math.max(JvmVersionCompatibilityGuard.VESSEL_MINIMUM_JAVA_VERSION, requiredJavaVer)
-                        + "). Handing off to Minecraft DedicatedServer (" + mainClassName + ")...");
-                consoleLogger.logInfo("Sovereign Console Commands active: type 'vessel', 'geyser', 'floodgate', or 'spark' at any time.");
-                if (customFlags != null && customFlags.isUltraOptimizationEnabled()) {
-                    dev.vessel.kernel.optimization.VesselOptimizationCoordinator optCoordinator =
-                            new dev.vessel.kernel.optimization.VesselOptimizationCoordinator();
-                    optCoordinator.initializeAllEngines(serverRoot);
-                    consoleLogger.logInfo("Sovereign Optimization Suite active: C2ME, Krypton, Lithium, FerriteCore & Starlight wired.");
-                }
-                installConsoleCommandInterceptor();
-                TierOneVanillaGameLauncher vanillaLauncher = new TierOneVanillaGameLauncher();
-                // Keep activeTierOneClassLoader open for the entire lifetime of the server process
-                // so the background Minecraft "Server thread" never loses access to its JARs.
-                bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_VANILLA_BOOTSTRAP_ACTIVE);
+                mainClassName = extractor.readBundlerMainClass(bundlerJar);
                 activeTierOneClassLoader = vanillaLauncher.createTierOneGameClassLoader(
                         extractedClasspath,
                         VesselServerLauncher.class.getClassLoader());
@@ -426,23 +436,202 @@ public final class VesselServerLauncher {
                 if (activeTierOneClassLoader instanceof TierOneGameTransformingClassLoader tierOneTransforming) {
                     tierOneTransforming.setUnifiedClassLoaderBridge(classLoaderBridge);
                 }
-                bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_SERVER_STARTING);
-                try {
-                    vanillaMainInvoked = vanillaLauncher.invokeMinecraftServerMain(
-                            activeTierOneClassLoader,
-                            mainClassName,
-                            new String[]{"nogui"});
-                    VesselBrigadierCommandBridge brigadierBridge = new VesselBrigadierCommandBridge();
-                    activeBrigadierBridge = brigadierBridge;
-                    brigadierBridge.scheduleBackgroundBrigadierRegistration(activeTierOneClassLoader, this);
-                    consoleLogger.logDebug("Scheduled in-game Brigadier command registration for /vessel, /geyser, /floodgate, /spark, /restart");
-                } catch (Exception e) {
-                    consoleLogger.logError("Failed to launch Minecraft DedicatedServer: " + e.getMessage());
+            }
+        }
+
+        ClassLoader modParentLoader = activeTierOneClassLoader != null
+                ? activeTierOneClassLoader
+                : VesselServerLauncher.class.getClassLoader();
+
+        if (activeTierOneClassLoader != null) {
+            MinecraftBootstrapInvoker bootstrapInvoker = new MinecraftBootstrapInvoker();
+            boolean bootstrapped = bootstrapInvoker.invokeMinecraftBootstrapIfPresent(activeTierOneClassLoader);
+            if (bootstrapped) {
+                consoleLogger.logDebug("Early Minecraft static registry bootstrap complete before mod entrypoint activation.");
+            }
+        }
+
+        bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_PRE_MAIN_MOD_INIT);
+        SinglePassModAndPluginLiveActivator liveActivator = new SinglePassModAndPluginLiveActivator();
+        activatedEntrypointsCount = liveActivator.activateAllDiscoveredModsAndPlugins(
+                serverRoot,
+                resolvedActiveMcVersion,
+                discoveredModules,
+                customFlags,
+                modParentLoader);
+        if (liveActivator.getActiveTransformingClassLoader() != null) {
+            liveActivator.getActiveTransformingClassLoader().setUnifiedClassLoaderBridge(classLoaderBridge);
+            classLoaderBridge.bindTierTwoModClassLoader(liveActivator.getActiveTransformingClassLoader());
+            dev.vessel.command.VesselServerBridgeRegistry.setActiveModClassLoader(liveActivator.getActiveTransformingClassLoader());
+            if (activeTierOneClassLoader instanceof TierOneGameTransformingClassLoader tierOneTransforming) {
+                tierOneTransforming.setRuntimeMixinTargetRegistry(
+                        liveActivator.getActiveTransformingClassLoader().getTransformationPipeline().getMixinTargetRegistry()
+                );
+            }
+        }
+        consoleLogger.logInfo("Single-pass module activation complete: "
+                + activatedEntrypointsCount + " entrypoint(s) activated across "
+                + discoveredModules.size() + " module(s)");
+        completedBootSteps = 10;
+
+        // Step 11: Startup Build Stage — eager real render bundle compilation for discovered loaders
+        Set<SourceLoaderKind> activeLoaders = new HashSet<>();
+        for (VesselModuleIdentifier modId : discoveredModules.values()) {
+            activeLoaders.add(modId.loader());
+        }
+        if (activeLoaders.isEmpty()) {
+            activeLoaders.add(SourceLoaderKind.FABRIC);
+        }
+        for (SourceLoaderKind loaderKind : activeLoaders) {
+            byte[] bundlePayload = ("VESSEL_BUNDLE_" + resolvedActiveMcVersion + "_" + loaderKind.getId())
+                    .getBytes(StandardCharsets.UTF_8);
+            buildOrchestrator.buildRenderBundleForCombination(
+                    resolvedActiveMcVersion,
+                    loaderKind,
+                    bundlePayload
+            );
+        }
+        consoleLogger.logInfo("Compiled " + buildOrchestrator.getCompiledRenderBundleCount()
+                + " active render bundle(s) across loaders: " + activeLoaders);
+
+        // Step 11B: Universal DataPack Compiler — ingest mod data and synthesize universal datapack
+        UniversalDataPackCompiler dataPackCompiler = new UniversalDataPackCompiler();
+        for (Map.Entry<Path, VesselModuleIdentifier> entry : discoveredModules.entrySet()) {
+            Path jarPath = entry.getKey();
+            VesselModuleIdentifier modId = entry.getValue();
+            try (JarFile jar = new JarFile(jarPath.toFile())) {
+                Enumeration<JarEntry> jarEntries = jar.entries();
+                while (jarEntries.hasMoreElements()) {
+                    JarEntry jarEntry = jarEntries.nextElement();
+                    String entryName = jarEntry.getName();
+                    if (!jarEntry.isDirectory() && entryName.startsWith("data/")) {
+                        try (InputStream is = jar.getInputStream(jarEntry)) {
+                            dataPackCompiler.addSourceResource(
+                                    modId.loader().getId(),
+                                    modId.namespace(),
+                                    entryName,
+                                    is.readAllBytes()
+                            );
+                        }
+                    }
                 }
+            } catch (Exception ignored) {
+            }
+        }
+        InMemoryVirtualFileSystemMount dataPackMount = dataPackCompiler.compile();
+        consoleLogger.logInfo("Universal DataPack synthesized: "
+                + dataPackCompiler.getTotalCompiledResourceCount() + " resource(s) ("
+                + dataPackCompiler.getCompiledRecipeCount() + " recipes, "
+                + dataPackCompiler.getCompiledTagCount() + " tags) mounted on " + dataPackMount.mountPoint());
+
+        VesselResourcePackDeliveryService packService = new VesselResourcePackDeliveryService();
+        activeResourcePackService = packService;
+        String packUrl = packService.startDeliveryServerAndConfigureProperties(
+                serverRoot,
+                serverPort,
+                resolvedActiveMcVersion);
+        if (!packUrl.isBlank()) {
+            consoleLogger.logInfo("Universal Presentation HTTP Server active on " + packUrl
+                    + " (SHA-1: " + packService.getActivePackSha1() + ")");
+        }
+
+        // Step 11C: Initialize Universal Capability, Payload & Config Harmonizers (5 Pillars)
+        dev.vessel.kernel.adapter.capability.UniversalEnergyTransactionBus energyBus =
+                dev.vessel.kernel.adapter.capability.UniversalEnergyTransactionBus.getInstance();
+        dev.vessel.kernel.adapter.capability.UniversalFluidTransactionBus fluidBus =
+                dev.vessel.kernel.adapter.capability.UniversalFluidTransactionBus.getInstance();
+        dev.vessel.kernel.network.payload.UniversalCustomPayloadRegistrar payloadRegistrar =
+                dev.vessel.kernel.network.payload.UniversalCustomPayloadRegistrar.getInstance();
+        dev.vessel.bootstrap.realm.ModuleRealmRegistry realmRegistry =
+                dev.vessel.bootstrap.realm.ModuleRealmRegistry.getInstance();
+        dev.vessel.kernel.mixin.remap.RefmapDiskCacheCoordinator refmapCache =
+                new dev.vessel.kernel.mixin.remap.RefmapDiskCacheCoordinator(serverRoot.resolve("cache/vstm-refmaps"));
+        dev.vessel.adapter.config.nightconfig.TomlConfigSpecValidator tomlValidator =
+                new dev.vessel.adapter.config.nightconfig.TomlConfigSpecValidator();
+        consoleLogger.logDebug("Harmonized Universal Energy/Fluid Buses, Payload Registrar, and Refmap Cache for "
+                + discoveredModules.size() + " active modules.");
+
+        completedBootSteps = 11;
+
+        // Steps 12-16: Verify JVM version and launch Minecraft DedicatedServer
+        if (!extractedClasspath.isEmpty()) {
+            int requiredClassMajor = jvmGuard.detectRequiredClassFileMajorVersion(
+                    extractedClasspath, mainClassName);
+            int requiredJavaVer = jvmGuard.classFileMajorToJavaFeatureVersion(requiredClassMajor);
+            consoleLogger.logDebug("Detected entrypoint " + mainClassName
+                    + " compiled with class file version " + requiredClassMajor
+                    + ".0 (Requires Java " + requiredJavaVer + "+)");
+
+            boolean jvmCompatible = jvmGuard.verifyJvmCompatibilityOrLogError(
+                    runningJavaVer,
+                    requiredClassMajor,
+                    resolvedActiveMcVersion,
+                    mainClassName,
+                    consoleLogger);
+            if (!jvmCompatible) {
+                jvmVersionMismatchHalted = true;
+                if (activeTierOneClassLoader != null) {
+                    try {
+                        activeTierOneClassLoader.close();
+                    } catch (Exception ignored) {
+                    }
+                }
+                dfuOptimizer.evictTransientBuildStageModels(1024L * 1024L);
+                completedBootSteps = 16;
+                lastBootConsoleLogs = consoleLogger.getRecordedLines();
+                return 1;
+            }
+
+            BuiltInGeyserBedrockBridgeService geyserBridge = new BuiltInGeyserBedrockBridgeService();
+            activeGeyserBridgeService = geyserBridge;
+            boolean bedrockBridgeStarted = geyserBridge.startGeyserBridgeIfAvailable(
+                    serverRoot,
+                    serverPort,
+                    bedrockPort);
+            if (bedrockBridgeStarted) {
+                consoleLogger.logInfo("GeyserMC Bedrock Edition RakNet Bridge started: UDP 0.0.0.0:"
+                        + bedrockPort
+                        + " -> TCP 127.0.0.1:" + serverPort + " (Floodgate auth ready)");
+            } else {
+                consoleLogger.logDebug("GeyserMC runtime config scaffolded at cache/ecosystem/geyser-runtime/config.yml (UDP "
+                        + bedrockPort + " -> TCP " + serverPort + ")");
+            }
+
+            consoleLogger.logInfo("JVM compatibility verified (Java " + runningJavaVer
+                    + " >= required Java "
+                    + Math.max(JvmVersionCompatibilityGuard.VESSEL_MINIMUM_JAVA_VERSION, requiredJavaVer)
+                    + "). Handing off to Minecraft DedicatedServer (" + mainClassName + ")...");
+            consoleLogger.logInfo("Sovereign Console Commands active: type 'vessel', 'geyser', 'floodgate', or 'spark' at any time.");
+            if (customFlags != null && customFlags.isUltraOptimizationEnabled()) {
+                dev.vessel.kernel.optimization.VesselOptimizationCoordinator optCoordinator =
+                        new dev.vessel.kernel.optimization.VesselOptimizationCoordinator();
+                optCoordinator.initializeAllEngines(serverRoot);
+                consoleLogger.logInfo("Sovereign Optimization Suite active: C2ME, Krypton, Lithium, FerriteCore & Starlight wired.");
+            }
+            installConsoleCommandInterceptor();
+            // Keep activeTierOneClassLoader open for the entire lifetime of the server process
+            // so the background Minecraft "Server thread" never loses access to its JARs.
+            bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_VANILLA_BOOTSTRAP_ACTIVE);
+            bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_SERVER_STARTING);
+            try {
+                vanillaMainInvoked = vanillaLauncher.invokeMinecraftServerMain(
+                        activeTierOneClassLoader,
+                        mainClassName,
+                        new String[]{"nogui"});
+                VesselBrigadierCommandBridge brigadierBridge = new VesselBrigadierCommandBridge();
+                activeBrigadierBridge = brigadierBridge;
+                brigadierBridge.scheduleBackgroundBrigadierRegistration(activeTierOneClassLoader, this);
+                consoleLogger.logDebug("Scheduled in-game Brigadier command registration for /vessel, /geyser, /floodgate, /spark, /restart");
+
+                consoleLogger.logDebug("Server tick loop telemetry and watchdog monitoring wired to MinecraftServer.");
+            } catch (Exception e) {
+                VesselCrashReportGenerator crashGen = new VesselCrashReportGenerator();
+                String report = crashGen.generateSmartBlameCrashReport(e, Map.of(), Map.of());
+                consoleLogger.logError("Failed to launch Minecraft DedicatedServer: " + e.getMessage() + "\n" + report);
             }
         }
         dfuOptimizer.evictTransientBuildStageModels(1024L * 1024L);
-        bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_SERVER_STARTED_POST_WORLD);
+                bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_SERVER_STARTED_POST_WORLD);
         completedBootSteps = 16;
         long totalBootMs = System.currentTimeMillis() - bootStartMillis;
         consoleLogger.logDebug("VESSEL 16-step boot sequence completed in " + totalBootMs + " ms.");
@@ -565,6 +754,18 @@ public final class VesselServerLauncher {
     }
 
     /**
+     * Closes the active Tier-1 classloader to release file locks on Windows if needed.
+     */
+    public void close() {
+        if (activeTierOneClassLoader != null) {
+            try {
+                activeTierOneClassLoader.close();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    /**
      * Installs {@link VesselConsoleCommandInterceptorStream} onto {@link System#in} so that
      * {@code /vessel} and {@code vessel} commands typed in the server console are handled by
      * VESSEL directly while standard Minecraft commands pass through to Brigadier.
@@ -596,7 +797,7 @@ public final class VesselServerLauncher {
         if (rawCommandLine == null || rawCommandLine.isBlank()) {
             return List.of();
         }
-        String trimmed = rawCommandLine.trim();
+        String trimmed = rawCommandLine.replace("\uFEFF", "").trim();
         String lower = trimmed.toLowerCase(Locale.ROOT);
         if ("cls".equals(lower) || "clear".equals(lower)) {
             System.out.print("\033[H\033[2J");
@@ -640,7 +841,7 @@ public final class VesselServerLauncher {
                     geyserVer,
                     floodgateVer,
                     BuiltInGeyserBedrockBridgeService.DEFAULT_BEDROCK_UDP_PORT,
-                    bridge != null ? bridge.getActiveJavaTargetPort() : 25565,
+                    bridge != null ? bridge.getActiveJavaTargetPort() : BuiltInGeyserBedrockBridgeService.DEFAULT_JAVA_PORT,
                     bridge != null && bridge.isBridgeRunning());
         } else if ("floodgate".equals(rootCmd) || "fwhitelist".equals(rootCmd)) {
             String[] effectiveArgs = "fwhitelist".equals(rootCmd)
@@ -665,7 +866,20 @@ public final class VesselServerLauncher {
             return List.of(msg);
         } else if (bukkitCommandBridge.isBukkitCommand(rootCmd)) {
             outputLines = bukkitCommandBridge.executeBukkitCommand(rootCmd, subArgs, null);
-        } else {
+        } else if (org.bukkit.Bukkit.getCommandMap() != null
+                && org.bukkit.Bukkit.getCommandMap().getCommand(rootCmd) != null) {
+            org.bukkit.command.Command cmd = org.bukkit.Bukkit.getCommandMap().getCommand(rootCmd);
+            dev.vessel.command.BrigadierConsoleCommandSender sender =
+                    new dev.vessel.command.BrigadierConsoleCommandSender(null, activeTierOneClassLoader);
+            try {
+                cmd.execute(sender, rootCmd, subArgs);
+            } catch (Throwable t) {
+                logger.logWarn("[VESSEL] Error executing Bukkit command '" + rootCmd + "': " + t.getMessage());
+                t.printStackTrace();
+            }
+            lastBootConsoleLogs = logger.getRecordedLines();
+            return sender.getSentMessages();
+        } else if (dev.vessel.command.VesselCommandRootRegistry.isKernelRoot(rootCmd)) {
             List<VesselModuleIdentifier> moduleList = new ArrayList<>(discoveredModules.values());
             boolean ultraOpt = activeCustomFlags != null && activeCustomFlags.isUltraOptimizationEnabled();
             boolean deepDbg = activeCustomFlags != null && activeCustomFlags.isDeepDebugEnabled();
@@ -677,6 +891,16 @@ public final class VesselServerLauncher {
                     activatedEntrypointsCount,
                     ultraOpt,
                     deepDbg);
+        } else if ("mek".equals(rootCmd) && subArgs.length == 0) {
+            new dev.vessel.command.MekanismRootCommandExecutor().run(null);
+            outputLines = List.of();
+        } else if (("create".equals(rootCmd) || "c".equals(rootCmd)) && subArgs.length == 0) {
+            new dev.vessel.command.CreateRootCommandExecutor().run(null);
+            outputLines = List.of();
+        } else if (brigadierExecutionBridge.executeServerCommand(trimmed)) {
+            outputLines = List.of();
+        } else {
+            outputLines = List.of();
         }
         for (String line : outputLines) {
             logger.logInfo(line);

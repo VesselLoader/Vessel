@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselCustomFlagsProfile {
 
@@ -69,6 +69,8 @@ public final class VesselCustomFlagsProfile {
         activeBooleanFlags.add(FLAG_AUTO_LATEST);
         activeBooleanFlags.add(FLAG_SINGLE_PASS_BOOT);
         activeBooleanFlags.add(FLAG_LENIENT_LOAD);
+        activeBooleanFlags.add(FLAG_ULTRA_OPTIMIZE);
+        activeBooleanFlags.add(FLAG_MAX_PERF);
     }
 
     /**

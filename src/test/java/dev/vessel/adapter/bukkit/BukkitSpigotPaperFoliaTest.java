@@ -27,9 +27,9 @@ import org.junit.jupiter.api.Test;
  * Unit tests for Sub-Stage 6.13: Bukkit, Spigot, Paper, and Folia shims plus the built-in
  * chunk pregenerator, sampler profiler, and 13 {@code /vessel} subcommands.
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
-class BukkitSpigotPaperFoliaTest {
+public class BukkitSpigotPaperFoliaTest {
 
     @Test
     void testBukkitSpigotAndPaperBootstrapAdapters() {

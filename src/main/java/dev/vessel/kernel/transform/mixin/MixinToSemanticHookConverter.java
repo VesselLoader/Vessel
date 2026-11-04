@@ -9,7 +9,7 @@ import java.util.Objects;
  * Normalizes vendor-specific Mixin annotations into canonical VESSEL Semantic Hook Records.
  * Resolves injection targets, priority mappings, and semantic hook intent classifications.
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class MixinToSemanticHookConverter {

@@ -1,6 +1,10 @@
 package org.bukkit.plugin.java;
 
-import dev.vessel.kernel.config.yaml.MemoryConfigurationSection;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,6 +18,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 
@@ -23,12 +29,12 @@ import org.bukkit.plugin.PluginDescriptionFile;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.3
  */
 public class JavaPlugin implements Plugin, CommandExecutor, TabCompleter {
 
     private PluginDescriptionFile description;
-    private MemoryConfigurationSection config;
+    private FileConfiguration config;
     private Server server;
     private Logger logger;
     private boolean enabled;
@@ -42,7 +48,6 @@ public class JavaPlugin implements Plugin, CommandExecutor, TabCompleter {
                 getClass().getSimpleName(),
                 "1.0.0",
                 getClass().getName());
-        this.config = new MemoryConfigurationSection();
         this.server = Bukkit.getServer();
         this.logger = Logger.getLogger(description.getName());
         this.enabled = false;
@@ -72,23 +77,91 @@ public class JavaPlugin implements Plugin, CommandExecutor, TabCompleter {
     }
 
     @Override
-    public MemoryConfigurationSection getConfig() {
+    public File getDataFolder() {
+        File folder = new File("plugins", getName());
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        return folder;
+    }
+
+    @Override
+    public FileConfiguration getConfig() {
         if (config == null) {
-            config = new MemoryConfigurationSection();
+            reloadConfig();
         }
         return config;
     }
 
     @Override
+    public void saveConfig() {
+        try {
+            getConfig().save(new File(getDataFolder(), "config.yml"));
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
     public void saveDefaultConfig() {
-        getConfig().set("plugin.initialized", true);
+        File configFile = new File(getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
+            saveResource("config.yml", false);
+        }
     }
 
     @Override
     public void reloadConfig() {
-        if (config == null) {
-            config = new MemoryConfigurationSection();
+        File configFile = new File(getDataFolder(), "config.yml");
+        config = YamlConfiguration.loadConfiguration(configFile);
+        InputStream defConfigStream = getResource("config.yml");
+        if (defConfigStream != null) {
+            try {
+                String defConfig = new String(defConfigStream.readAllBytes(), StandardCharsets.UTF_8);
+                YamlConfiguration defaults = YamlConfiguration.loadConfigurationFromString(defConfig);
+                for (Map.Entry<String, Object> entry : defaults.getValues(true).entrySet()) {
+                    config.addDefault(entry.getKey(), entry.getValue());
+                }
+            } catch (Exception ignored) {
+            }
         }
+    }
+
+    /**
+     * Saves an embedded resource file from the plugin JAR into the plugin's data folder.
+     *
+     * @param resourcePath relative path to embedded resource
+     * @param replace      whether to overwrite if file already exists
+     */
+    public void saveResource(String resourcePath, boolean replace) {
+        if (resourcePath == null || resourcePath.isBlank()) {
+            return;
+        }
+        String normalizedPath = resourcePath.replace('\\', '/');
+        InputStream in = getResource(normalizedPath);
+        if (in == null) {
+            return;
+        }
+        File outFile = new File(getDataFolder(), normalizedPath);
+        if (outFile.exists() && !replace) {
+            return;
+        }
+        File outDir = outFile.getParentFile();
+        if (outDir != null && !outDir.exists()) {
+            outDir.mkdirs();
+        }
+        try (in; OutputStream out = new FileOutputStream(outFile)) {
+            in.transferTo(out);
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    public InputStream getResource(String filename) {
+        if (filename == null) {
+            return null;
+        }
+        ClassLoader cl = getClass().getClassLoader();
+        return cl != null ? cl.getResourceAsStream(filename) : null;
     }
 
     @Override
@@ -157,5 +230,36 @@ public class JavaPlugin implements Plugin, CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         return List.of();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends JavaPlugin> T getPlugin(Class<T> clazz) {
+        Objects.requireNonNull(clazz, "clazz must not be null");
+        if (!JavaPlugin.class.isAssignableFrom(clazz)) {
+            throw new IllegalArgumentException(clazz + " does not extend " + JavaPlugin.class);
+        }
+        Server s = Bukkit.getServer();
+        if (s != null && s.getPluginManager() != null) {
+            for (Plugin p : s.getPluginManager().getPlugins()) {
+                if (clazz.isInstance(p)) {
+                    return (T) p;
+                }
+            }
+        }
+        throw new IllegalArgumentException(clazz + " is not currently loaded.");
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends JavaPlugin> T getProvidingPlugin(Class<?> clazz) {
+        Objects.requireNonNull(clazz, "clazz must not be null");
+        Server s = Bukkit.getServer();
+        if (s != null && s.getPluginManager() != null) {
+            for (Plugin p : s.getPluginManager().getPlugins()) {
+                if (p.getClass().getClassLoader() == clazz.getClassLoader()) {
+                    return (T) p;
+                }
+            }
+        }
+        throw new IllegalArgumentException(clazz + " is not provided by a plugin.");
     }
 }

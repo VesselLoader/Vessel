@@ -10,9 +10,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Bootstraps legacy Bukkit {@code plugin.yml} descriptors into canonical
  * {@link VesselModuleIdentifier} records and manages per-plugin {@link MemoryConfigurationSection}
- * instances.
+ * instances using zero-regex string scanning.
  *
- * @version 1.0.0
+ * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
+ *
+ * @version 1.0.1
+ * @author VESSEL Engine Team
  */
 public final class BukkitPluginBootstrapAdapter {
 
@@ -85,7 +88,22 @@ public final class BukkitPluginBootstrapAdapter {
     }
 
     private static String sanitizeNamespace(String raw) {
-        String sanitized = raw.trim().toLowerCase().replaceAll("[^a-z0-9_.-]", "_");
-        return sanitized.isEmpty() ? "unknown_plugin" : sanitized;
+        if (raw == null) {
+            return "unknown_plugin";
+        }
+        String trimmed = raw.trim().toLowerCase();
+        if (trimmed.isEmpty()) {
+            return "unknown_plugin";
+        }
+        StringBuilder sb = new StringBuilder(trimmed.length());
+        for (int i = 0; i < trimmed.length(); i++) {
+            char c = trimmed.charAt(i);
+            if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '.' || c == '-') {
+                sb.append(c);
+            } else {
+                sb.append('_');
+            }
+        }
+        return sb.toString();
     }
 }

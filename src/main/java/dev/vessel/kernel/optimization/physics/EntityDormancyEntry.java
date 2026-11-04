@@ -7,15 +7,15 @@ package dev.vessel.kernel.optimization.physics;
  * when entity collision and physics ticks can be safely suspended.
  * </p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class EntityDormancyEntry {
 
     private final int entityId;
-    private double lastPosX;
-    private double lastPosY;
-    private double lastPosZ;
+    private volatile double lastPosX;
+    private volatile double lastPosY;
+    private volatile double lastPosZ;
     private int stationaryTicks;
     private boolean dormant;
     private long lastWakeTick;
@@ -58,35 +58,37 @@ public final class EntityDormancyEntry {
         return stationaryTicks;
     }
 
-    public boolean isDormant() {
+    public synchronized boolean isDormant() {
         return dormant;
     }
 
-    public long getLastWakeTick() {
+    public synchronized long getLastWakeTick() {
         return lastWakeTick;
     }
 
-    public void setPosition(double posX, double posY, double posZ) {
+    public synchronized void setPosition(double posX, double posY, double posZ) {
         this.lastPosX = posX;
         this.lastPosY = posY;
         this.lastPosZ = posZ;
     }
 
-    public void incrementStationaryTicks() {
+    public synchronized void incrementStationaryTicks() {
         this.stationaryTicks++;
     }
 
-    public void resetStationaryTicks() {
+    public synchronized void resetStationaryTicks() {
         this.stationaryTicks = 0;
     }
 
-    public void setDormant(boolean dormant) {
+    public synchronized void setDormant(boolean dormant) {
         this.dormant = dormant;
     }
 
-    public void markAwake(long currentTick) {
+    public synchronized boolean markAwake(long currentTick) {
+        boolean wasDormant = this.dormant;
         this.dormant = false;
         this.stationaryTicks = 0;
         this.lastWakeTick = currentTick;
+        return wasDormant;
     }
 }

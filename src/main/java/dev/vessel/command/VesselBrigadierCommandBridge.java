@@ -17,7 +17,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.5
  */
 public final class VesselBrigadierCommandBridge {
 
@@ -30,10 +30,11 @@ public final class VesselBrigadierCommandBridge {
     };
 
     private volatile boolean commandsRegistered;
+    private volatile VesselBrigadierLifecycleRegistrar activeRegistrar;
 
     /**
-     * Polls and registers the VESSEL command suite into the live Minecraft server's Brigadier
-     * dispatcher in the background as soon as {@code MinecraftServer} finishes startup.
+     * Hooks event-driven registration for the VESSEL command suite and mod items/blocks
+     * into the Minecraft server's lifecycle with zero polling and zero race conditions.
      *
      * @param tierOneClassLoader active Tier-1 Minecraft classloader
      * @param launcher            active launcher instance
@@ -44,11 +45,20 @@ public final class VesselBrigadierCommandBridge {
         Objects.requireNonNull(tierOneClassLoader, "tierOneClassLoader must not be null");
         Objects.requireNonNull(launcher, "launcher must not be null");
 
-        Thread registrationThread = new Thread(
-                new VesselBrigadierRegistrationTask(tierOneClassLoader, launcher, this),
-                "vessel-brigadier-registration");
-        registrationThread.setDaemon(true);
-        registrationThread.start();
+        VesselBrigadierLifecycleRegistrar registrar =
+                new VesselBrigadierLifecycleRegistrar(tierOneClassLoader, launcher, this);
+        this.activeRegistrar = registrar;
+        VesselServerBridgeRegistry.registerServerReadyCallback(registrar);
+    }
+
+    /**
+     * Unregisters any active lifecycle registration callback.
+     */
+    public void stopBackgroundRegistration() {
+        VesselBrigadierLifecycleRegistrar reg = this.activeRegistrar;
+        if (reg != null) {
+            VesselServerBridgeRegistry.unregisterServerReadyCallback(reg);
+        }
     }
 
     /**
@@ -154,40 +164,7 @@ public final class VesselBrigadierCommandBridge {
     }
 
     private static Object extractDispatcher(Object target) {
-        if (target == null) {
-            target = VesselServerBridgeRegistry.getActiveCommands();
-            if (target == null) {
-                target = VesselServerBridgeRegistry.getActiveMinecraftServer();
-            }
-        }
-        if (target == null) {
-            return null;
-        }
-        try {
-            // Case 1: Target is already CommandDispatcher
-            if (target.getClass().getName().contains("CommandDispatcher")) {
-                return target;
-            }
-            // Case 2: Target is Commands (net.minecraft.commands.Commands)
-            for (Method m : target.getClass().getMethods()) {
-                if (m.getParameterCount() == 0
-                        && m.getReturnType().getName().contains("CommandDispatcher")) {
-                    return m.invoke(target);
-                }
-            }
-            // Case 3: Target is MinecraftServer
-            for (Method m : target.getClass().getMethods()) {
-                if (m.getParameterCount() == 0
-                        && m.getReturnType().getName().endsWith("Commands")) {
-                    Object commandsObj = m.invoke(target);
-                    if (commandsObj != null) {
-                        return extractDispatcher(commandsObj);
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return null;
+        return new BrigadierDispatcherExtractor().extractDispatcher(target);
     }
 
     private static List<String> getSubcommandsForRoot(String rootName) {

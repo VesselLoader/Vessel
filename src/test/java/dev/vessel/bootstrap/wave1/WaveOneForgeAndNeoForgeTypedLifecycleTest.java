@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 final class WaveOneForgeAndNeoForgeTypedLifecycleTest {
 
@@ -38,7 +38,7 @@ final class WaveOneForgeAndNeoForgeTypedLifecycleTest {
     @Test
     void testForgeTypedLifecycleSequencePriorityOrderAndDeferredWorkQueue() {
         net.minecraftforge.eventbus.api.IEventBus forgeBus =
-                new net.minecraftforge.eventbus.api.IEventBus();
+                new net.minecraftforge.eventbus.api.VesselEventBus();
         SampleForgeWaveOneModFixture forgeFixture = new SampleForgeWaveOneModFixture();
         forgeBus.register(forgeFixture);
         forgeBus.addListener(
@@ -83,7 +83,7 @@ final class WaveOneForgeAndNeoForgeTypedLifecycleTest {
 
     @Test
     void testNeoForgeTypedLifecycleSequencePriorityOrderAndDeferredWorkQueue() {
-        net.neoforged.bus.api.IEventBus neoForgeBus = new net.neoforged.bus.api.IEventBus();
+        net.neoforged.bus.api.IEventBus neoForgeBus = new net.neoforged.bus.api.VesselNeoEventBus();
         SampleNeoForgeWaveOneModFixture neoForgeFixture =
                 new SampleNeoForgeWaveOneModFixture(neoForgeBus);
         neoForgeBus.addListener(

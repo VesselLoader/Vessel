@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -62,7 +63,7 @@ final class WaveTenBukkitInventoryGuiAndDeathRespawnTest {
         assertFalse(ClickType.SHIFT_LEFT.isRightClick());
         assertTrue(ClickType.RIGHT.isRightClick());
 
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Location spawnLoc = new Location(world, 0.0D, 64.0D, 0.0D);
         Player player = new Player("Shiroz", spawnLoc);
 

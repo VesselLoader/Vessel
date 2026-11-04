@@ -25,9 +25,11 @@ import java.util.regex.Pattern;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class HourlyGitHubAutoUpdateDaemon {
+
+    private static volatile HourlyGitHubAutoUpdateDaemon activeDaemon;
 
     public static final long DEFAULT_CHECK_INTERVAL_SECONDS = 3600L;
     public static final String DEFAULT_GITHUB_PAGES_MANIFEST_URL =
@@ -46,6 +48,25 @@ public final class HourlyGitHubAutoUpdateDaemon {
     private volatile String lastCheckResultStatus = STATUS_UP_TO_DATE;
 
     /**
+     * Returns the currently running auto-update daemon instance, if any.
+     *
+     * @return active auto-update daemon or {@code null}
+     */
+    public static HourlyGitHubAutoUpdateDaemon getActiveDaemon() {
+        return activeDaemon;
+    }
+
+    /**
+     * Returns whether an auto-update daemon scheduler is actively running.
+     *
+     * @return {@code true} if an active daemon is scheduled
+     */
+    public static boolean isDaemonActive() {
+        HourlyGitHubAutoUpdateDaemon daemon = activeDaemon;
+        return daemon != null && daemon.isHourlySchedulerActive();
+    }
+
+    /**
      * Starts the hourly background update scanner on a dedicated low-priority daemon thread
      * ({@code vessel-hourly-auto-updater}).
      *
@@ -58,6 +79,7 @@ public final class HourlyGitHubAutoUpdateDaemon {
         if (scheduler != null && !scheduler.isShutdown()) {
             return;
         }
+        activeDaemon = this;
         scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread daemon = new Thread(runnable, "vessel-hourly-auto-updater");
             daemon.setDaemon(true);
@@ -78,6 +100,9 @@ public final class HourlyGitHubAutoUpdateDaemon {
         if (scheduler != null) {
             scheduler.shutdownNow();
             scheduler = null;
+        }
+        if (activeDaemon == this) {
+            activeDaemon = null;
         }
     }
 

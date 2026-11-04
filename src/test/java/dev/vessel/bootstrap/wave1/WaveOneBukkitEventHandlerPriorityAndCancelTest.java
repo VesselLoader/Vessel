@@ -25,13 +25,13 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 final class WaveOneBukkitEventHandlerPriorityAndCancelTest {
 
     @Test
     void testBukkitEventHandlerPriorityOrderingIgnoreCancelledAndMonitorReadOnlyLock() {
-        PluginManager pluginManager = new PluginManager();
+        PluginManager pluginManager = new org.bukkit.plugin.VesselPluginManager();
         JavaPlugin plugin = new JavaPlugin();
         plugin.init(
                 new PluginDescriptionFile(

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 final class WaveTwoForgeAndNeoForgeDeferredRegisterTest {
 
@@ -33,7 +33,7 @@ final class WaveTwoForgeAndNeoForgeDeferredRegisterTest {
         assertEquals("fallback", copperGear.orElse("fallback"));
 
         net.minecraftforge.eventbus.api.IEventBus forgeBus =
-                new net.minecraftforge.eventbus.api.IEventBus();
+                new net.minecraftforge.eventbus.api.VesselEventBus();
         forgeItems.register(forgeBus);
 
         forgeBus.post(new FMLConstructModEvent("create"));
@@ -58,7 +58,7 @@ final class WaveTwoForgeAndNeoForgeDeferredRegisterTest {
         assertFalse(atomicAlloy.isBound());
         assertEquals("fallback", atomicAlloy.orElse("fallback"));
 
-        net.neoforged.bus.api.IEventBus neoForgeBus = new net.neoforged.bus.api.IEventBus();
+        net.neoforged.bus.api.IEventBus neoForgeBus = new net.neoforged.bus.api.VesselNeoEventBus();
         neoForgeItems.register(neoForgeBus);
 
         neoForgeBus.post(new net.neoforged.fml.event.lifecycle.FMLConstructModEvent("mekanism"));

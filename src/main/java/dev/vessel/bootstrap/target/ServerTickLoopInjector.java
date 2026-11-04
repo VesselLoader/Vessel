@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-29)
  */
 public final class ServerTickLoopInjector {
@@ -54,7 +54,9 @@ public final class ServerTickLoopInjector {
         if (start == 0L) {
             return 0L;
         }
-        return Math.max(1L, System.nanoTime() - start);
+        long duration = Math.max(1L, System.nanoTime() - start);
+        dev.vessel.kernel.metrics.VesselLiveTickMetricsProvider.recordTickDurationNanos(duration);
+        return duration;
     }
 
     public TickPhaseStage getCurrentPhase() {

@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * modded creature spawners (Cobblemon, Pixelmon, Alex's Mobs, In Control!) when local
  * density exceeds 75% of the per-player cap.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class NaturalSpawnerAndModdedCreatureGovernor {
 
@@ -104,5 +104,21 @@ public final class NaturalSpawnerAndModdedCreatureGovernor {
             return false;
         }
         return (currentTick % 10L) != 0L;
+    }
+
+    /**
+     * Evicts cached spawnable surface bitsets when a chunk section is unloaded.
+     *
+     * @param sectionKey 64-bit packed chunk section key
+     */
+    public void evictSection(long sectionKey) {
+        spawnableSurfaceMaskBySection.remove(sectionKey);
+    }
+
+    /**
+     * Clears all cached surface bitsets.
+     */
+    public void clear() {
+        spawnableSurfaceMaskBySection.clear();
     }
 }

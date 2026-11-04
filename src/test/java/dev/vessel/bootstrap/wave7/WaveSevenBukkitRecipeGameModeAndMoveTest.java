@@ -11,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
@@ -80,7 +81,7 @@ final class WaveSevenBukkitRecipeGameModeAndMoveTest {
                 1,
                 Bukkit.getRecipesFor(new ItemStack(Material.IRON_INGOT, 1)).size());
 
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Location from = new Location(world, 0.0D, 64.0D, 0.0D);
         Location to = new Location(world, 10.0D, 65.0D, 10.0D);
         Player player = new Player("Shiroz", from);

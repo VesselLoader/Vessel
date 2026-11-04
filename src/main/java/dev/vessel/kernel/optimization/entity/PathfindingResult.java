@@ -11,7 +11,7 @@ package dev.vessel.kernel.optimization.entity;
  * @param success            true if a path was successfully found
  * @param cancelled          true if this request was superseded and cancelled
  * @param computeDurationNs  nanoseconds spent computing the path
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public record PathfindingResult(
@@ -24,6 +24,14 @@ public record PathfindingResult(
         boolean cancelled,
         long computeDurationNs
 ) {
+    public boolean isSuccessful() {
+        return success;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
     public static PathfindingResult cancelled(int entityId) {
         return new PathfindingResult(entityId, new double[0], new double[0], new double[0], 0, false, true, 0L);
     }

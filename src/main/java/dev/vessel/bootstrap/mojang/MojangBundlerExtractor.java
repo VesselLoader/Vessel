@@ -23,7 +23,7 @@ import java.util.jar.Manifest;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 public final class MojangBundlerExtractor {
 
@@ -180,7 +180,29 @@ public final class MojangBundlerExtractor {
             try (InputStream bundledIn = jarFile.getInputStream(bundledJarEntry)) {
                 Files.copy(bundledIn, destination, StandardCopyOption.REPLACE_EXISTING);
             }
+            stripJarSignaturesIfPresent(destination);
             outExtracted.add(destination);
+        }
+    }
+
+    private static void stripJarSignaturesIfPresent(Path jarPath) {
+        if (jarPath == null || !jarPath.toString().endsWith(".jar") || !Files.isRegularFile(jarPath)) {
+            return;
+        }
+        try (java.nio.file.FileSystem fs = java.nio.file.FileSystems.newFileSystem(jarPath, (ClassLoader) null)) {
+            Path metaInf = fs.getPath("META-INF");
+            if (Files.isDirectory(metaInf)) {
+                try (java.util.stream.Stream<Path> stream = Files.list(metaInf)) {
+                    List<Path> toDelete = stream.filter(p -> {
+                        String name = p.getFileName().toString().toUpperCase(java.util.Locale.ROOT);
+                        return name.endsWith(".SF") || name.endsWith(".RSA") || name.endsWith(".DSA") || name.startsWith("SIG-");
+                    }).toList();
+                    for (Path sigFile : toDelete) {
+                        Files.deleteIfExists(sigFile);
+                    }
+                }
+            }
+        } catch (Exception ignored) {
         }
     }
 }

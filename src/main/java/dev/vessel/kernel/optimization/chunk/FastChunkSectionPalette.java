@@ -12,8 +12,10 @@ import java.util.Arrays;
  * This class provides adaptive single-value compact storage for homogeneous sections,
  * and flat 12-bit coordinate packing {@code (y << 8) | (z << 4) | x} for multi-state sections,
  * enabling sub-nanosecond block state lookups with zero heap allocations.
+ * </p>
  *
- * @version 1.0.1
+ * @version 1.0.3
+ * @author VESSEL Engine Team
  */
 public final class FastChunkSectionPalette {
 
@@ -38,7 +40,7 @@ public final class FastChunkSectionPalette {
     }
 
     /**
-     * Computes the flat 12-bit index for coordinates within a 16x16x16 section.
+     * Computes the flat 12-bit index for coordinates within a 16x16x16 section with strict bounds checking.
      *
      * @param x local X (0-15)
      * @param y local Y (0-15)
@@ -53,6 +55,18 @@ public final class FastChunkSectionPalette {
     }
 
     /**
+     * Computes the flat 12-bit index using fast bit masking without exception checks for maximum JIT inlining.
+     *
+     * @param x local X (0-15)
+     * @param y local Y (0-15)
+     * @param z local Z (0-15)
+     * @return masked flat index (0-4095)
+     */
+    public static int getIndexFast(int x, int y, int z) {
+        return ((y & 0xF) << 8) | ((z & 0xF) << 4) | (x & 0xF);
+    }
+
+    /**
      * Retrieves the block state ID at local coordinates (x, y, z).
      *
      * @param x local X (0-15)
@@ -61,12 +75,15 @@ public final class FastChunkSectionPalette {
      * @return block state ID
      */
     public int getBlockStateId(int x, int y, int z) {
-        int index = getIndex(x, y, z);
+        if ((x & ~0xF) != 0 || (y & ~0xF) != 0 || (z & ~0xF) != 0) {
+            throw new IndexOutOfBoundsException("Local section coordinates must be 0-15. Got: (" + x + ", " + y + ", " + z + ")");
+        }
         if (homogeneous) {
             return singleStateId;
         }
         short[] data = this.stateData;
         if (data != null) {
+            int index = (y << 8) | (z << 4) | x;
             return data[index] & 0xFFFF;
         }
         return singleStateId;

@@ -8,6 +8,7 @@ import io.papermc.paper.event.player.PlayerTradeEvent;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
@@ -27,7 +28,7 @@ final class WaveElevenPaperAndServerEventsTest {
 
     @Test
     void testPaperTradeAndServerPluginEvents() {
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Player player = new Player("Shiroz", new Location(world, 0.0D, 64.0D, 0.0D));
 
         ItemStack offered = new ItemStack(Material.EMERALD, 5);

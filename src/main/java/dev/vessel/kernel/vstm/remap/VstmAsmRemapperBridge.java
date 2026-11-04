@@ -12,7 +12,7 @@ import org.objectweb.asm.commons.Remapper;
  * between source and target dialect spaces at $O(1)$ lookup velocity (Catalog ref: FOL-0040, USML-0021).
  * Supports dual-dialect owner and descriptor resolution across obfuscated and clean namespaces.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0 (Wave 3)
  */
 public final class VstmAsmRemapperBridge extends Remapper {
@@ -167,6 +167,22 @@ public final class VstmAsmRemapperBridge extends Remapper {
             return name;
         }
         return name;
+    }
+
+    @Override
+    public String mapDesc(String descriptor) {
+        if (descriptor == null || descriptor.indexOf('L') < 0) {
+            return descriptor;
+        }
+        return super.mapDesc(descriptor);
+    }
+
+    @Override
+    public String mapMethodDesc(String methodDescriptor) {
+        if (methodDescriptor == null || methodDescriptor.indexOf('L') < 0) {
+            return methodDescriptor;
+        }
+        return super.mapMethodDesc(methodDescriptor);
     }
 
     /**

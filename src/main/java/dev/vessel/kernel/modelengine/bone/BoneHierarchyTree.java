@@ -13,10 +13,13 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @author VESSEL Engine Team
  */
 public final class BoneHierarchyTree {
+
+    private static final ThreadLocal<float[]> SCRATCH_VECTOR =
+            ThreadLocal.withInitial(() -> new float[3]);
 
     private final Map<String, BoneNode> bones = new LinkedHashMap<>();
     private final Map<String, List<String>> childrenMap = new LinkedHashMap<>();
@@ -96,12 +99,13 @@ public final class BoneHierarchyTree {
             float scaledLocalY = bone.getTranslationY() * parentTransform.scaleY();
             float scaledLocalZ = bone.getTranslationZ() * parentTransform.scaleZ();
 
-            // Rotate scaled local translation by parent rotation
-            float[] rotatedOffset = parentTransform.rotation().rotateVector(scaledLocalX, scaledLocalY, scaledLocalZ);
+            // Rotate scaled local translation by parent rotation with zero heap allocations
+            float[] scratch = SCRATCH_VECTOR.get();
+            parentTransform.rotation().rotateVectorTo(scaledLocalX, scaledLocalY, scaledLocalZ, scratch, 0);
 
-            float worldX = parentTransform.translationX() + rotatedOffset[0];
-            float worldY = parentTransform.translationY() + rotatedOffset[1];
-            float worldZ = parentTransform.translationZ() + rotatedOffset[2];
+            float worldX = parentTransform.translationX() + scratch[0];
+            float worldY = parentTransform.translationY() + scratch[1];
+            float worldZ = parentTransform.translationZ() + scratch[2];
 
             QuaternionRotation worldRot = parentTransform.rotation().multiply(localRot);
 

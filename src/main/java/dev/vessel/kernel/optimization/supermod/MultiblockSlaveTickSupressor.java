@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Suppresses redundant per-tick updates on Immersive Engineering and Mekanism multiblock slave
  * blocks so only the master controller block executes logic each tick.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class MultiblockSlaveTickSupressor {
 
@@ -45,5 +45,40 @@ public final class MultiblockSlaveTickSupressor {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Unregisters a disassembled or broken multiblock structure, restoring tick evaluation
+     * to all its constituent blocks.
+     *
+     * @param masterBlockPos      the packed 64-bit master block coordinate
+     * @param slaveBlockPositions the list of packed 64-bit slave block coordinates
+     */
+    public void unregisterMultiblockStructure(long masterBlockPos, List<Long> slaveBlockPositions) {
+        masterBlocks.remove(masterBlockPos);
+        if (slaveBlockPositions != null) {
+            for (Long slavePos : slaveBlockPositions) {
+                if (slavePos != null) {
+                    slaveBlocks.remove(slavePos);
+                }
+            }
+        }
+    }
+
+    /**
+     * Unregisters a single broken multiblock slave block position.
+     *
+     * @param slaveBlockPos the packed 64-bit block coordinate
+     */
+    public void unregisterSlaveBlock(long slaveBlockPos) {
+        slaveBlocks.remove(slaveBlockPos);
+    }
+
+    /**
+     * Clears all registered multiblock master and slave tracking records.
+     */
+    public void clearAll() {
+        masterBlocks.clear();
+        slaveBlocks.clear();
     }
 }

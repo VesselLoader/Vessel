@@ -2,6 +2,8 @@ package dev.vessel.kernel.optimization.supermod;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.vessel.kernel.actor.RegionCoordinateHash;
@@ -12,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -19,7 +22,7 @@ import org.junit.jupiter.api.Test;
  * physics sleep, Lua virtual FS, and NaN/static sanitizer engines in
  * {@code dev.vessel.kernel.optimization.supermod} (Part 2).
  *
- * @version 1.0.0
+ * @version 1.0.2
  */
 class SuperModCombatWorldAndSanitizerTest {
 
@@ -101,6 +104,12 @@ class SuperModCombatWorldAndSanitizerTest {
         assertEquals(16, shipGov.budgetShipVoxelCollisionSweeps(501L, 64, 16));
         assertTrue(shipGov.coalesceShipTransformToRegionThread(
                 501L, 100.0, 72.0, -50.0, 90.0f, 0.0f, 0.0f));
+        double[] transform = shipGov.getCoalescedTransform(501L);
+        assertNotNull(transform);
+        assertEquals(100.0, transform[0]);
+        double[] polled = shipGov.pollCoalescedTransform(501L);
+        assertNotNull(polled);
+        assertNull(shipGov.getCoalescedTransform(501L));
 
         LuaCoroutineAndPeripheralQuotaGovernor luaGov =
                 new LuaCoroutineAndPeripheralQuotaGovernor();
@@ -119,6 +128,8 @@ class SuperModCombatWorldAndSanitizerTest {
                 "print('hello')".getBytes(StandardCharsets.UTF_8),
                 100L);
         assertEquals(0, luaGov.flushDirtyVirtualFilesToDisk(400L));
-        assertEquals(1, luaGov.flushDirtyVirtualFilesToDisk(705L));
+        AtomicInteger filesWritten = new AtomicInteger(0);
+        assertEquals(1, luaGov.flushDirtyVirtualFilesToDisk(705L, (path, data) -> filesWritten.incrementAndGet()));
+        assertEquals(1, filesWritten.get());
     }
 }

@@ -12,7 +12,7 @@ import java.util.Objects;
  * and method descriptors with near-zero collision probability in $100,000+$ item spaces
  * (Catalog refs: ADV-0320, ZER-0010).</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @since 1.0.0 (Wave 1)
  */
 public final class VstmMurmurHash64 {
@@ -32,7 +32,8 @@ public final class VstmMurmurHash64 {
     }
 
     /**
-     * Hashes a Java String with a caller-specified seed.
+     * Hashes a Java String with a caller-specified seed using an optimized zero-allocation
+     * ASCII fast-path when the input contains only ASCII characters (standard for JVM identifiers).
      *
      * @param input the string to hash
      * @param seed  the seed
@@ -40,8 +41,73 @@ public final class VstmMurmurHash64 {
      */
     public static long hash64(String input, long seed) {
         Objects.requireNonNull(input, "input string must not be null");
+        int len = input.length();
+        boolean isAscii = true;
+        for (int i = 0; i < len; i++) {
+            if (input.charAt(i) >= 0x80) {
+                isAscii = false;
+                break;
+            }
+        }
+        if (isAscii) {
+            return hash64Ascii(input, len, seed);
+        }
         byte[] bytes = input.getBytes(StandardCharsets.UTF_8);
         return hash64(bytes, 0, bytes.length, seed);
+    }
+
+    @SuppressWarnings("fallthrough")
+    private static long hash64Ascii(String s, int length, long seed) {
+        long h = seed ^ ((long) length * M);
+        int nblocks = length >> 3; // length / 8
+
+        for (int i = 0; i < nblocks; i++) {
+            int index = i << 3;
+            long k = ((long) s.charAt(index) & 0xffL)
+                    | (((long) s.charAt(index + 1) & 0xffL) << 8)
+                    | (((long) s.charAt(index + 2) & 0xffL) << 16)
+                    | (((long) s.charAt(index + 3) & 0xffL) << 24)
+                    | (((long) s.charAt(index + 4) & 0xffL) << 32)
+                    | (((long) s.charAt(index + 5) & 0xffL) << 40)
+                    | (((long) s.charAt(index + 6) & 0xffL) << 48)
+                    | (((long) s.charAt(index + 7) & 0xffL) << 56);
+
+            k *= M;
+            k ^= k >>> R;
+            k *= M;
+
+            h ^= k;
+            h *= M;
+        }
+
+        int tailIndex = nblocks << 3;
+        int remaining = length & 7;
+
+        switch (remaining) {
+            case 7:
+                h ^= ((long) s.charAt(tailIndex + 6) & 0xffL) << 48;
+            case 6:
+                h ^= ((long) s.charAt(tailIndex + 5) & 0xffL) << 40;
+            case 5:
+                h ^= ((long) s.charAt(tailIndex + 4) & 0xffL) << 32;
+            case 4:
+                h ^= ((long) s.charAt(tailIndex + 3) & 0xffL) << 24;
+            case 3:
+                h ^= ((long) s.charAt(tailIndex + 2) & 0xffL) << 16;
+            case 2:
+                h ^= ((long) s.charAt(tailIndex + 1) & 0xffL) << 8;
+            case 1:
+                h ^= ((long) s.charAt(tailIndex) & 0xffL);
+                h *= M;
+            default:
+                break;
+        }
+
+        h ^= h >>> R;
+        h *= M;
+        h ^= h >>> R;
+
+        return h;
     }
 
     /**

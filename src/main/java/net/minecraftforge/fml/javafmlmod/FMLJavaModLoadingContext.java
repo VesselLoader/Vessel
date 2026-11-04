@@ -2,6 +2,7 @@ package net.minecraftforge.fml.javafmlmod;
 
 import java.util.Objects;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.VesselEventBus;
 
 /**
  * Forge Java FML mod loading context ({@code net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext})
@@ -9,13 +10,13 @@ import net.minecraftforge.eventbus.api.IEventBus;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class FMLJavaModLoadingContext {
 
     private static final FMLJavaModLoadingContext INSTANCE = new FMLJavaModLoadingContext();
 
-    private volatile IEventBus activeModEventBus = new IEventBus();
+    private volatile IEventBus activeModEventBus = new VesselEventBus();
 
     private FMLJavaModLoadingContext() {
     }

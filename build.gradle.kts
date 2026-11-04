@@ -1,6 +1,6 @@
 // ==============================================================================
 // VESSEL — Build Gradle (Kotlin DSL)
-// Version: 1.0.10
+// Version: 1.0.13
 // Description: Core build configuration for VESSEL Microkernel Engine.
 // Architecture: Sovereign Standalone Server (Java 21 LTS Toolchain).
 // ==============================================================================
@@ -51,11 +51,19 @@ sourceSets {
 
 repositories {
     mavenCentral()
+    maven {
+        name = "Mojang"
+        url = uri("https://libraries.minecraft.net/")
+    }
 }
 
 dependencies {
+    // Official Mojang Brigadier Command Engine
+    implementation("com.mojang:brigadier:1.3.11")
+    implementation("com.google.code.gson:gson:2.11.0")
+
     // Public Developer Contracts & Symmetry Bridge (Interconnected via Gradle Composite Build)
-    api("dev.vessel:vessel-api:1.0.0-SNAPSHOT")
+    api("dev.vessel:vessel-api:1.1.0")
 
     // ASM 9.7 — Bytecode Manipulation & ASM Tree for VesselModuleIR
     implementation("org.ow2.asm:asm:9.7")
@@ -203,5 +211,25 @@ tasks.register<Jar>("vstmCliJar") {
             "Implementation-Title" to "vstm-cli",
             "Implementation-Version" to project.version
         )
+    }
+}
+
+
+tasks.register<Zip>("packageCleanReleaseZip") {
+    group = "distribution"
+    description = "Packages a clean release distribution zip strictly excluding credentials, secrets, and caches."
+    archiveFileName.set("vessel-release-${project.version}.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+
+    from(projectDir) {
+        exclude("credentials/**")
+        exclude("*.local.properties")
+        exclude(".secrets/**")
+        exclude(".env*")
+        exclude("build/**")
+        exclude(".gradle/**")
+        exclude("cache/**")
+        exclude("run/**")
+        exclude("test-server/**")
     }
 }

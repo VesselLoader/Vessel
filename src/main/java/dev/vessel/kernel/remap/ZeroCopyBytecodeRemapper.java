@@ -28,7 +28,7 @@ import java.util.Objects;
  * <p>Operates directly on ASM {@link ClassNode} trees with zero inner classes (Rule 17)
  * and translates reflection string literals per Lesson L11.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-27)
  */
 public final class ZeroCopyBytecodeRemapper {
@@ -95,6 +95,11 @@ public final class ZeroCopyBytecodeRemapper {
     public String mapMethodDescriptor(String descriptor, CompactMappingDictionary dictionary) {
         Objects.requireNonNull(descriptor, "descriptor cannot be null");
         Objects.requireNonNull(dictionary, "dictionary cannot be null");
+
+        // Fast-path: primitive descriptors without reference types require no transformation
+        if (descriptor.indexOf('L') < 0) {
+            return descriptor;
+        }
 
         StringBuilder sb = new StringBuilder(descriptor.length());
         int i = 0;

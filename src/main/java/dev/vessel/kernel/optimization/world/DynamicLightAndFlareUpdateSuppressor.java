@@ -9,12 +9,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * projectiles, Create contraption headlamps), preventing continuous chunk disk dirtying
  * and redundant light engine recalculations.
  *
- * @version 1.0.0
+ * <p>Employs {@link DynamicLightSourceState} to consolidate lookups and eliminate redundant hashing.</p>
+ * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
+ *
+ * @version 1.0.2
+ * @author VESSEL Engine Team
  */
 public final class DynamicLightAndFlareUpdateSuppressor {
 
-    private final Map<Long, Long> lastPosBySourceId = new ConcurrentHashMap<>();
-    private final Map<Long, Long> lastUpdateTickBySourceId = new ConcurrentHashMap<>();
+    private final Map<Long, DynamicLightSourceState> sourceStates = new ConcurrentHashMap<>();
     private final Map<Long, Integer> ephemeralLightByBlockPos = new ConcurrentHashMap<>();
 
     /**
@@ -40,15 +43,23 @@ public final class DynamicLightAndFlareUpdateSuppressor {
             int luminanceLevel,
             long currentTick,
             int hysteresisTicks) {
-        Long lastTick = lastUpdateTickBySourceId.get(entityOrLanternId);
-        if (lastTick != null && (currentTick - lastTick) < Math.max(1, hysteresisTicks)) {
-            return false;
+        DynamicLightSourceState state = sourceStates.get(entityOrLanternId);
+        if (state != null) {
+            synchronized (state) {
+                if ((currentTick - state.getLastUpdateTick()) < Math.max(1, hysteresisTicks)) {
+                    return false;
+                }
+                long prevPos = state.getLastPos();
+                if (prevPos != newBlockPos) {
+                    ephemeralLightByBlockPos.remove(prevPos);
+                }
+                state.setLastPos(newBlockPos);
+                state.setLastUpdateTick(currentTick);
+            }
+        } else {
+            sourceStates.put(entityOrLanternId, new DynamicLightSourceState(newBlockPos, currentTick));
         }
-        Long previousPos = lastPosBySourceId.put(entityOrLanternId, newBlockPos);
-        if (previousPos != null && previousPos != newBlockPos) {
-            ephemeralLightByBlockPos.remove(previousPos);
-        }
-        lastUpdateTickBySourceId.put(entityOrLanternId, currentTick);
+
         int clampedLight = Math.max(0, Math.min(15, luminanceLevel));
         if (clampedLight > 0) {
             ephemeralLightByBlockPos.put(newBlockPos, clampedLight);
@@ -65,6 +76,29 @@ public final class DynamicLightAndFlareUpdateSuppressor {
      * @return ephemeral light level (0..15)
      */
     public int getEphemeralLightLevel(long packedBlockPos) {
-        return ephemeralLightByBlockPos.getOrDefault(packedBlockPos, 0);
+        Integer lvl = ephemeralLightByBlockPos.get(packedBlockPos);
+        return lvl != null ? lvl : 0;
+    }
+
+    /**
+     * Removes an ephemeral light source when destroyed or despawned.
+     *
+     * @param entityOrLanternId source identifier
+     */
+    public void removeEphemeralLightSource(long entityOrLanternId) {
+        DynamicLightSourceState state = sourceStates.remove(entityOrLanternId);
+        if (state != null) {
+            synchronized (state) {
+                ephemeralLightByBlockPos.remove(state.getLastPos());
+            }
+        }
+    }
+
+    /**
+     * Clears all ephemeral light sources upon dimension unload.
+     */
+    public void clearAll() {
+        sourceStates.clear();
+        ephemeralLightByBlockPos.clear();
     }
 }

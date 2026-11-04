@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>Responsibility: Zero-copy buffer slicing and allocation elimination.
  * Eliminates: ERR-79, OPT-080..090.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class ZeroCopyNettyByteBufSlicer {
@@ -25,6 +25,8 @@ public final class ZeroCopyNettyByteBufSlicer {
 
     private static final java.lang.reflect.Field ZC_ARRAY_FIELD;
     private static final java.lang.reflect.Field ZC_OFFSET_FIELD;
+    private static final java.util.Map<Class<?>, java.lang.invoke.MethodHandle> SLICE_HANDLE_CACHE =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     static {
         java.lang.reflect.Field arr = null;
@@ -135,26 +137,36 @@ public final class ZeroCopyNettyByteBufSlicer {
      */
     public Object sliceNettyByteBuf(Object nettyByteBuf, int index, int length) {
         Objects.requireNonNull(nettyByteBuf, "nettyByteBuf must not be null");
+        Class<?> bufClass = nettyByteBuf.getClass();
+        java.lang.invoke.MethodHandle handle = SLICE_HANDLE_CACHE.computeIfAbsent(bufClass, clazz -> {
+            java.lang.invoke.MethodHandles.Lookup lookup = java.lang.invoke.MethodHandles.lookup();
+            try {
+                Method m = clazz.getMethod("retainedSlice", int.class, int.class);
+                return lookup.unreflect(m);
+            } catch (NoSuchMethodException e) {
+                try {
+                    Method m2 = clazz.getMethod("slice", int.class, int.class);
+                    return lookup.unreflect(m2);
+                } catch (NoSuchMethodException ex) {
+                    throw new UnsupportedOperationException(
+                            "Target object does not expose slice/retainedSlice: " + clazz.getName(), ex
+                    );
+                } catch (IllegalAccessException ex) {
+                    throw new RuntimeException(ex);
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
         try {
-            Method sliceMethod = nettyByteBuf.getClass().getMethod("retainedSlice", int.class, int.class);
-            Object result = sliceMethod.invoke(nettyByteBuf, index, length);
+            Object result = handle.invoke(nettyByteBuf, index, length);
             sliceCount.incrementAndGet();
             bytesSliced.addAndGet(length);
             allocationsSaved.incrementAndGet();
             return result;
-        } catch (ReflectiveOperationException e) {
-            try {
-                Method fallbackMethod = nettyByteBuf.getClass().getMethod("slice", int.class, int.class);
-                Object result = fallbackMethod.invoke(nettyByteBuf, index, length);
-                sliceCount.incrementAndGet();
-                bytesSliced.addAndGet(length);
-                allocationsSaved.incrementAndGet();
-                return result;
-            } catch (ReflectiveOperationException ex) {
-                throw new UnsupportedOperationException(
-                        "Target object does not expose slice/retainedSlice: " + nettyByteBuf.getClass().getName(), ex
-                );
-            }
+        } catch (Throwable t) {
+            throw new RuntimeException("Error invoking slice handle on " + bufClass.getName(), t);
         }
     }
 

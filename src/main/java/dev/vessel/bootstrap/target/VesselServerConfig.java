@@ -13,9 +13,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * Manages the root {@code vessel.yml} configuration file containing all 34 annotated
  * enterprise configuration sections for the VESSEL microkernel.
  *
- * @version 1.0.0
+ * @version 1.0.2
  */
 public final class VesselServerConfig {
+
+    private static volatile VesselServerConfig activeConfig;
 
     private static final List<String> CANONICAL_34_SECTIONS = List.of(
             "branding",
@@ -55,6 +57,56 @@ public final class VesselServerConfig {
     );
 
     private final Map<String, String> flatProperties = new ConcurrentHashMap<>();
+
+    /**
+     * Returns the globally active server configuration instance.
+     *
+     * @return active configuration store
+     */
+    public static VesselServerConfig getActiveConfig() {
+        VesselServerConfig current = activeConfig;
+        if (current == null) {
+            current = new VesselServerConfig();
+            activeConfig = current;
+        }
+        return current;
+    }
+
+    /**
+     * Stores the globally active server configuration instance.
+     *
+     * @param config active configuration store
+     */
+    public static void setActiveConfig(VesselServerConfig config) {
+        activeConfig = config;
+    }
+
+    /**
+     * Returns the total count of distinct loaded properties.
+     *
+     * @return loaded property key count
+     */
+    public int getLoadedPropertiesCount() {
+        return flatProperties.size();
+    }
+
+    /**
+     * Returns the count of canonical configuration sections.
+     *
+     * @return section count (34)
+     */
+    public int getCanonicalSectionsCount() {
+        return CANONICAL_34_SECTIONS.size();
+    }
+
+    /**
+     * Returns an unmodifiable list of canonical section names.
+     *
+     * @return canonical section names
+     */
+    public List<String> getCanonicalSections() {
+        return CANONICAL_34_SECTIONS;
+    }
 
     /**
      * Creates a new server configuration manager populated with in-memory defaults.
@@ -161,9 +213,16 @@ public final class VesselServerConfig {
                 sb.append("  f3-debug-brand: \"VESSEL\"\n");
             } else if ("actor-scheduler".equals(section)) {
                 sb.append("  use-virtual-threads: true\n");
+            } else if ("client-presentation".equals(section)) {
+                sb.append("  http-port: 0\n");
+                sb.append("  profile: \"enterprise\"\n");
+            } else if ("network-and-security".equals(section)) {
+                sb.append("  server-port: 25565\n");
+                sb.append("  profile: \"enterprise\"\n");
             } else if ("proxy-integration".equals(section)) {
                 sb.append("  protocol: \"VELOCITY_MODERN\"\n");
                 sb.append("  velocity-forwarding-secret: \"\"\n");
+                sb.append("  bedrock-port: 19132\n");
             } else if ("lua-computer-governor".equals(section)) {
                 sb.append("  max-cpu-slice-micros-per-tick: 250\n");
             } else {
@@ -185,6 +244,9 @@ public final class VesselServerConfig {
         flatProperties.put("actor-scheduler.use-virtual-threads", "true");
         flatProperties.put("proxy-integration.protocol", "VELOCITY_MODERN");
         flatProperties.put("proxy-integration.velocity-forwarding-secret", "");
+        flatProperties.put("proxy-integration.bedrock-port", "19132");
+        flatProperties.put("client-presentation.http-port", "0");
+        flatProperties.put("network-and-security.server-port", "25565");
         flatProperties.put("lua-computer-governor.max-cpu-slice-micros-per-tick", "250");
         flatProperties.put("server-identity.brand", "VESSEL");
         flatProperties.put("startup-build-stage.first-run-warning-seconds", "45");

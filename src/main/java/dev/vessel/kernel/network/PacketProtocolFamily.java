@@ -6,7 +6,7 @@ package dev.vessel.kernel.network;
  * Governs network multiplexing and serialization rules in the VESSEL dual-protocol core.
  * </p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-6)
  */
 public enum PacketProtocolFamily {
@@ -15,5 +15,11 @@ public enum PacketProtocolFamily {
     JAVA_NATIVE,
 
     /** Bedrock Edition UDP RakNet protocol (Geyser/Bedrock multiplexed). */
-    BEDROCK_RAKNET
+    BEDROCK_RAKNET;
+
+    /** Compatibility alias for legacy tests and callers. */
+    public static final PacketProtocolFamily JAVA = JAVA_NATIVE;
+
+    /** Compatibility alias for legacy tests and callers. */
+    public static final PacketProtocolFamily BEDROCK = BEDROCK_RAKNET;
 }

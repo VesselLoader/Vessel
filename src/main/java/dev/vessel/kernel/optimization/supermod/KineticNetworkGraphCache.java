@@ -1,17 +1,22 @@
 package dev.vessel.kernel.optimization.supermod;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Caches Create mod kinetic network speed multipliers per shaft position so RPM propagation across
  * large cogwheel and shaft graphs resolves in {@code O(1)} without recursive graph traversal.
  *
- * @version 1.0.0
+ * <p>Employs flat 64-bit composite primitive hashing to eliminate intermediate map allocations
+ * and reduce GC pressure across large kinetic networks.</p>
+ *
+ * @version 1.0.1
  */
 public final class KineticNetworkGraphCache {
 
-    private final Map<Long, Map<Long, Float>> networkSpeedRatios = new ConcurrentHashMap<>();
+    private final Map<Long, Float> shaftSpeedRatios = new ConcurrentHashMap<>();
+    private final Map<Long, Set<Long>> networkKeys = new ConcurrentHashMap<>();
 
     /**
      * Caches the gear ratio multiplier for a shaft within a kinetic network.
@@ -21,9 +26,11 @@ public final class KineticNetworkGraphCache {
      * @param speedRatio    the speed multiplier relative to the network source
      */
     public void cacheNetworkSpeedMultiplier(long networkId, long shaftBlockPos, float speedRatio) {
-        networkSpeedRatios
-                .computeIfAbsent(networkId, ignored -> new ConcurrentHashMap<>())
-                .put(shaftBlockPos, speedRatio);
+        long compositeKey = computeKey(networkId, shaftBlockPos);
+        shaftSpeedRatios.put(compositeKey, speedRatio);
+        networkKeys
+                .computeIfAbsent(networkId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(compositeKey);
     }
 
     /**
@@ -35,15 +42,12 @@ public final class KineticNetworkGraphCache {
      * @return the propagated RPM, or {@code 0.0f} if the network or shaft is not cached
      */
     public float computePropagatedRpmO1(long networkId, long shaftBlockPos, float sourceRpm) {
-        Map<Long, Float> shafts = networkSpeedRatios.get(networkId);
-        if (shafts == null) {
-            return 0.0f;
-        }
-        Float ratio = shafts.get(shaftBlockPos);
+        long compositeKey = computeKey(networkId, shaftBlockPos);
+        Float ratio = shaftSpeedRatios.get(compositeKey);
         if (ratio == null) {
             return 0.0f;
         }
-        return sourceRpm * ratio;
+        return sourceRpm * ratio.floatValue();
     }
 
     /**
@@ -52,6 +56,23 @@ public final class KineticNetworkGraphCache {
      * @param networkId the kinetic network identifier
      */
     public void invalidateKineticNetwork(long networkId) {
-        networkSpeedRatios.remove(networkId);
+        Set<Long> keys = networkKeys.remove(networkId);
+        if (keys != null) {
+            for (Long key : keys) {
+                shaftSpeedRatios.remove(key);
+            }
+        }
+    }
+
+    /**
+     * Clears all cached kinetic networks.
+     */
+    public void clear() {
+        shaftSpeedRatios.clear();
+        networkKeys.clear();
+    }
+
+    private static long computeKey(long networkId, long shaftPos) {
+        return (networkId * 31L) ^ shaftPos;
     }
 }

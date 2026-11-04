@@ -11,13 +11,15 @@ import java.util.Set;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
+ * @author VESSEL Engine Team
  */
 public final class UnifiedGameAndModClassLoaderBridge {
 
     private volatile ClassLoader tierOneGameClassLoader;
     private volatile ClassLoader tierTwoModClassLoader;
-    private final ThreadLocal<Set<String>> activeResolutionSet = new ThreadLocal<>();
+    private final ThreadLocal<Set<String>> activeModResolutionSet = ThreadLocal.withInitial(HashSet::new);
+    private final ThreadLocal<Set<String>> activeGameResolutionSet = ThreadLocal.withInitial(HashSet::new);
 
     public void bindTierOneGameClassLoader(ClassLoader gameClassLoader) {
         this.tierOneGameClassLoader = gameClassLoader;
@@ -43,9 +45,8 @@ public final class UnifiedGameAndModClassLoaderBridge {
         if (className == null || className.isBlank() || tierTwoModClassLoader == null) {
             return null;
         }
-        Set<String> set = getOrCreateResolutionSet();
-        String key = "MOD:" + className;
-        if (!set.add(key)) {
+        Set<String> set = activeModResolutionSet.get();
+        if (!set.add(className)) {
             return null;
         }
         try {
@@ -53,7 +54,7 @@ public final class UnifiedGameAndModClassLoaderBridge {
         } catch (ClassNotFoundException | LinkageError e) {
             return null;
         } finally {
-            set.remove(key);
+            set.remove(className);
         }
     }
 
@@ -61,9 +62,8 @@ public final class UnifiedGameAndModClassLoaderBridge {
         if (className == null || className.isBlank() || tierOneGameClassLoader == null) {
             return null;
         }
-        Set<String> set = getOrCreateResolutionSet();
-        String key = "GAME:" + className;
-        if (!set.add(key)) {
+        Set<String> set = activeGameResolutionSet.get();
+        if (!set.add(className)) {
             return null;
         }
         try {
@@ -71,16 +71,7 @@ public final class UnifiedGameAndModClassLoaderBridge {
         } catch (ClassNotFoundException | LinkageError e) {
             return null;
         } finally {
-            set.remove(key);
+            set.remove(className);
         }
-    }
-
-    private Set<String> getOrCreateResolutionSet() {
-        Set<String> set = activeResolutionSet.get();
-        if (set == null) {
-            set = new HashSet<>();
-            activeResolutionSet.set(set);
-        }
-        return set;
     }
 }

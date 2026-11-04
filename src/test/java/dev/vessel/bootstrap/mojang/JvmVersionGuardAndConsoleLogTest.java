@@ -132,6 +132,7 @@ public final class JvmVersionGuardAndConsoleLogTest {
             assertThat(customLogger.getRecordedLines())
                     .anyMatch(l -> l.contains("Server Requires  : Java 25 or newer"));
         }
+        launcher.close();
     }
 
     @Test

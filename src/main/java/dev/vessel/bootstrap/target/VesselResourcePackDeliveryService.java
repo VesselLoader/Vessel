@@ -21,7 +21,7 @@ import java.util.jar.JarOutputStream;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.6
  */
 public final class VesselResourcePackDeliveryService {
 
@@ -32,8 +32,16 @@ public final class VesselResourcePackDeliveryService {
             new VesselUniversalResourcePackCompiler();
     private final VesselServerPropertiesPackConfigurator propertiesConfigurator =
             new VesselServerPropertiesPackConfigurator();
+    private final VesselResourcePackHostResolver hostResolver =
+            new VesselResourcePackHostResolver();
+    private final dev.vessel.kernel.presentation.PresentationResourceChecksumVerifier checksumVerifier =
+            new dev.vessel.kernel.presentation.PresentationResourceChecksumVerifier();
+    private final dev.vessel.kernel.presentation.ClientResourcePackAcceptanceVerifier acceptanceVerifier =
+            new dev.vessel.kernel.presentation.ClientResourcePackAcceptanceVerifier();
+    private final dev.vessel.kernel.network.bridge.IntegratedPackHttpServer integratedPackServer =
+            new dev.vessel.kernel.network.bridge.IntegratedPackHttpServer();
     private volatile HttpServer activeHttpServer;
-    private volatile int activeHttpPort = 25566;
+    private volatile int activeHttpPort = resolveInitialHttpPort();
     private volatile String activePackSha1 = "";
 
     /**
@@ -42,7 +50,7 @@ public final class VesselResourcePackDeliveryService {
      *
      * @param serverRoot the server root directory
      * @param serverPort the Minecraft game server port (e.g., {@code 25565})
-     * @return the local HTTP download URL of the pack (e.g., {@code "http://127.0.0.1:25566/vessel-pack.zip"})
+     * @return the HTTP download URL of the pack
      */
     public String startDeliveryServerAndConfigureProperties(Path serverRoot, int serverPort) {
         return startDeliveryServerAndConfigureProperties(serverRoot, serverPort, "1.21.4");
@@ -55,11 +63,11 @@ public final class VesselResourcePackDeliveryService {
      * @param serverRoot the server root directory
      * @param serverPort the Minecraft game server port (e.g., {@code 25565})
      * @param mcVersion  active Minecraft version (e.g., {@code "1.12.2"}, {@code "1.20.1"}, {@code "26.3"})
-     * @return the local HTTP download URL of the pack (e.g., {@code "http://127.0.0.1:25566/vessel-pack.zip"})
+     * @return the HTTP download URL of the pack
      */
     public String startDeliveryServerAndConfigureProperties(Path serverRoot, int serverPort, String mcVersion) {
         Objects.requireNonNull(serverRoot, "serverRoot must not be null");
-        this.activeHttpPort = (serverPort > 0 && serverPort < 65535) ? serverPort + 1 : 25566;
+        this.activeHttpPort = resolveConfiguredHttpPort(serverPort);
 
         Path ecosystemDir = serverRoot.resolve("cache").resolve("ecosystem");
         Path packZip = ecosystemDir.resolve(PACK_FILE_NAME);
@@ -67,6 +75,7 @@ public final class VesselResourcePackDeliveryService {
         try {
             Files.createDirectories(ecosystemDir);
             this.activePackSha1 = packCompiler.compileResourcePack(serverRoot, packZip, mcVersion);
+            checksumVerifier.verifyChecksum(packZip, activePackSha1);
 
             if (activeHttpServer == null) {
                 HttpServer server = HttpServer.create(new InetSocketAddress(activeHttpPort), 0);
@@ -76,7 +85,7 @@ public final class VesselResourcePackDeliveryService {
                 this.activeHttpServer = server;
             }
 
-            String packUrl = "http://127.0.0.1:" + activeHttpPort + PACK_ENDPOINT_PATH;
+            String packUrl = hostResolver.resolveDeliveryUrl(serverRoot, activeHttpPort, PACK_ENDPOINT_PATH);
             propertiesConfigurator.configureServerProperties(serverRoot, packUrl, activePackSha1, mcVersion);
             return packUrl;
         } catch (Exception e) {
@@ -100,6 +109,49 @@ public final class VesselResourcePackDeliveryService {
      */
     public int getActiveHttpPort() {
         return activeHttpPort;
+    }
+
+    /**
+     * Dynamically sets or overrides the active HTTP delivery port.
+     *
+     * @param activeHttpPort valid TCP port between 1 and 65535
+     */
+    public void setActiveHttpPort(int activeHttpPort) {
+        if (activeHttpPort > 0 && activeHttpPort <= 65535) {
+            this.activeHttpPort = activeHttpPort;
+        }
+    }
+
+    private static int resolveInitialHttpPort() {
+        int configured = VesselServerConfig.getActiveConfig().getInt("client-presentation.http-port", 0);
+        if (configured > 0 && configured <= 65535) {
+            return configured;
+        }
+        int serverPort = VesselServerConfig.getActiveConfig().getInt("network-and-security.server-port", 25565);
+        return (serverPort > 0 && serverPort < 65535) ? serverPort + 1 : 25566;
+    }
+
+    private int resolveConfiguredHttpPort(int serverPort) {
+        int configuredPort = VesselServerConfig.getActiveConfig().getInt("client-presentation.http-port", 0);
+        if (configuredPort > 0 && configuredPort <= 65535) {
+            return configuredPort;
+        }
+        int effectiveServerPort = serverPort > 0
+                ? serverPort
+                : VesselServerConfig.getActiveConfig().getInt("network-and-security.server-port", 25565);
+        return (effectiveServerPort > 0 && effectiveServerPort < 65535) ? effectiveServerPort + 1 : 25566;
+    }
+
+    public dev.vessel.kernel.presentation.ClientResourcePackAcceptanceVerifier getAcceptanceVerifier() {
+        return acceptanceVerifier;
+    }
+
+    public dev.vessel.kernel.presentation.PresentationResourceChecksumVerifier getChecksumVerifier() {
+        return checksumVerifier;
+    }
+
+    public dev.vessel.kernel.network.bridge.IntegratedPackHttpServer getIntegratedPackServer() {
+        return integratedPackServer;
     }
 
     /**

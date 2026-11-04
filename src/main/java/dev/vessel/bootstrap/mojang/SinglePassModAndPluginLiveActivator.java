@@ -1,5 +1,8 @@
 package dev.vessel.bootstrap.mojang;
 
+import dev.vessel.adapter.bukkit.PluginCommandAutoRegistrar;
+import dev.vessel.adapter.bukkit.PluginJarDescriptorExtractor;
+import dev.vessel.adapter.bukkit.PluginYmlCommandDescriptor;
 import dev.vessel.adapter.fabric.FabricLoaderShim;
 import dev.vessel.adapter.fabric.FabricModContainerShim;
 import dev.vessel.kernel.compat.era.ForwardVersionModRejectedException;
@@ -23,6 +26,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
+import org.bukkit.VesselServer;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -36,7 +40,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.6
+ * @version 1.0.15
  */
 public final class SinglePassModAndPluginLiveActivator {
 
@@ -44,8 +48,16 @@ public final class SinglePassModAndPluginLiveActivator {
             new ForwardVersionModRejectionGuard();
     private final FastJarEntrypointHeaderScanner entrypointScanner =
             new FastJarEntrypointHeaderScanner();
+    private final NestedModJarUnpacker nestedJarUnpacker =
+            new NestedModJarUnpacker();
     private final ForgeAndNeoForgeLifecycleSequenceDispatcher forgeLifecycleDispatcher =
             new ForgeAndNeoForgeLifecycleSequenceDispatcher();
+    private final PluginJarDescriptorExtractor descriptorExtractor =
+            new PluginJarDescriptorExtractor();
+    private final PluginCommandAutoRegistrar commandAutoRegistrar =
+            new PluginCommandAutoRegistrar();
+    private final dev.vessel.adapter.forge.ForgeEventBusSubscriberScanner subscriberScanner =
+            new dev.vessel.adapter.forge.ForgeEventBusSubscriberScanner();
     private final Map<String, String> rejectedForwardVersionModules = new LinkedHashMap<>();
     private volatile LiveJarBytecodeTransformingClassLoader activeTransformingClassLoader;
 
@@ -81,10 +93,18 @@ public final class SinglePassModAndPluginLiveActivator {
         FabricLoader liveFabricLoader = new FabricLoader(fabricShim, customFlags.isDeepDebugEnabled());
         FabricLoader.setInstance(liveFabricLoader);
 
-        Server liveBukkitServer = new Server(
+        String normalizedBukkitVersion = activeMcVersion != null ? activeMcVersion : "1.21.4";
+        if (!normalizedBukkitVersion.contains("-")) {
+            long dotCount = normalizedBukkitVersion.chars().filter(c -> c == '.').count();
+            if (dotCount < 2) {
+                normalizedBukkitVersion = normalizedBukkitVersion + ".0";
+            }
+            normalizedBukkitVersion = normalizedBukkitVersion + "-R0.1-SNAPSHOT";
+        }
+        Server liveBukkitServer = new VesselServer(
                 "VESSEL",
-                activeMcVersion + "-R0.1-SNAPSHOT",
-                activeMcVersion + "-R0.1-SNAPSHOT");
+                normalizedBukkitVersion,
+                normalizedBukkitVersion);
         Bukkit.setServer(liveBukkitServer);
 
         if (discoveredModules.isEmpty()) {
@@ -126,9 +146,12 @@ public final class SinglePassModAndPluginLiveActivator {
         // blocks, and event listeners can be loaded on demand.
         int activatedCount = 0;
         try {
+            List<Path> expandedJarPaths = nestedJarUnpacker.unpackNestedJars(
+                    jarPaths,
+                    Path.of("cache", "nested-jars"));
             LiveJarBytecodeTransformingClassLoader transformingLoader =
                     new LiveJarBytecodeTransformingClassLoader(
-                            jarPaths,
+                            expandedJarPaths,
                             parentClassLoader != null ? parentClassLoader : SinglePassModAndPluginLiveActivator.class.getClassLoader(),
                             customFlags.isUniversalCompatEnabled(),
                             customFlags.isDeepDebugEnabled());
@@ -145,7 +168,10 @@ public final class SinglePassModAndPluginLiveActivator {
                         customFlags.isLenientLoadEnabled());
             }
             Bukkit.getPluginManager().callEvent(new ServerLoadEvent(ServerLoadEvent.STARTUP_TYPE));
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            if (customFlags.isDeepDebugEnabled()) {
+                e.printStackTrace();
+            }
         }
         return activatedCount;
     }
@@ -186,7 +212,7 @@ public final class SinglePassModAndPluginLiveActivator {
             VesselModuleIdentifier moduleId,
             String activeMcVersion,
             Server liveBukkitServer) throws Exception {
-        return activateIfModOrPluginClass(clazz, moduleId, activeMcVersion, liveBukkitServer);
+        return activateIfModOrPluginClass(clazz, moduleId, activeMcVersion, liveBukkitServer, null);
     }
 
     private int activateJarEntrypoints(
@@ -208,7 +234,7 @@ public final class SinglePassModAndPluginLiveActivator {
                         || clazz.isEnum()) {
                     continue;
                 }
-                if (activateIfModOrPluginClass(clazz, moduleId, activeMcVersion, liveBukkitServer)) {
+                if (activateIfModOrPluginClass(clazz, moduleId, activeMcVersion, liveBukkitServer, jarPath)) {
                     count++;
                 }
             } catch (Throwable t) {
@@ -217,6 +243,9 @@ public final class SinglePassModAndPluginLiveActivator {
                             "Failed to activate class " + className + " in " + jarPath, t);
                 }
             }
+        }
+        if (moduleId.loader() == dev.vessel.kernel.identity.SourceLoaderKind.FORGE) {
+            subscriberScanner.scanAndRegisterSubscribers(candidateClasses, transformingLoader);
         }
         if (count == 0 && lenientLoad && entrypointScanner.containsExecutableBytecodeOrMixins(jarPath)) {
             if (isBukkitFamilyLoader(moduleId.loader())) {
@@ -228,6 +257,12 @@ public final class SinglePassModAndPluginLiveActivator {
                         activeMcVersion);
                 proxyPlugin.init(description, liveBukkitServer);
                 Bukkit.getPluginManager().enablePlugin(proxyPlugin);
+                List<PluginYmlCommandDescriptor> descriptors =
+                        descriptorExtractor.extractCommandsFromJar(jarPath);
+                commandAutoRegistrar.registerPluginCommands(
+                        proxyPlugin,
+                        descriptors,
+                        liveBukkitServer.getCommandMap());
             }
             count = 1;
         }
@@ -245,7 +280,8 @@ public final class SinglePassModAndPluginLiveActivator {
             Class<?> clazz,
             VesselModuleIdentifier moduleId,
             String activeMcVersion,
-            Server liveBukkitServer) throws Exception {
+            Server liveBukkitServer,
+            Path jarPath) throws Exception {
         boolean activated = false;
 
         // A. Fabric ModInitializer & DedicatedServerModInitializer
@@ -273,9 +309,9 @@ public final class SinglePassModAndPluginLiveActivator {
                     ? opt.get()
                     : FabricLoader.getInstance().registerModContainer(
                             new FabricModContainerShim(
-                                    moduleId,
-                                    Map.of("name", moduleId.namespace()),
-                                    Path.of(".")));
+                                     moduleId,
+                                     Map.of("name", moduleId.namespace()),
+                                     Path.of(".")));
             Object instance = clazz.getDeclaredConstructor().newInstance();
             if (isQuiltMain) {
                 ((org.quiltmc.qsl.base.api.entrypoint.ModInitializer) instance).onInitialize(quiltContainer);
@@ -295,7 +331,7 @@ public final class SinglePassModAndPluginLiveActivator {
                     ? forgeModAnnotation.value()
                     : moduleId.namespace();
             net.minecraftforge.eventbus.api.IEventBus forgeBus =
-                    new net.minecraftforge.eventbus.api.IEventBus();
+                    new net.minecraftforge.eventbus.api.VesselEventBus();
             net.minecraftforge.fml.ModLoadingContext.get().setActiveNamespace(forgeModId);
             net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().setActiveModEventBus(forgeBus);
             Object forgeModInstance = instantiateForgeOrNeoForgeMod(
@@ -307,6 +343,12 @@ public final class SinglePassModAndPluginLiveActivator {
             activated = true;
         }
 
+        // B2. Forge @Mod.EventBusSubscriber
+        if (subscriberScanner.isEventBusSubscriber(clazz)) {
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(clazz);
+            activated = true;
+        }
+
         // C. NeoForge @Mod("modid")
         if (clazz.isAnnotationPresent(net.neoforged.fml.common.Mod.class)) {
             net.neoforged.fml.common.Mod neoForgeModAnnotation =
@@ -315,7 +357,7 @@ public final class SinglePassModAndPluginLiveActivator {
                     ? neoForgeModAnnotation.value()
                     : moduleId.namespace();
             net.neoforged.bus.api.IEventBus neoForgeBus =
-                    new net.neoforged.bus.api.IEventBus();
+                    new net.neoforged.bus.api.VesselNeoEventBus();
             net.neoforged.fml.ModContainer neoForgeContainer =
                     new net.neoforged.fml.ModContainer(neoForgeModId, neoForgeBus);
             net.neoforged.fml.ModLoadingContext.get().setActiveContainer(neoForgeContainer);
@@ -337,10 +379,31 @@ public final class SinglePassModAndPluginLiveActivator {
                     clazz.getName(),
                     activeMcVersion);
             plugin.init(description, liveBukkitServer);
-            plugin.onLoad();
-            Bukkit.getPluginManager().enablePlugin(plugin);
+            if (jarPath != null) {
+                List<PluginYmlCommandDescriptor> descriptors =
+                        descriptorExtractor.extractCommandsFromJar(jarPath);
+                commandAutoRegistrar.registerPluginCommands(
+                        plugin,
+                        descriptors,
+                        liveBukkitServer.getCommandMap());
+            }
+            try {
+                plugin.onLoad();
+            } catch (Throwable t) {
+                System.err.println("[VESSEL/ERROR] Failed onLoad for Bukkit plugin: " + plugin.getName());
+                t.printStackTrace();
+            }
+            try {
+                Bukkit.getPluginManager().enablePlugin(plugin);
+            } catch (Throwable t) {
+                System.err.println("[VESSEL/ERROR] Failed to enable Bukkit plugin: " + plugin.getName());
+                t.printStackTrace();
+            }
             if (Listener.class.isAssignableFrom(clazz)) {
-                Bukkit.getPluginManager().registerEvents((Listener) plugin, plugin);
+                try {
+                    Bukkit.getPluginManager().registerEvents((Listener) plugin, plugin);
+                } catch (Throwable ignored) {
+                }
             }
             activated = true;
         }

@@ -13,10 +13,10 @@ import java.util.Objects;
  * </p>
  *
  * @param <V> value type
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-5)
  */
-public class LongPrimitive2ObjectMap<V> {
+public final class LongPrimitive2ObjectMap<V> {
 
     private static final int DEFAULT_CAPACITY = 16;
     private static final float DEFAULT_LOAD_FACTOR = 0.75f;

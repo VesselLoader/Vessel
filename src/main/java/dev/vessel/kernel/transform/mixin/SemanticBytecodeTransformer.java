@@ -13,7 +13,9 @@ import java.util.Objects;
  * Executes in-memory ahead-of-time bytecode alterations, mapping Mixin and MixinExtras intents
  * without runtime proxy overhead.
  *
- * @version 1.0.0
+ * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
+ *
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class SemanticBytecodeTransformer {
@@ -59,8 +61,8 @@ public final class SemanticBytecodeTransformer {
     private MethodNode findTargetMethod(ClassNode classNode, String name, String desc) {
         for (MethodNode method : classNode.methods) {
             if (method.name.equals(name)) {
-                // If descriptor specified, verify match; otherwise accept first matching name
-                if (desc == null || desc.isEmpty() || "()V".equals(desc) || method.desc.equals(desc)) {
+                // If descriptor specified, verify exact match; otherwise accept first matching name
+                if (desc == null || desc.isEmpty() || method.desc.equals(desc)) {
                     return method;
                 }
             }
@@ -70,6 +72,7 @@ public final class SemanticBytecodeTransformer {
 
     private boolean applyHookToMethod(MethodNode method, VesselSemanticHookRecord hook) {
         VesselSemanticHookIntent intent = hook.intent();
+        String callDesc = resolveCallDescriptor(hook, method);
 
         if (intent == VesselSemanticHookIntent.METHOD_PRE_EXECUTION) {
             AbstractInsnNode head = opcodeMatcher.findHead(method);
@@ -79,7 +82,7 @@ public final class SemanticBytecodeTransformer {
                         Opcodes.INVOKESTATIC,
                         hook.sourceClass(),
                         hook.sourceMethod(),
-                        "()V",
+                        callDesc,
                         false
                 ));
                 method.instructions.insertBefore(head, injectList);
@@ -94,7 +97,7 @@ public final class SemanticBytecodeTransformer {
                             Opcodes.INVOKESTATIC,
                             hook.sourceClass(),
                             hook.sourceMethod(),
-                            "()V",
+                            callDesc,
                             false
                     ));
                     method.instructions.insertBefore(ret, injectList);
@@ -111,7 +114,7 @@ public final class SemanticBytecodeTransformer {
                         Opcodes.INVOKESTATIC,
                         hook.sourceClass(),
                         hook.sourceMethod(),
-                        "()V",
+                        callDesc,
                         false
                 ));
                 return true;
@@ -124,7 +127,7 @@ public final class SemanticBytecodeTransformer {
                         Opcodes.INVOKESTATIC,
                         hook.sourceClass(),
                         hook.sourceMethod(),
-                        "()V",
+                        callDesc,
                         false
                 ));
                 return true;
@@ -132,5 +135,13 @@ public final class SemanticBytecodeTransformer {
         }
 
         return false;
+    }
+
+    private String resolveCallDescriptor(VesselSemanticHookRecord hook, MethodNode method) {
+        if (hook.intent() == VesselSemanticHookIntent.METHOD_OPERATION_WRAPPING
+                && method != null && method.desc != null && !method.desc.isEmpty()) {
+            return method.desc;
+        }
+        return "()V";
     }
 }

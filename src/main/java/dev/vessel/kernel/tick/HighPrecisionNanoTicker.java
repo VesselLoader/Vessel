@@ -16,10 +16,12 @@ import java.util.concurrent.locks.LockSupport;
  * </ul>
  * </p>
  *
- * @version 1.0.1
+ * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
+ *
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-6)
  */
-public class HighPrecisionNanoTicker {
+public final class HighPrecisionNanoTicker {
 
     /** Exactly 50,000,000 nanoseconds (50 milliseconds) per game tick. */
     public static final long TICK_DURATION_NANOS = 50_000_000L;
@@ -30,6 +32,12 @@ public class HighPrecisionNanoTicker {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicLong tickCount = new AtomicLong(0L);
     private volatile long nextTickTargetNanos = 0L;
+
+    /**
+     * Constructs a high-precision nano-second tick scheduler.
+     */
+    public HighPrecisionNanoTicker() {
+    }
 
     /**
      * Initializes the ticker clock baseline.
@@ -78,7 +86,7 @@ public class HighPrecisionNanoTicker {
                 // Coarse park: sleep for majority of remaining duration minus 1ms guard
                 LockSupport.parkNanos(diff - 1_000_000L);
             } else {
-                // Fine-grained busy-spin loop for the final micro-seconds
+                // Fine-grained busy-spin loop for the final micro-seconds with CPU pause hint
                 Thread.onSpinWait();
             }
             now = System.nanoTime();

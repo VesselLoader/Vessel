@@ -16,10 +16,10 @@ import java.util.function.Supplier;
  * coordinate region are strictly serialized and executed without race conditions.
  * </p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-4)
  */
-public class RegionalActorStrand implements AutoCloseable {
+public final class RegionalActorStrand implements AutoCloseable {
 
     private final RegionCoordinateHash regionHash;
     private final ActorMailboxQueue<Runnable> mailbox = new ActorMailboxQueue<>();

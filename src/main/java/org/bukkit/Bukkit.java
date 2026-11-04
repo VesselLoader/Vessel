@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Logger;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -23,11 +24,11 @@ import org.bukkit.scheduler.BukkitScheduler;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.5
+ * @version 1.0.8
  */
 public final class Bukkit {
 
-    private static volatile Server server = new Server();
+    private static volatile Server server = new VesselServer();
 
     private Bukkit() {
     }
@@ -62,8 +63,32 @@ public final class Bukkit {
         return server.getBukkitVersion();
     }
 
+    public static List<World> getWorlds() {
+        return server.getWorlds();
+    }
+
+    public static World getWorld(String name) {
+        return server.getWorld(name);
+    }
+
+    public static World getWorld(UUID uid) {
+        return server.getWorld(uid);
+    }
+
+    public static int getMaxWorldSize() {
+        return server.getMaxWorldSize();
+    }
+
+    public static org.bukkit.command.ConsoleCommandSender getConsoleSender() {
+        return server.getConsoleSender();
+    }
+
     public static PluginManager getPluginManager() {
         return server.getPluginManager();
+    }
+
+    public static SimpleCommandMap getCommandMap() {
+        return server.getCommandMap();
     }
 
     public static Logger getLogger() {

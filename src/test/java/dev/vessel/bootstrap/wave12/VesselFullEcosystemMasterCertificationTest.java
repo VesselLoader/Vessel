@@ -26,6 +26,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -74,7 +75,7 @@ final class VesselFullEcosystemMasterCertificationTest implements Listener {
         server.getPluginManager().registerEvents(this, dummyPlugin);
 
         // 4. Test Cross-Platform Player Join Dispatch
-        World world = new World("sovereign_world");
+        World world = new VesselWorld("sovereign_world");
         UUID playerUuid = UUID.randomUUID();
         Player player = new Player("Shiroz", playerUuid, new Location(world, 100.0, 64.0, 100.0));
         SampleVelocityPlayerDouble velocityPlayer = new SampleVelocityPlayerDouble(playerUuid, "Shiroz");

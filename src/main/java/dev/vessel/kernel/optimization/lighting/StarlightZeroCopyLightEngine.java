@@ -4,11 +4,11 @@ import java.util.Objects;
 
 /**
  * Ultra-fast Starlight-inspired lighting propagation engine.
- * Employs 64-bit primitive bitsets, non-recursive BFS queues on flat primitive integer arrays,
+ * Employs 64-bit primitive bitsets, non-recursive BFS queues on thread-local flat primitive integer arrays,
  * and direct nibble bitwise manipulation to slash chunk generation and block-breaking lighting CPU
- * consumption by up to 90%.
+ * consumption by up to 90% without thread lock contention.
  *
- * @version 1.0.0
+ * @version 1.0.2
  * @author VESSEL Engine Team
  */
 public final class StarlightZeroCopyLightEngine {
@@ -19,9 +19,8 @@ public final class StarlightZeroCopyLightEngine {
     private static final int[] DZ = { 0,  0,  0,  0,  1, -1 };
 
     private final LightPropagationType type;
-    private final int[] queue = new int[8192]; // Pre-allocated primitive BFS queue
-    private int queueHead = 0;
-    private int queueTail = 0;
+    private final ThreadLocal<int[]> threadLocalQueues = ThreadLocal.withInitial(() -> new int[8192]);
+    private final ThreadLocal<int[]> threadLocalPointers = ThreadLocal.withInitial(() -> new int[2]); // [0] = head, [1] = tail
 
     /**
      * Constructs a StarlightZeroCopyLightEngine for the specified propagation type.
@@ -33,15 +32,15 @@ public final class StarlightZeroCopyLightEngine {
     }
 
     /**
-     * Propagates a light source within a single section using non-recursive BFS.
+     * Propagates a light source within a single section using non-recursive, lock-free BFS.
      *
-     * @param section light section data
-     * @param srcX local light source X (0..15)
-     * @param srcY local light source Y (0..15)
-     * @param srcZ local light source Z (0..15)
+     * @param section     light section data
+     * @param srcX        local light source X (0..15)
+     * @param srcY        local light source Y (0..15)
+     * @param srcZ        local light source Z (0..15)
      * @param sourceLevel source light level (1..15)
      */
-    public synchronized void propagate(ChunkSectionLightData section, int srcX, int srcY, int srcZ, int sourceLevel) {
+    public void propagate(ChunkSectionLightData section, int srcX, int srcY, int srcZ, int sourceLevel) {
         Objects.requireNonNull(section, "section cannot be null");
         int initial = Math.min(type.maxLightLevel(), Math.max(0, sourceLevel));
         if (initial <= 0) {
@@ -49,11 +48,17 @@ public final class StarlightZeroCopyLightEngine {
         }
 
         section.set(srcX, srcY, srcZ, initial);
-        resetQueue();
-        enqueue(srcX, srcY, srcZ, initial);
 
-        while (queueHead < queueTail) {
-            int entry = queue[queueHead++];
+        int[] q = threadLocalQueues.get();
+        int[] ptrs = threadLocalPointers.get();
+        int head = 0;
+        int tail = 0;
+
+        // enqueue source
+        q[tail++] = (srcX & 0xF) | ((srcY & 0xF) << 4) | ((srcZ & 0xF) << 8) | ((initial & 0xF) << 12);
+
+        while (head < tail) {
+            int entry = q[head++];
             int cx = entry & 0x0F;
             int cy = (entry >> 4) & 0x0F;
             int cz = (entry >> 8) & 0x0F;
@@ -74,22 +79,27 @@ public final class StarlightZeroCopyLightEngine {
                     int existingLevel = section.get(nx, ny, nz);
                     if (existingLevel < nextLevel) {
                         section.set(nx, ny, nz, nextLevel);
-                        enqueue(nx, ny, nz, nextLevel);
+                        if (tail < q.length) {
+                            q[tail++] = (nx & 0xF) | ((ny & 0xF) << 4) | ((nz & 0xF) << 8) | ((nextLevel & 0xF) << 12);
+                        }
                     }
                 }
             }
         }
+
+        ptrs[0] = head;
+        ptrs[1] = tail;
     }
 
     /**
-     * Propagates removal of a light source, dimming affected voxels.
+     * Propagates removal of a light source, dimming affected voxels using two-pass lock-free BFS.
      *
      * @param section light section data
-     * @param srcX local light source X (0..15)
-     * @param srcY local light source Y (0..15)
-     * @param srcZ local light source Z (0..15)
+     * @param srcX    local light source X (0..15)
+     * @param srcY    local light source Y (0..15)
+     * @param srcZ    local light source Z (0..15)
      */
-    public synchronized void removeLight(ChunkSectionLightData section, int srcX, int srcY, int srcZ) {
+    public void removeLight(ChunkSectionLightData section, int srcX, int srcY, int srcZ) {
         Objects.requireNonNull(section, "section cannot be null");
         int current = section.get(srcX, srcY, srcZ);
         if (current <= 0) {
@@ -97,15 +107,23 @@ public final class StarlightZeroCopyLightEngine {
         }
 
         section.set(srcX, srcY, srcZ, 0);
-        resetQueue();
-        enqueue(srcX, srcY, srcZ, current);
 
-        while (queueHead < queueTail) {
-            int entry = queue[queueHead++];
+        int[] q = threadLocalQueues.get();
+        int head = 0;
+        int tail = 0;
+
+        q[tail++] = (srcX & 0xF) | ((srcY & 0xF) << 4) | ((srcZ & 0xF) << 8) | ((current & 0xF) << 12);
+
+        // Re-propagate queue for neighboring preserved light
+        int[] rePropQueue = new int[256];
+        int rePropTail = 0;
+
+        while (head < tail) {
+            int entry = q[head++];
             int cx = entry & 0x0F;
             int cy = (entry >> 4) & 0x0F;
             int cz = (entry >> 8) & 0x0F;
-            int oldLevel = (entry >> 12) & 0x0F;
+            int level = (entry >> 12) & 0x0F;
 
             for (int i = 0; i < 6; i++) {
                 int nx = cx + DX[i];
@@ -114,23 +132,28 @@ public final class StarlightZeroCopyLightEngine {
 
                 if (nx >= 0 && nx < 16 && ny >= 0 && ny < 16 && nz >= 0 && nz < 16) {
                     int neighborLevel = section.get(nx, ny, nz);
-                    if (neighborLevel > 0 && neighborLevel < oldLevel) {
+                    if (neighborLevel != 0 && neighborLevel < level) {
                         section.set(nx, ny, nz, 0);
-                        enqueue(nx, ny, nz, neighborLevel);
+                        if (tail < q.length) {
+                            q[tail++] = (nx & 0xF) | ((ny & 0xF) << 4) | ((nz & 0xF) << 8) | ((neighborLevel & 0xF) << 12);
+                        }
+                    } else if (neighborLevel >= level) {
+                        if (rePropTail < rePropQueue.length) {
+                            rePropQueue[rePropTail++] = (nx & 0xF) | ((ny & 0xF) << 4) | ((nz & 0xF) << 8) | ((neighborLevel & 0xF) << 12);
+                        }
                     }
                 }
             }
         }
-    }
 
-    private void resetQueue() {
-        queueHead = 0;
-        queueTail = 0;
-    }
-
-    private void enqueue(int x, int y, int z, int level) {
-        if (queueTail < queue.length) {
-            queue[queueTail++] = (x & 0x0F) | ((y & 0x0F) << 4) | ((z & 0x0F) << 8) | ((level & 0x0F) << 12);
+        // Second pass: re-propagate boundary lights into vacated space
+        for (int r = 0; r < rePropTail; r++) {
+            int entry = rePropQueue[r];
+            int rx = entry & 0x0F;
+            int ry = (entry >> 4) & 0x0F;
+            int rz = (entry >> 8) & 0x0F;
+            int rLevel = (entry >> 12) & 0x0F;
+            propagate(section, rx, ry, rz, rLevel);
         }
     }
 

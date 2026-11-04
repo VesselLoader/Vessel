@@ -11,12 +11,41 @@ import java.util.concurrent.atomic.AtomicLong;
  * Built-in Spark-style low-overhead method sampler profiler (`BuiltinSamplerProfiler`) that
  * aggregates per-module and per-method execution nanoseconds into a flamegraph summary map.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class BuiltinSamplerProfiler {
 
+    private static final BuiltinSamplerProfiler DEFAULT_INSTANCE = new BuiltinSamplerProfiler();
+
     private final AtomicBoolean samplingActive = new AtomicBoolean(false);
     private final Map<String, AtomicLong> accumulatedSamplesNanos = new ConcurrentHashMap<>();
+
+    /**
+     * Returns the global default profiler instance.
+     *
+     * @return default profiler instance
+     */
+    public static BuiltinSamplerProfiler getDefaultProfiler() {
+        return DEFAULT_INSTANCE;
+    }
+
+    /**
+     * Checks whether profiling sampling is currently active.
+     *
+     * @return true if sampling is active
+     */
+    public boolean isSamplingActive() {
+        return samplingActive.get();
+    }
+
+    /**
+     * Returns the total count of distinct sampled method frames recorded.
+     *
+     * @return count of sampled method signatures
+     */
+    public int getSampleCount() {
+        return accumulatedSamplesNanos.size();
+    }
 
     /**
      * Clears previous samples and starts a new profiler sampling session.

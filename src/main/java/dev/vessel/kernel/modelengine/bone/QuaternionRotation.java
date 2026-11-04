@@ -8,7 +8,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @author VESSEL Engine Team
  */
 public final class QuaternionRotation {
@@ -88,6 +88,26 @@ public final class QuaternionRotation {
         float newY = this.w * other.y - this.x * other.z + this.y * other.w + this.z * other.x;
         float newZ = this.w * other.z + this.x * other.y - this.y * other.x + this.z * other.w;
         return normalize(newX, newY, newZ, newW);
+    }
+
+    /**
+     * Rotates a 3D vector by this quaternion directly into the provided output array,
+     * achieving zero heap allocations on high-frequency bone animation loops.
+     *
+     * @param vx vector X
+     * @param vy vector Y
+     * @param vz vector Z
+     * @param out target float array of minimum length 3
+     * @param offset starting index in target array
+     */
+    public void rotateVectorTo(float vx, float vy, float vz, float[] out, int offset) {
+        float tx = 2.0f * (this.y * vz - this.z * vy);
+        float ty = 2.0f * (this.z * vx - this.x * vz);
+        float tz = 2.0f * (this.x * vy - this.y * vx);
+
+        out[offset] = vx + this.w * tx + (this.y * tz - this.z * ty);
+        out[offset + 1] = vy + this.w * ty + (this.z * tx - this.x * tz);
+        out[offset + 2] = vz + this.w * tz + (this.x * ty - this.y * tx);
     }
 
     /**

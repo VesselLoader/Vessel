@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
  * Unit tests for Sub-Stage 6.11: all 10 super-mod industrial, magic, backpack, and Botania
  * optimization engines in {@code dev.vessel.kernel.optimization.supermod} (Part 1).
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 class SuperModIndustrialAndMagicEnginesTest {
 
@@ -31,6 +31,10 @@ class SuperModIndustrialAndMagicEnginesTest {
         assertEquals(48, beltOptimizer.coalesceItemsOnBelt(700L, "create:crushed_raw_iron", 32));
         assertEquals(5, beltOptimizer.advanceBeltSegmentBatch(700L, 5));
         assertEquals(9, beltOptimizer.advanceBeltSegmentBatch(700L, 4));
+        assertEquals(10, beltOptimizer.consumeItemsFromBelt(700L, "create:crushed_raw_iron", 10));
+        assertEquals(38, beltOptimizer.getBeltItemCount(700L, "create:crushed_raw_iron"));
+        beltOptimizer.clearBelt(700L);
+        assertEquals(0, beltOptimizer.getBeltItemCount(700L, "create:crushed_raw_iron"));
 
         MultiblockSlaveTickSupressor multiblockSupressor = new MultiblockSlaveTickSupressor();
         multiblockSupressor.registerMultiblockStructure(1000L, List.of(1001L, 1002L, 1003L));
@@ -38,14 +42,20 @@ class SuperModIndustrialAndMagicEnginesTest {
         assertFalse(multiblockSupressor.shouldTickMultiblockPart(1001L));
         assertFalse(multiblockSupressor.shouldTickMultiblockPart(1003L));
         assertTrue(multiblockSupressor.shouldTickMultiblockPart(9999L));
+        multiblockSupressor.unregisterMultiblockStructure(1000L, List.of(1001L, 1002L, 1003L));
+        assertTrue(multiblockSupressor.shouldTickMultiblockPart(1001L));
 
         StorageNetworkDebounceCoordinator debounceCoordinator =
                 new StorageNetworkDebounceCoordinator();
         AtomicInteger rebuildCount = new AtomicInteger(0);
         debounceCoordinator.scheduleGridTopologyRebuild(42L, 1000L, rebuildCount::incrementAndGet);
         debounceCoordinator.scheduleGridTopologyRebuild(42L, 1020L, rebuildCount::incrementAndGet);
+        // Test resilient error handling
+        debounceCoordinator.scheduleGridTopologyRebuild(99L, 1020L, () -> {
+            throw new RuntimeException("AE2 simulated exception");
+        });
         assertEquals(0, debounceCoordinator.flushDebouncedGridRebuilds(1050L, 50L));
-        assertEquals(1, debounceCoordinator.flushDebouncedGridRebuilds(1080L, 50L));
+        assertEquals(2, debounceCoordinator.flushDebouncedGridRebuilds(1080L, 50L));
         assertEquals(1, rebuildCount.get());
     }
 

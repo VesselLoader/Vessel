@@ -1,5 +1,6 @@
 package dev.vessel.bootstrap.mojang;
 
+import dev.vessel.kernel.compat.bytecode.AsmClassReaderBytecodeSanitizer;
 import java.util.Objects;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -10,12 +11,14 @@ import org.objectweb.asm.ClassWriter;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.4
  */
 public final class VesselServerBrandTransformer {
 
     public static final String TARGET_INTERNAL_NAME = "net/minecraft/server/MinecraftServer";
     public static final String TARGET_CLASS_NAME = "net.minecraft.server.MinecraftServer";
+
+    private final AsmClassReaderBytecodeSanitizer sanitizer = new AsmClassReaderBytecodeSanitizer();
 
     public VesselServerBrandTransformer() {
     }
@@ -32,7 +35,9 @@ public final class VesselServerBrandTransformer {
         }
         String norm = className.replace('/', '.');
         return "net.minecraft.server.MinecraftServer".equals(norm)
-                || (norm.startsWith("net.minecraft.server.") && norm.endsWith(".MinecraftServer"));
+                || "net.minecraft.server.dedicated.DedicatedServer".equals(norm)
+                || (norm.startsWith("net.minecraft.server.")
+                        && (norm.endsWith(".MinecraftServer") || norm.endsWith(".DedicatedServer")));
     }
 
     /**
@@ -45,11 +50,13 @@ public final class VesselServerBrandTransformer {
     public byte[] transformServerBrand(byte[] originalBytes) {
         Objects.requireNonNull(originalBytes, "originalBytes must not be null");
         try {
-            ClassReader reader = new ClassReader(originalBytes);
+            int originalMajor = sanitizer.extractMajorVersion(originalBytes);
+            ClassReader reader = sanitizer.createSafeClassReader(originalBytes);
             ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
             VesselServerBrandClassVisitor visitor = new VesselServerBrandClassVisitor(writer);
             reader.accept(visitor, 0);
-            return writer.toByteArray();
+            byte[] transformed = writer.toByteArray();
+            return sanitizer.restoreOriginalMajorVersion(transformed, originalMajor);
         } catch (Exception e) {
             return originalBytes;
         }

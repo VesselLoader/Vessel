@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselServerBrandMethodVisitor extends MethodVisitor {
 
@@ -22,6 +22,27 @@ public final class VesselServerBrandMethodVisitor extends MethodVisitor {
         super.visitCode();
         super.visitLdcInsn("VESSEL");
         super.visitInsn(Opcodes.ARETURN);
+    }
+
+    @Override
+    public void visitLocalVariable(
+            String name,
+            String descriptor,
+            String signature,
+            org.objectweb.asm.Label start,
+            org.objectweb.asm.Label end,
+            int index) {
+        // Suppress original LocalVariableTable entries to prevent Invalid start_pc ClassFormatError
+    }
+
+    @Override
+    public void visitLineNumber(int line, org.objectweb.asm.Label start) {
+        // Suppress original line numbers
+    }
+
+    @Override
+    public void visitLabel(org.objectweb.asm.Label label) {
+        // Suppress original labels
     }
 
     @Override

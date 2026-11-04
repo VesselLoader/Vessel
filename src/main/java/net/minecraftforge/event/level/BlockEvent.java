@@ -2,6 +2,7 @@ package net.minecraftforge.event.level;
 
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
+import net.minecraftforge.eventbus.api.Event;
 
 /**
  * Base Forge world block event ({@code net.minecraftforge.event.level.BlockEvent}) exposing the
@@ -9,14 +10,20 @@ import net.minecraft.core.BlockPos;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.2
  */
-public class BlockEvent {
+public class BlockEvent extends Event {
 
     private final String levelName;
     private final BlockPos pos;
     private final String blockStateId;
-    private volatile boolean cancelled;
+
+    /**
+     * Constructs a default {@code BlockEvent} for compatibility.
+     */
+    public BlockEvent() {
+        this("minecraft:overworld", BlockPos.ZERO, "minecraft:air");
+    }
 
     /**
      * Constructs a new {@code BlockEvent} for the given level, coordinates, and block state.
@@ -26,9 +33,15 @@ public class BlockEvent {
      * @param blockStateId non-null namespaced block state identifier
      */
     public BlockEvent(String levelName, BlockPos pos, String blockStateId) {
+        super();
         this.levelName = Objects.requireNonNull(levelName, "levelName must not be null").trim();
         this.pos = Objects.requireNonNull(pos, "pos must not be null");
         this.blockStateId = Objects.requireNonNull(blockStateId, "blockStateId must not be null").trim();
+    }
+
+    @Override
+    public boolean isCancelable() {
+        return true;
     }
 
     /**
@@ -56,23 +69,5 @@ public class BlockEvent {
      */
     public final String getState() {
         return blockStateId;
-    }
-
-    /**
-     * Returns {@code true} if this block event has been cancelled.
-     *
-     * @return {@code true} if cancelled
-     */
-    public final boolean isCanceled() {
-        return cancelled;
-    }
-
-    /**
-     * Updates the cancellation state of this block event.
-     *
-     * @param cancel {@code true} to cancel the block operation
-     */
-    public final void setCanceled(boolean cancel) {
-        this.cancelled = cancel;
     }
 }

@@ -1,5 +1,7 @@
 package dev.vessel.kernel.mixin.weaver;
 
+import dev.vessel.kernel.transform.mixin.SemanticHookRegistry;
+import dev.vessel.kernel.transform.mixin.VesselMixinSemanticHookWeaver;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -13,13 +15,14 @@ import org.objectweb.asm.ClassReader;
 
 /**
  * Thread-safe runtime registry of inspected {@code @Mixin} classes and their target Minecraft or
- * library classes, automatically widening target fields and methods to {@code public} and merging
- * unique/injected mixin members when target classes pass through the bytecode transformation
- * pipeline.
+ * library classes, automatically widening target fields and methods to {@code public}, merging
+ * unique/injected mixin members, and translating mixin injection annotations into canonical
+ * semantic hook records when target classes pass through the bytecode transformation pipeline.
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
+ * @author VESSEL Engine Team
  */
 public final class RuntimeMixinTargetRegistry {
 
@@ -28,9 +31,20 @@ public final class RuntimeMixinTargetRegistry {
             new AccessorAndShadowBytecodeSynthesizer();
     private final MixinInjectAndUniqueMemberMerger memberMerger =
             new MixinInjectAndUniqueMemberMerger();
+    private final SemanticHookRegistry semanticHookRegistry =
+            new SemanticHookRegistry();
+    private final VesselMixinSemanticHookWeaver hookWeaver =
+            new VesselMixinSemanticHookWeaver();
+
     private final Map<String, Set<String>> targetToWidenedMembers = new ConcurrentHashMap<>();
     private final Map<String, List<byte[]>> targetToMixinBytecodes = new ConcurrentHashMap<>();
     private final List<InspectedMixinSummary> registeredMixins = new CopyOnWriteArrayList<>();
+
+    /**
+     * Constructs a new runtime mixin target registry.
+     */
+    public RuntimeMixinTargetRegistry() {
+    }
 
     /**
      * Registers an inspected {@link InspectedMixinSummary} and records all {@code @Shadow},
@@ -66,7 +80,8 @@ public final class RuntimeMixinTargetRegistry {
 
     /**
      * Inspects raw classfile bytecode for {@code @Mixin} metadata and registers it if the class
-     * declares at least one mixin target.
+     * declares at least one mixin target, automatically weaving semantic hook records into
+     * the active {@link SemanticHookRegistry}.
      *
      * @param classBytes raw JVM classfile bytes (must not be null)
      * @return optional containing the registered {@link InspectedMixinSummary} if the class is a mixin
@@ -90,6 +105,7 @@ public final class RuntimeMixinTargetRegistry {
                 }
                 existingList.add(clonedBytes);
             }
+            hookWeaver.weaveMixinIntoRegistry(classBytes, summary.getTargetClassNames(), semanticHookRegistry);
             return Optional.of(summary);
         }
         return Optional.empty();
@@ -171,6 +187,15 @@ public final class RuntimeMixinTargetRegistry {
         } catch (Exception ignored) {
         }
         return classBytes;
+    }
+
+    /**
+     * Returns the active semantic hook registry containing translated mixin hooks.
+     *
+     * @return the semantic hook registry
+     */
+    public SemanticHookRegistry getSemanticHookRegistry() {
+        return semanticHookRegistry;
     }
 
     /**

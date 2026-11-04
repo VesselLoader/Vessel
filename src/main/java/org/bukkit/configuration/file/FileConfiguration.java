@@ -15,16 +15,27 @@ import org.bukkit.configuration.ConfigurationSection;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public abstract class FileConfiguration extends MemoryConfigurationSection
         implements ConfigurationSection {
+
+    private final FileConfigurationOptions options = new FileConfigurationOptions();
 
     /**
      * Constructs an empty root {@code FileConfiguration}.
      */
     protected FileConfiguration() {
         super();
+    }
+
+    /**
+     * Returns the options governing this configuration instance.
+     *
+     * @return file configuration options
+     */
+    public FileConfigurationOptions options() {
+        return options;
     }
 
     /**

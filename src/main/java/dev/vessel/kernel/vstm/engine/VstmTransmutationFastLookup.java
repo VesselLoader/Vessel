@@ -12,7 +12,7 @@ import java.util.Objects;
  * <p>Directly inspects 64-byte cache-line aligned off-heap hash tables from mapped .vstmb binaries,
  * avoiding object creation and GC pauses during the hot-path 50ms tick cycle (Catalog refs: ZER-0001, ZER-0010).</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @since 1.0.0 (Wave 1)
  */
 public final class VstmTransmutationFastLookup {

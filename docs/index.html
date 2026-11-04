@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- @version 1.0.7 -->
+<!-- @version 1.0.8 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vessel Sovereign Server Microkernel — Universal Minecraft Server Loader (v1.0.7)</title>
+  <title>Vessel Sovereign Server Microkernel — Universal Minecraft Server Loader (v1.0.8)</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="icon" type="image/svg+xml" href="vessel-logo.svg" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
@@ -639,6 +639,20 @@ java -jar server.jar --vessel-deep-debug --nogui</code></pre>
               </tr>
             </thead>
             <tbody>
+              <tr><td><code>VesselAPI</code></td><td><code>dev.vessel.api</code></td><td>Central IDE discovery facade providing zero-overhead factory access to registries, blocks, items, capabilities, and networking</td><td>All 8 Loaders</td></tr>
+              <tr><td><code>VesselDeferredRegister</code></td><td><code>dev.vessel.api.registry</code></td><td>Forge-style expressive static registration engine with thread-safe deferred resolution and zero reflection</td><td>Forge, NeoForge, Fabric, Quilt</td></tr>
+              <tr><td><code>VesselRegistryKey</code></td><td><code>dev.vessel.api.registry</code></td><td>Strongly-typed registry identifiers for blocks, items, entities, fluid types, and biomes</td><td>All Ecosystems</td></tr>
+              <tr><td><code>VesselRegistrySupplier</code></td><td><code>dev.vessel.api.registry</code></td><td>Immutable lazy supplier contract binding registry entries safely before gameplay bootstrap</td><td>All Ecosystems</td></tr>
+              <tr><td><code>VesselBlock</code></td><td><code>dev.vessel.api.block</code></td><td>Microsecond block abstraction with hardness, resistance, luminance, and material flags</td><td>Vanilla, Forge, Fabric</td></tr>
+              <tr><td><code>VesselBlockBuilder</code></td><td><code>dev.vessel.api.block</code></td><td>Fluent zero-allocation block builder with chainable properties and drops configuration</td><td>Vanilla, Forge, Fabric</td></tr>
+              <tr><td><code>VesselItem</code></td><td><code>dev.vessel.api.item</code></td><td>Lightweight item definition contract with durability, stack size, and right-click interaction hooks</td><td>Vanilla, Forge, Fabric</td></tr>
+              <tr><td><code>VesselItemBuilder</code></td><td><code>dev.vessel.api.item</code></td><td>Fluent item specification builder supporting interactive callbacks and fire resistance</td><td>Vanilla, Forge, Fabric</td></tr>
+              <tr><td><code>VesselEnergy</code></td><td><code>dev.vessel.api.capability</code></td><td>Universal energy transaction contract interoperable with Forge Energy (FE) and Fabric Transfer API</td><td>Forge, NeoForge, Fabric</td></tr>
+              <tr><td><code>VesselFluidHandler</code></td><td><code>dev.vessel.api.capability</code></td><td>Universal fluid storage contract with millibucket and droplet automatic conversions</td><td>Forge, NeoForge, Fabric</td></tr>
+              <tr><td><code>VesselItemStorage</code></td><td><code>dev.vessel.api.capability</code></td><td>Universal transaction-safe slot storage contract with simulate and commit phases</td><td>Forge, NeoForge, Fabric</td></tr>
+              <tr><td><code>VesselCapabilityLookup</code></td><td><code>dev.vessel.api.capability</code></td><td>Sub-nanosecond O(1) directional block capability lookup substrate</td><td>Forge, NeoForge, Fabric</td></tr>
+              <tr><td><code>VesselPayloadChannel</code></td><td><code>dev.vessel.api.network</code></td><td>High-throughput custom packet channel routing with ByteBuf codecs for C2S/S2C packets</td><td>Forge, NeoForge, Fabric, Bedrock</td></tr>
+              <tr><td><code>VesselSubscribe</code></td><td><code>dev.vessel.api.event</code></td><td>Universal event listener annotation with 6 priority tiers for method-handle dispatch</td><td>All 8 Loaders</td></tr>
               <tr><td><code>FoliaRegionExecutionBridge</code></td><td><code>dev.vessel.api.actor</code></td><td>Executes tasks on owning regional strand with cancellation support</td><td>Folia, Paper, Bukkit</td></tr>
               <tr><td><code>RegionalActorStrand</code></td><td><code>dev.vessel.api.actor</code></td><td>16x16 chunk regionized actor strand with MPSC lock-free ring buffer</td><td>Folia, Paper</td></tr>
               <tr><td><code>GlobalRegionSyncBarrier</code></td><td><code>dev.vessel.api.actor</code></td><td>Cross-region work synchronization with 25ms timeout circuit breaker</td><td>Folia, Paper</td></tr>
@@ -677,28 +691,55 @@ java -jar server.jar --vessel-deep-debug --nogui</code></pre>
             </tbody>
           </table>
         </div>
-        <div class="table-tip">💡 Tip: Use the search box above to instantly filter through all 35+ core public API classes.</div>
+        <div class="table-tip">💡 Tip: Use the search box above to instantly filter through all 50+ core public API classes in Vessel Universal Super-API (VUSA) 1.1.0.</div>
       </div>
 
       <div class="card">
-        <h2>🛠️ Quick Code Reference: Pure VESSEL Super-API</h2>
+        <h2>🛠️ Quick Code Reference: Pure VESSEL Super-API (VUSA 1.1.0)</h2>
         <p>Write once with VESSEL Super-API and run across Forge, NeoForge, Fabric, Quilt, Bukkit, Spigot, Paper, and Folia servers without re-compilation or loader dependencies:</p>
-        <pre><code>// 1. Zero-Allocation Energy Transfer (64-Bit Primitive Math)
-long moved = energyService.transferBetweenStorages(sourceStorage, targetStorage, 25000L);
+        <pre><code>// 1. Forge-Style Expressive Static Registration (Zero-Reflection, Zero-GC)
+public static final VesselDeferredRegister&lt;VesselBlock&gt; BLOCKS = 
+    VesselAPI.createDeferredRegister(VesselRegistryKey.BLOCK, "mymod");
+public static final VesselDeferredRegister&lt;VesselItem&gt; ITEMS = 
+    VesselAPI.createDeferredRegister(VesselRegistryKey.ITEM, "mymod");
 
-// 2. Sub-Nanosecond Block Query from CPU L1 Cache
-int blockId = blockHandler.inspectBlockId(worldHandle, x, y, z);
-float blastResistance = blockHandler.getFastExplosionResistance(blockId); // &lt; 1.0 ns
+public static final VesselRegistrySupplier&lt;VesselBlock&gt; QUANTUM_BATTERY = 
+    BLOCKS.register("quantum_battery", () -&gt; VesselAPI.createBlock("mymod", "quantum_battery")
+        .hardness(4.5f)
+        .resistance(15.0f)
+        .luminance(14)
+        .build());
 
-// 3. Concurrency-Safe Regional Work (Paper, Bukkit, and Folia Auto-Adaptive)
-teleportDispatcher.dispatchRegionalWork(worldHandle, chunkX, chunkZ, () -&gt; {
-    blockHandler.placeQuantumBlock(worldHandle, x, y, z, 49); // Safe on owning strand!
+public static final VesselRegistrySupplier&lt;VesselItem&gt; PLASMA_BLADE = 
+    ITEMS.register("plasma_blade", () -&gt; VesselAPI.createItem("mymod", "plasma_blade")
+        .maxStackSize(1)
+        .durability(1500)
+        .fireResistant()
+        .onRightClick((world, player, hand) -&gt; {
+            player.sendMessage("Plasma Blade Activated!");
+            return true;
+        })
+        .build());
+
+// 2. Universal Capability Lookup (Cross-Loader Forge Energy &amp; Fabric Transfer)
+VesselEnergy energy = VesselAPI.getCapabilityLookup().find(
+    VesselCapabilityKey.ENERGY, world, pos, Direction.NORTH);
+if (energy != null) {
+    long accepted = energy.receiveEnergy(5000L, false); // Instant ALU math
+}
+
+// 3. Custom Payload Network Channel with Type-Safe Codecs
+VesselPayloadChannel&lt;SpeedSyncPayload&gt; CHANNEL = 
+    VesselAPI.createPayloadChannel("mymod", "speed_sync", SpeedSyncPayload.CODEC);
+CHANNEL.registerServerReceiver((payload, context) -&gt; {
+    context.player().sendMessage("Speed updated to: " + payload.speed());
 });
 
-// 4. Universal Brigadier &amp; Bukkit Command with Trie Autocompletion
-modCommand.registerCommand("vesselmod", (sender, args) -&gt; {
-    sender.sendMessage("VESSEL Super-API Running at 20.0 TPS!");
-});</code></pre>
+// 4. Multi-Loader Event Listener with @VesselSubscribe
+@VesselSubscribe(priority = VesselEventPriority.HIGH)
+public void onPlayerJoin(PlayerJoinEvent event) {
+    VesselAPI.getLogger().info("Player joined: " + event.getPlayerName());
+}</code></pre>
       </div>
     </section>
 
@@ -876,7 +917,7 @@ repositories {
 
 dependencies {
     // Vessel Sovereign API (Clean-Room, Zero GPL Taint)
-    compileOnly("io.github.vesselloader:vessel-api:1.0.0")
+    compileOnly("io.github.vesselloader:vessel-api:1.1.0")
 }
 
 vessel {
@@ -1279,7 +1320,7 @@ public final class MyModInitializer implements VesselModInitializer {
   </main>
 
   <footer>
-    Vessel Sovereign Server Microkernel (v1.0.7) &bull; Licensed under VSK-EA v1.0 &bull; Repository: <a href="https://github.com/VesselLoader/Vessel" target="_blank">github.com/VesselLoader/Vessel</a> &bull; Engineered by Shiroz &amp; Vessel Core Architects.
+    Vessel Sovereign Server Microkernel (v1.0.8) &bull; Licensed under VSK-EA v1.0 &bull; Repository: <a href="https://github.com/VesselLoader/Vessel" target="_blank">github.com/VesselLoader/Vessel</a> &bull; Engineered by Shiroz &amp; Vessel Core Architects.
   </footer>
 
   <script>

@@ -1,5 +1,6 @@
 package dev.vessel.kernel.compat.era;
 
+import dev.vessel.kernel.compat.bytecode.AsmClassReaderBytecodeSanitizer;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -22,11 +23,13 @@ import org.objectweb.asm.tree.MethodNode;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class LegacyBukkitApiVersionBridge {
 
     private static final String INVENTORY_VIEW_INTERNAL = "org/bukkit/inventory/InventoryView";
+    private static final AsmClassReaderBytecodeSanitizer SANITIZER =
+            new AsmClassReaderBytecodeSanitizer();
 
     private static final Map<String, String> LEGACY_MATERIAL_ALIASES = Map.ofEntries(
             Map.entry("WORKBENCH", "CRAFTING_TABLE"),
@@ -49,8 +52,9 @@ public final class LegacyBukkitApiVersionBridge {
      */
     public byte[] rewriteLegacyBukkitPluginBytecode(byte[] classBytes) {
         Objects.requireNonNull(classBytes, "classBytes must not be null");
+        int origMajor = SANITIZER.extractMajorVersion(classBytes);
         ClassNode classNode = new ClassNode();
-        ClassReader reader = new ClassReader(classBytes);
+        ClassReader reader = SANITIZER.createSafeClassReader(classBytes);
         reader.accept(classNode, 0);
 
         for (MethodNode method : classNode.methods) {
@@ -66,7 +70,8 @@ public final class LegacyBukkitApiVersionBridge {
 
         ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
         classNode.accept(writer);
-        return writer.toByteArray();
+        byte[] producedBytes = writer.toByteArray();
+        return SANITIZER.restoreOriginalMajorVersion(producedBytes, origMajor);
     }
 
     /**

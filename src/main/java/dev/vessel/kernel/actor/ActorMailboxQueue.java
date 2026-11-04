@@ -13,10 +13,10 @@ import java.util.function.Consumer;
  * </p>
  *
  * @param <T> message or task type
- * @version 1.0.2
+ * @version 1.0.3
  * @since 1.0.0 (Pass K-4)
  */
-public class ActorMailboxQueue<T> {
+public final class ActorMailboxQueue<T> {
 
     private final ConcurrentLinkedQueue<T> queue = new ConcurrentLinkedQueue<>();
 
@@ -28,6 +28,15 @@ public class ActorMailboxQueue<T> {
     public void send(T message) {
         Objects.requireNonNull(message, "message cannot be null");
         queue.offer(message);
+    }
+
+    /**
+     * Polls the next available message directly without Optional object allocation.
+     *
+     * @return the message if present, or {@code null} if mailbox is empty
+     */
+    public T pollDirect() {
+        return queue.poll();
     }
 
     /**

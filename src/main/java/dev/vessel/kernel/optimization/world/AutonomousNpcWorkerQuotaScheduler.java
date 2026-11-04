@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * workers (MineColonies Citizens, Touhou Little Maid, Ars Nouveau Starbuncles, Rats),
  * preventing a single 100-NPC colony from exhausting the server tick budget.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class AutonomousNpcWorkerQuotaScheduler {
 
@@ -62,9 +62,35 @@ public final class AutonomousNpcWorkerQuotaScheduler {
             if (task == null) {
                 break;
             }
-            task.run();
+            try {
+                task.run();
+            } catch (Throwable ignored) {
+            }
             executed++;
         }
+        if (queue.isEmpty()) {
+            colonyJobQueues.remove(colonyId, queue);
+        }
         return executed;
+    }
+
+    /**
+     * Clears all pending job evaluations for the given colony.
+     *
+     * @param colonyId numeric colony identifier
+     */
+    public void clearColony(int colonyId) {
+        colonyJobQueues.remove(colonyId);
+    }
+
+    /**
+     * Returns the number of queued jobs waiting for the given colony.
+     *
+     * @param colonyId numeric colony identifier
+     * @return count of pending jobs
+     */
+    public int getPendingJobCount(int colonyId) {
+        Queue<Runnable> queue = colonyJobQueues.get(colonyId);
+        return queue != null ? queue.size() : 0;
     }
 }

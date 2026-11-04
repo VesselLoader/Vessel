@@ -9,12 +9,20 @@ import java.util.UUID;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public class PlayerEvent {
 
     private final UUID playerUuid;
     private final String playerName;
+
+    public PlayerEvent() {
+        this(new UUID(0L, 0L), "Player");
+    }
+
+    public PlayerEvent(Object player) {
+        this(new UUID(0L, 0L), player != null ? player.toString() : "Player");
+    }
 
     /**
      * Constructs a new {@code PlayerEvent} for the specified player UUID and username.

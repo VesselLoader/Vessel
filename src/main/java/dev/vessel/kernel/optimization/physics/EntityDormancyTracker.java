@@ -1,6 +1,7 @@
 package dev.vessel.kernel.optimization.physics;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,8 +20,12 @@ import java.util.concurrent.atomic.AtomicLong;
  * checks. Dormant entities are instantly awoken when receiving player interactions, nearby block changes,
  * or external impulse vectors.
  * </p>
+ * <p>
+ * Features spatial chunk bucketing to reduce spherical wake propagation (e.g., explosions and block
+ * breaks) from full-world O(N) scanning to localized O(1) chunk lookups.
+ * </p>
  *
- * @version 1.0.0
+ * @version 1.0.3
  * @author VESSEL Engine Team
  */
 public final class EntityDormancyTracker {
@@ -30,6 +35,7 @@ public final class EntityDormancyTracker {
     public static final double DEFAULT_MOVEMENT_TOLERANCE_SQ = DEFAULT_MOVEMENT_TOLERANCE * DEFAULT_MOVEMENT_TOLERANCE;
 
     private final Map<Integer, EntityDormancyEntry> entries;
+    private final Map<Long, Set<Integer>> entityIdsByChunk;
     private final AtomicInteger dormantCount;
     private volatile int idleTicksThreshold;
     private volatile double movementToleranceSq;
@@ -57,6 +63,7 @@ public final class EntityDormancyTracker {
         }
 
         this.entries = new ConcurrentHashMap<>();
+        this.entityIdsByChunk = new ConcurrentHashMap<>();
         this.dormantCount = new AtomicInteger(0);
         this.idleTicksThreshold = idleTicksThreshold;
         this.movementToleranceSq = movementTolerance * movementTolerance;
@@ -64,7 +71,7 @@ public final class EntityDormancyTracker {
     }
 
     /**
-     * Registers a newly spawned or loaded entity for dormancy tracking.
+     * Registers a newly spawned or loaded entity for dormancy tracking and indexes it into its spatial chunk.
      *
      * @param entityId unique entity identifier
      * @param posX     initial X
@@ -72,13 +79,22 @@ public final class EntityDormancyTracker {
      * @param posZ     initial Z
      */
     public void registerEntity(int entityId, double posX, double posY, double posZ) {
+        long chunkKey = computeChunkKey(posX, posZ);
+        entityIdsByChunk.computeIfAbsent(chunkKey, k -> ConcurrentHashMap.newKeySet()).add(entityId);
+
         entries.compute(entityId, (k, existing) -> {
             if (existing != null) {
-                if (existing.isDormant()) {
+                if (existing.markAwake(currentTickCounter.get())) {
                     dormantCount.decrementAndGet();
                 }
+                long oldChunkKey = computeChunkKey(existing.getLastPosX(), existing.getLastPosZ());
+                if (oldChunkKey != chunkKey) {
+                    Set<Integer> oldSet = entityIdsByChunk.get(oldChunkKey);
+                    if (oldSet != null) {
+                        oldSet.remove(entityId);
+                    }
+                }
                 existing.setPosition(posX, posY, posZ);
-                existing.markAwake(currentTickCounter.get());
                 return existing;
             }
             return new EntityDormancyEntry(entityId, posX, posY, posZ);
@@ -94,6 +110,11 @@ public final class EntityDormancyTracker {
     public boolean unregisterEntity(int entityId) {
         EntityDormancyEntry removed = entries.remove(entityId);
         if (removed != null) {
+            long chunkKey = computeChunkKey(removed.getLastPosX(), removed.getLastPosZ());
+            Set<Integer> set = entityIdsByChunk.get(chunkKey);
+            if (set != null) {
+                set.remove(entityId);
+            }
             if (removed.isDormant()) {
                 dormantCount.decrementAndGet();
             }
@@ -118,28 +139,40 @@ public final class EntityDormancyTracker {
             return false;
         }
 
-        double dx = posX - entry.getLastPosX();
-        double dy = posY - entry.getLastPosY();
-        double dz = posZ - entry.getLastPosZ();
-        double distSq = dx * dx + dy * dy + dz * dz;
+        synchronized (entry) {
+            double dx = posX - entry.getLastPosX();
+            double dy = posY - entry.getLastPosY();
+            double dz = posZ - entry.getLastPosZ();
+            double distSq = dx * dx + dy * dy + dz * dz;
 
-        entry.setPosition(posX, posY, posZ);
+            long oldChunkKey = computeChunkKey(entry.getLastPosX(), entry.getLastPosZ());
+            long newChunkKey = computeChunkKey(posX, posZ);
+            if (oldChunkKey != newChunkKey) {
+                Set<Integer> oldSet = entityIdsByChunk.get(oldChunkKey);
+                if (oldSet != null) {
+                    oldSet.remove(entityId);
+                }
+                entityIdsByChunk.computeIfAbsent(newChunkKey, k -> ConcurrentHashMap.newKeySet()).add(entityId);
+            }
 
-        if (distSq <= movementToleranceSq) {
-            entry.incrementStationaryTicks();
-            if (entry.getStationaryTicks() >= idleTicksThreshold && !entry.isDormant()) {
-                entry.setDormant(true);
-                dormantCount.incrementAndGet();
+            entry.setPosition(posX, posY, posZ);
+
+            if (distSq <= movementToleranceSq) {
+                entry.incrementStationaryTicks();
+                if (entry.getStationaryTicks() >= idleTicksThreshold && !entry.isDormant()) {
+                    entry.setDormant(true);
+                    dormantCount.incrementAndGet();
+                }
+            } else {
+                if (entry.isDormant()) {
+                    entry.setDormant(false);
+                    dormantCount.decrementAndGet();
+                }
+                entry.resetStationaryTicks();
             }
-        } else {
-            if (entry.isDormant()) {
-                entry.setDormant(false);
-                dormantCount.decrementAndGet();
-            }
-            entry.resetStationaryTicks();
+
+            return entry.isDormant();
         }
-
-        return entry.isDormant();
     }
 
     /**
@@ -150,8 +183,7 @@ public final class EntityDormancyTracker {
      */
     public boolean wake(int entityId) {
         EntityDormancyEntry entry = entries.get(entityId);
-        if (entry != null && entry.isDormant()) {
-            entry.markAwake(currentTickCounter.get());
+        if (entry != null && entry.markAwake(currentTickCounter.get())) {
             dormantCount.decrementAndGet();
             return true;
         }
@@ -160,7 +192,7 @@ public final class EntityDormancyTracker {
 
     /**
      * Awakens all dormant entities within a spherical radius of a spatial disturbance
-     * (e.g., explosion, block break, piston movement).
+     * (e.g., explosion, block break, piston movement) using localized spatial chunk indexing.
      *
      * @param originX disturbance center X
      * @param originY disturbance center Y
@@ -172,19 +204,34 @@ public final class EntityDormancyTracker {
         if (radius <= 0.0) {
             return 0;
         }
+        int minChunkX = Math.floorDiv((int) (originX - radius), 16);
+        int maxChunkX = Math.floorDiv((int) (originX + radius), 16);
+        int minChunkZ = Math.floorDiv((int) (originZ - radius), 16);
+        int maxChunkZ = Math.floorDiv((int) (originZ + radius), 16);
+
         double radiusSq = radius * radius;
         long currentTick = currentTickCounter.get();
         int awokenCount = 0;
 
-        for (EntityDormancyEntry entry : entries.values()) {
-            if (entry.isDormant()) {
-                double dx = entry.getLastPosX() - originX;
-                double dy = entry.getLastPosY() - originY;
-                double dz = entry.getLastPosZ() - originZ;
-                if ((dx * dx + dy * dy + dz * dz) <= radiusSq) {
-                    entry.markAwake(currentTick);
-                    dormantCount.decrementAndGet();
-                    awokenCount++;
+        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                long chunkKey = packChunkKey(cx, cz);
+                Set<Integer> chunkEntities = entityIdsByChunk.get(chunkKey);
+                if (chunkEntities != null && !chunkEntities.isEmpty()) {
+                    for (Integer id : chunkEntities) {
+                        EntityDormancyEntry entry = entries.get(id);
+                        if (entry != null && entry.isDormant()) {
+                            double dx = entry.getLastPosX() - originX;
+                            double dy = entry.getLastPosY() - originY;
+                            double dz = entry.getLastPosZ() - originZ;
+                            if ((dx * dx + dy * dy + dz * dz) <= radiusSq) {
+                                if (entry.markAwake(currentTick)) {
+                                    dormantCount.decrementAndGet();
+                                    awokenCount++;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -197,8 +244,8 @@ public final class EntityDormancyTracker {
     public void wakeAll() {
         long currentTick = currentTickCounter.get();
         for (EntityDormancyEntry entry : entries.values()) {
-            if (entry.isDormant()) {
-                entry.markAwake(currentTick);
+            if (entry.markAwake(currentTick)) {
+                dormantCount.decrementAndGet();
             }
         }
         dormantCount.set(0);
@@ -230,6 +277,15 @@ public final class EntityDormancyTracker {
      * @return dormant entity count
      */
     public int getDormantCount() {
+        return dormantCount.get();
+    }
+
+    /**
+     * Alias for {@link #getDormantCount()} for backward test and API compatibility.
+     *
+     * @return dormant entity count
+     */
+    public int getDormantEntityCount() {
         return dormantCount.get();
     }
 
@@ -274,10 +330,21 @@ public final class EntityDormancyTracker {
     }
 
     /**
-     * Clears all registered entities.
+     * Clears all registered entities and spatial chunk buckets.
      */
     public void clear() {
         entries.clear();
+        entityIdsByChunk.clear();
         dormantCount.set(0);
+    }
+
+    private static long computeChunkKey(double x, double z) {
+        int cx = Math.floorDiv((int) x, 16);
+        int cz = Math.floorDiv((int) z, 16);
+        return packChunkKey(cx, cz);
+    }
+
+    private static long packChunkKey(int cx, int cz) {
+        return (((long) cx) << 32) | (((long) cz) & 0xFFFFFFFFL);
     }
 }

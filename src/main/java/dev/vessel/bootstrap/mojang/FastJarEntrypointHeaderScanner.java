@@ -1,5 +1,6 @@
 package dev.vessel.bootstrap.mojang;
 
+import dev.vessel.kernel.compat.bytecode.AsmClassReaderBytecodeSanitizer;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -29,9 +30,12 @@ import org.objectweb.asm.ClassReader;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class FastJarEntrypointHeaderScanner {
+
+    private static final AsmClassReaderBytecodeSanitizer SANITIZER =
+            new AsmClassReaderBytecodeSanitizer();
 
     private static final Pattern YAML_MAIN_CLASS_PATTERN =
             Pattern.compile("(?m)^\\s*main\\s*:\\s*['\"]?([a-zA-Z0-9_.$]+)['\"]?\\s*$");
@@ -155,7 +159,7 @@ public final class FastJarEntrypointHeaderScanner {
 
     private boolean isCandidateEntrypointHeader(byte[] classBytes) {
         try {
-            ClassReader cr = new ClassReader(classBytes);
+            ClassReader cr = SANITIZER.createSafeClassReader(classBytes);
             String superName = cr.getSuperName();
             if ("org/bukkit/plugin/java/JavaPlugin".equals(superName)) {
                 return true;

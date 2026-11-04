@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -79,7 +80,7 @@ final class WaveEightBukkitServicesMessengerChunkAndEntityTest
         assertTrue(messenger.isOutgoingChannelRegistered("BungeeCord"));
         assertTrue(messenger.isIncomingChannelRegistered("BungeeCord"));
 
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Location loc = new Location(world, 32.0D, 64.0D, -48.0D);
         Player player = new Player("Shiroz", loc);
 

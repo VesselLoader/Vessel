@@ -21,6 +21,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 final class WaveTenFabricLootAndForgeDeathCommandEventsTest {
 
@@ -66,7 +67,7 @@ final class WaveTenFabricLootAndForgeDeathCommandEventsTest {
     }
 
     @Test
-    void testFabricLootEntityLifecycleAndForgeNeoForgeDeathCommandEvents() {
+    void testFabricLootEntityLifecycleAndForgeNeoForgeDeathCommandEvents() throws Exception {
         LootTableEvents.MODIFY.clearListeners();
         ServerEntityEvents.ENTITY_LOAD.clearListeners();
         ServerEntityEvents.ENTITY_UNLOAD.clearListeners();
@@ -89,7 +90,7 @@ final class WaveTenFabricLootAndForgeDeathCommandEventsTest {
         ServerEntityEvents.ENTITY_LOAD.register(this::onEntityLoaded);
         ServerEntityEvents.ENTITY_UNLOAD.register(this::onEntityUnloaded);
 
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Entity golem = world.spawnEntity(
                 new Location(world, 0.0D, 64.0D, 0.0D),
                 EntityType.IRON_GOLEM);

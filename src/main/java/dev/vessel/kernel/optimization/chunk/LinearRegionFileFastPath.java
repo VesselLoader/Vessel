@@ -18,7 +18,7 @@ import java.util.zip.InflaterInputStream;
  * Eliminates I/O stuttering and GC pauses when players travel at extreme speeds (Elytra, Teleportation)
  * by streaming compressed chunk payloads through pre-allocated direct buffers.
  *
- * @version 1.0.0
+ * @version 1.0.2
  * @author VESSEL Engine Team
  */
 public final class LinearRegionFileFastPath implements Closeable {
@@ -155,15 +155,16 @@ public final class LinearRegionFileFastPath implements Closeable {
             }
 
             int readPos = loc.sectorOffset() * SECTOR_BYTES;
-            regionBuffer.position(readPos);
-            int length = regionBuffer.getInt();
+            ByteBuffer readView = regionBuffer.duplicate();
+            readView.position(readPos);
+            int length = readView.getInt();
             if (length <= 1) {
                 return new byte[0];
             }
-            byte formatId = regionBuffer.get();
+            byte formatId = readView.get();
             int dataLen = length - 1;
             byte[] compressed = new byte[dataLen];
-            regionBuffer.get(compressed);
+            readView.get(compressed);
 
             return decompress(compressed, RegionCompressionFormat.fromId(formatId));
         } finally {
@@ -191,9 +192,12 @@ public final class LinearRegionFileFastPath implements Closeable {
                 gzos.write(data);
             }
         } else {
-            // Deflate default
-            try (DeflaterOutputStream dos = new DeflaterOutputStream(baos, new Deflater(Deflater.DEFAULT_COMPRESSION))) {
+            // Deflate default with explicit native resource disposal to eliminate C-Heap leaks
+            Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION);
+            try (DeflaterOutputStream dos = new DeflaterOutputStream(baos, deflater)) {
                 dos.write(data);
+            } finally {
+                deflater.end();
             }
         }
         return baos.toByteArray();

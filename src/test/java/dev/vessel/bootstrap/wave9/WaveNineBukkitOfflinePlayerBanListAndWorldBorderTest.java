@@ -14,6 +14,7 @@ import org.bukkit.Environment;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.WorldBorder;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
@@ -62,7 +63,7 @@ final class WaveNineBukkitOfflinePlayerBanListAndWorldBorderTest {
         nameBans.pardon("Griefer");
         assertFalse(nameBans.isBanned("Griefer"));
 
-        World world = new World("world_the_end");
+        World world = new VesselWorld("world_the_end");
         world.setDifficulty(Difficulty.HARD);
         world.setEnvironment(Environment.THE_END);
         world.setStorm(true);

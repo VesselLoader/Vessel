@@ -1,6 +1,6 @@
 # COMPREHENSIVE ADMINISTRATOR & DEVELOPER GUIDE — VESSEL SOVEREIGN SERVER MICROKERNEL (v2.3.1)
 
-> **Document Version:** `1.0.3`  
+> **Document Version:** `1.0.4`  
 > **Active VESSEL Build Version Code:** `VESSEL-2.3.1-rev1047`  
 > **GitHub Repository:** `https://github.com/VesselLoader/Vessel`  
 > **Runnable Server Binary:** `build/libs/server.jar`
@@ -345,6 +345,37 @@ A full production example mod implemented in `examples/example-vessel-mod` demon
 - `RegionalTeleportDispatcher.java`: Multi-threaded Folia and Paper concurrency.
 - `SovereignModCommand.java`: Universal Brigadier commands with autocompletion.
 - `PureVesselEventListener.java`: Sub-nanosecond Sovereign Event Bus listeners.
+
+#### 16. VESSEL Super-API (VUSA) 1.1.0 — Expressive Like Forge, Lightweight Like Fabric
+The modern `VesselAPI` facade delivers instant IDE auto-completion (IntelliSense) for mod developers:
+```java
+// 1. Static Deferred Registers with auto-complete
+public static final VesselDeferredRegister<VesselBlock> BLOCKS = 
+    VesselAPI.createDeferredRegister(VesselRegistryKey.BLOCK, "mymod");
+public static final VesselDeferredRegister<VesselItem> ITEMS = 
+    VesselAPI.createDeferredRegister(VesselRegistryKey.ITEM, "mymod");
+
+// 2. Fluent Content Builders (zero NMS code)
+public static final VesselRegistrySupplier<VesselBlock> QUANTUM_GENERATOR = BLOCKS.register("quantum_generator", () ->
+    VesselAPI.createBlock("mymod:quantum_generator")
+        .hardness(4.5f)
+        .resistance(12.0f)
+        .luminance(15)
+        .sound("metal")
+        .energyStorage(50_000_000L)
+        .build()
+);
+
+// 3. Type-Safe Network Channels (Client <-> Server)
+VesselPayloadChannel channel = VesselAPI.createNetworkChannel("mymod:main");
+channel.sendToServer(new MyCustomPacket(120, "FAST"));
+
+// 4. Zero-Overhead Event Subscriptions
+@VesselSubscribe(priority = VesselEventPriority.HIGH)
+public void onWorldTick(Object tickEvent) {
+    // Process event at sub-nanosecond speed
+}
+```
 
 ---
 

@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  * Directly resolves ERR-31, ERR-32, and FOL-041..060.
  * </p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class CrossRegionActorMailbox {
@@ -127,15 +127,10 @@ public final class CrossRegionActorMailbox {
     }
 
     private boolean enqueueInternal(long sourceRegionKey, long timeoutMillis, Runnable task) {
-        while (true) {
-            int current = queueSize.get();
-            if (current >= maxQueueCapacity) {
-                rejectedCount.incrementAndGet();
-                return false;
-            }
-            if (queueSize.compareAndSet(current, current + 1)) {
-                break;
-            }
+        int prev = queueSize.getAndUpdate(size -> (size < maxQueueCapacity) ? size + 1 : size);
+        if (prev >= maxQueueCapacity) {
+            rejectedCount.incrementAndGet();
+            return false;
         }
 
         long requestId = nextRequestId.getAndIncrement();

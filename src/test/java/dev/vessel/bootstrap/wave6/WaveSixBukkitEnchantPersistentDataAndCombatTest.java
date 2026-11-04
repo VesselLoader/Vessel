@@ -11,6 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
@@ -60,7 +61,7 @@ final class WaveSixBukkitEnchantPersistentDataAndCombatTest {
                         .getPersistentDataContainer()
                         .get(soulKey, PersistentDataType.INTEGER));
 
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Location loc = new Location(world, 10, 64, 10);
         Player player = new Player("Shiroz", loc);
 

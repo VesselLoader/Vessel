@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * MekaSuit, and AttributeFix) using a smooth asymptotic damage reduction curve, and bridges modded
  * shield blocks (Spartan Shields, Tinkers' Battlesigns) to Bukkit damage events.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class UniversalCombatAndArmorHarmonizer {
 
@@ -69,5 +69,23 @@ public final class UniversalCombatAndArmorHarmonizer {
      */
     public float getLastShieldAbsorbedDamage(UUID defenderUuid) {
         return lastShieldAbsorbedDamage.getOrDefault(defenderUuid, 0.0f);
+    }
+
+    /**
+     * Cleans up shield absorption state when a defending entity is removed or dies.
+     *
+     * @param defenderUuid the defending entity's UUID
+     */
+    public void removeDefender(UUID defenderUuid) {
+        if (defenderUuid != null) {
+            lastShieldAbsorbedDamage.remove(defenderUuid);
+        }
+    }
+
+    /**
+     * Clears all shield absorption state.
+     */
+    public void clear() {
+        lastShieldAbsorbedDamage.clear();
     }
 }

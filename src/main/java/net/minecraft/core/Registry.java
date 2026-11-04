@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @param <T> registered entry type
  */
 public class Registry<T> {
@@ -78,6 +78,14 @@ public class Registry<T> {
         byId.put(id, value);
         byValue.put(value, id);
         holders.put(id, new Holder<>(id, value));
+        if (key != null && key.location() != null) {
+            String path = key.location().getPath();
+            if ("item".equals(path)) {
+                dev.vessel.kernel.registry.VesselModRegistryHolder.registerModItem(id.toString(), value);
+            } else if ("block".equals(path)) {
+                dev.vessel.kernel.registry.VesselModRegistryHolder.registerModBlock(id.toString(), value);
+            }
+        }
         return value;
     }
 

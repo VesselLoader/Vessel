@@ -3,6 +3,7 @@ package net.minecraftforge.registries;
 import dev.vessel.adapter.forge.DeferredRegisterBridge;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -14,7 +15,7 @@ import java.util.function.Supplier;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class RegisterEvent {
 
@@ -56,7 +57,7 @@ public final class RegisterEvent {
 
     /**
      * Evaluates the given supplier, records the resulting entry under {@code entryName}, and bridges
-     * the registration into VESSEL's {@link DeferredRegisterBridge}.
+     * the registration into VESSEL's {@link DeferredRegisterBridge} and {@link dev.vessel.kernel.registry.VesselModRegistryHolder}.
      *
      * @param entryName     non-null entry path or identifier
      * @param valueSupplier non-null factory supplier for the entry
@@ -68,7 +69,22 @@ public final class RegisterEvent {
         Objects.requireNonNull(valueSupplier, "valueSupplier must not be null");
         T val = valueSupplier.get();
         registeredValues.put(entryName, val);
-        bridge.registerBlockEntry("minecraft", entryName, 1);
+        int colonIdx = entryName.indexOf(':');
+        String namespace = colonIdx >= 0 ? entryName.substring(0, colonIdx) : "minecraft";
+        String path = colonIdx >= 0 ? entryName.substring(colonIdx + 1) : entryName;
+        String fullKey = namespace + ":" + path;
+        boolean isItem = registryKey.toLowerCase(Locale.ROOT).contains("item");
+        if (isItem) {
+            bridge.registerItemEntry(namespace, path, Collections.emptyMap());
+            if (val != null) {
+                dev.vessel.kernel.registry.VesselModRegistryHolder.registerModItem(fullKey, val);
+            }
+        } else {
+            bridge.registerBlockEntry(namespace, path, 1);
+            if (val != null) {
+                dev.vessel.kernel.registry.VesselModRegistryHolder.registerModBlock(fullKey, val);
+            }
+        }
         return val;
     }
 

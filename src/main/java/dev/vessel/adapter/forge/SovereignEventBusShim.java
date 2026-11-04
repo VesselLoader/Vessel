@@ -2,7 +2,6 @@ package dev.vessel.adapter.forge;
 
 import dev.vessel.kernel.event.EventExecutionPhase;
 import dev.vessel.kernel.event.VesselCancellable;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,11 +13,16 @@ import java.util.function.Consumer;
 /**
  * Clean-room ABI shim for Forge and NeoForge {@code IEventBus}, dispatching events
  * across {@link EventExecutionPhase} priority tiers while honoring cancellation
- * and {@code receiveCancelled} subscription semantics.
+ * and {@code receiveCancelled} subscription semantics with zero-lock concurrent phase traversal.
  *
- * @version 1.0.0
+ * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
+ *
+ * @version 1.0.2
+ * @author VESSEL Engine Team
  */
 public final class SovereignEventBusShim {
+
+    private static final EventExecutionPhase[] CACHED_PHASES = EventExecutionPhase.values();
 
     private final Map<String, Map<EventExecutionPhase, List<Consumer<Object>>>> phaseListeners =
             new ConcurrentHashMap<>();
@@ -54,12 +58,10 @@ public final class SovereignEventBusShim {
         Map<EventExecutionPhase, List<Consumer<Object>>> byPhase =
                 phaseListeners.computeIfAbsent(
                         eventType.trim(),
-                        k -> new EnumMap<>(EventExecutionPhase.class));
-        synchronized (byPhase) {
-            List<Consumer<Object>> list =
-                    byPhase.computeIfAbsent(priority, p -> new CopyOnWriteArrayList<>());
-            list.add(handler);
-        }
+                        k -> new ConcurrentHashMap<>());
+        List<Consumer<Object>> list =
+                byPhase.computeIfAbsent(priority, p -> new CopyOnWriteArrayList<>());
+        list.add(handler);
     }
 
     /**
@@ -79,11 +81,9 @@ public final class SovereignEventBusShim {
             return isEventCancelled(eventPayload);
         }
 
-        for (EventExecutionPhase phase : EventExecutionPhase.values()) {
-            List<Consumer<Object>> handlers;
-            synchronized (byPhase) {
-                handlers = byPhase.get(phase);
-            }
+        for (int i = 0; i < CACHED_PHASES.length; i++) {
+            EventExecutionPhase phase = CACHED_PHASES[i];
+            List<Consumer<Object>> handlers = byPhase.get(phase);
             if (handlers == null || handlers.isEmpty()) {
                 continue;
             }
@@ -93,7 +93,14 @@ public final class SovereignEventBusShim {
                         && !receiveCancelledHandlers.contains(handler)) {
                     continue;
                 }
-                handler.accept(eventPayload);
+                try {
+                    handler.accept(eventPayload);
+                } catch (ClassCastException ignored) {
+                    // Wildcard consumer expects a different concrete event type
+                } catch (Throwable t) {
+                    System.err.println("[VESSEL] Event handler exception during "
+                            + eventType + " dispatch: " + t.getMessage());
+                }
             }
         }
         return isEventCancelled(eventPayload);

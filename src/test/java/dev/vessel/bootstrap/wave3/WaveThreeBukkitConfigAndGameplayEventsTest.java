@@ -9,6 +9,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -48,7 +49,7 @@ final class WaveThreeBukkitConfigAndGameplayEventsTest {
         assertTrue(serialized.contains("VESSEL Sovereign"));
         assertTrue(serialized.contains("200"));
 
-        World overworld = new World("world");
+        World overworld = new VesselWorld("world");
         assertEquals("world", overworld.getName());
         assertEquals(-64, overworld.getMinHeight());
         assertEquals(320, overworld.getMaxHeight());

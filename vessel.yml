@@ -1,0 +1,179 @@
+# ============================================================================
+# VESSEL Sovereign Microkernel Enterprise Configuration (34 Canonical Sections)
+# ============================================================================
+
+# Section 1: branding
+branding:
+  enabled: true
+  server-brand-name: "VESSEL"
+  f3-debug-brand: "VESSEL"
+
+# Section 2: actor-scheduler
+actor-scheduler:
+  enabled: true
+  use-virtual-threads: true
+
+# Section 3: world-and-chunks
+world-and-chunks:
+  enabled: true
+  profile: "enterprise"
+
+# Section 4: redstone-and-physics
+redstone-and-physics:
+  enabled: true
+  profile: "enterprise"
+
+# Section 5: chunk-loader-governor
+chunk-loader-governor:
+  enabled: true
+  profile: "enterprise"
+
+# Section 6: mob-spawning-and-despawn
+mob-spawning-and-despawn:
+  enabled: true
+  profile: "enterprise"
+
+# Section 7: optimizations
+optimizations:
+  enabled: true
+  profile: "enterprise"
+
+# Section 8: network-and-security
+network-and-security:
+  enabled: true
+  server-port: 25565
+  profile: "enterprise"
+
+# Section 9: loader-runtime
+loader-runtime:
+  enabled: true
+  profile: "enterprise"
+
+# Section 10: dual-sided-mods
+dual-sided-mods:
+  enabled: true
+  profile: "enterprise"
+
+# Section 11: mod-specific-optimizations
+mod-specific-optimizations:
+  enabled: true
+  profile: "enterprise"
+
+# Section 12: client-presentation
+client-presentation:
+  enabled: true
+  http-port: 0
+  profile: "enterprise"
+
+# Section 13: logging
+logging:
+  enabled: true
+  profile: "enterprise"
+
+# Section 14: hybrid-compatibility
+hybrid-compatibility:
+  enabled: true
+  profile: "enterprise"
+
+# Section 15: proxy-integration
+proxy-integration:
+  enabled: true
+  protocol: "VELOCITY_MODERN"
+  velocity-forwarding-secret: ""
+  bedrock-port: 19132
+
+# Section 16: entity-density-limits
+entity-density-limits:
+  enabled: true
+  profile: "enterprise"
+
+# Section 17: voice-chat
+voice-chat:
+  enabled: true
+  profile: "enterprise"
+
+# Section 18: maintenance
+maintenance:
+  enabled: true
+  profile: "enterprise"
+
+# Section 19: anti-exploit
+anti-exploit:
+  enabled: true
+  profile: "enterprise"
+
+# Section 20: microblock-compression
+microblock-compression:
+  enabled: true
+  profile: "enterprise"
+
+# Section 21: client-inventory-tweaks
+client-inventory-tweaks:
+  enabled: true
+  profile: "enterprise"
+
+# Section 22: cross-chunk-governor
+cross-chunk-governor:
+  enabled: true
+  profile: "enterprise"
+
+# Section 23: industrial-and-recipe-accelerators
+industrial-and-recipe-accelerators:
+  enabled: true
+  profile: "enterprise"
+
+# Section 24: world-event-batching
+world-event-batching:
+  enabled: true
+  profile: "enterprise"
+
+# Section 25: memory-and-npc-guards
+memory-and-npc-guards:
+  enabled: true
+  profile: "enterprise"
+
+# Section 26: hybrid-overload-and-dfu
+hybrid-overload-and-dfu:
+  enabled: true
+  profile: "enterprise"
+
+# Section 27: fluid-and-falling-block-governor
+fluid-and-falling-block-governor:
+  enabled: true
+  profile: "enterprise"
+
+# Section 28: tree-canopy-decay-scheduler
+tree-canopy-decay-scheduler:
+  enabled: true
+  profile: "enterprise"
+
+# Section 29: natural-spawner-and-creatures
+natural-spawner-and-creatures:
+  enabled: true
+  profile: "enterprise"
+
+# Section 30: instanced-loot-and-world-map
+instanced-loot-and-world-map:
+  enabled: true
+  profile: "enterprise"
+
+# Section 31: nested-backpack-and-curios
+nested-backpack-and-curios:
+  enabled: true
+  profile: "enterprise"
+
+# Section 32: botania-and-corporea
+botania-and-corporea:
+  enabled: true
+  profile: "enterprise"
+
+# Section 33: valkyrien-physics-governor
+valkyrien-physics-governor:
+  enabled: true
+  profile: "enterprise"
+
+# Section 34: lua-computer-governor
+lua-computer-governor:
+  enabled: true
+  max-cpu-slice-micros-per-tick: 250
+

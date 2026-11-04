@@ -1,6 +1,7 @@
 package dev.vessel.kernel.optimization.supermod;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -8,9 +9,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Governs Valkyrien Skies 2, Eureka! Ships!, Clockwork, and Create Aeronautics voxel ship physics.
  * Places stationary or micro-vibrating ships (&lt; {@code 0.002 m/tick} for 20 ticks) into Physics
  * Sleep Mode, wakes ships on block interaction, budgets VoxelShape AABB collision sweeps, and
- * coalesces 60 Hz physics thread transforms to the 20 TPS Folia region thread.
+ * coalesces 60 Hz physics thread transforms to the 20 TPS Folia region thread with zero-allocation buffers.
  *
- * @version 1.0.0
+ * @version 1.0.2
  */
 public final class ValkyrienPhysicsAndVoxelShipCollisionGovernor {
 
@@ -78,7 +79,7 @@ public final class ValkyrienPhysicsAndVoxelShipCollisionGovernor {
 
     /**
      * Coalesces high-frequency (60 Hz) physics thread ship pose updates into a latest-value buffer
-     * for 20 TPS consumption by the owning Folia region thread.
+     * for 20 TPS consumption by the owning Folia region thread without per-frame allocations.
      *
      * @param shipId the unique physics ship identifier
      * @param x      the ship world X coordinate
@@ -101,7 +102,73 @@ public final class ValkyrienPhysicsAndVoxelShipCollisionGovernor {
                 || !Float.isFinite(yaw) || !Float.isFinite(pitch) || !Float.isFinite(roll)) {
             return false;
         }
-        coalescedShipTransforms.put(shipId, new double[]{x, y, z, yaw, pitch, roll});
+        double[] buffer = coalescedShipTransforms.computeIfAbsent(shipId, ignored -> new double[6]);
+        synchronized (buffer) {
+            buffer[0] = x;
+            buffer[1] = y;
+            buffer[2] = z;
+            buffer[3] = yaw;
+            buffer[4] = pitch;
+            buffer[5] = roll;
+        }
         return true;
+    }
+
+    /**
+     * Retrieves the latest coalesced 6D transform for a ship.
+     *
+     * @param shipId the unique physics ship identifier
+     * @return the double array [x, y, z, yaw, pitch, roll], or null if absent
+     */
+    public double[] getCoalescedTransform(long shipId) {
+        double[] buffer = coalescedShipTransforms.get(shipId);
+        if (buffer == null) {
+            return null;
+        }
+        synchronized (buffer) {
+            return buffer.clone();
+        }
+    }
+
+    /**
+     * Copies the latest coalesced 6D transform into a caller-supplied array without heap allocation.
+     *
+     * @param shipId      the unique physics ship identifier
+     * @param destination destination array with length &gt;= 6
+     * @return {@code true} if populated, {@code false} if absent
+     */
+    public boolean copyCoalescedTransform(long shipId, double[] destination) {
+        Objects.requireNonNull(destination, "destination must not be null");
+        if (destination.length < 6) {
+            throw new IllegalArgumentException("destination array must have length >= 6");
+        }
+        double[] buffer = coalescedShipTransforms.get(shipId);
+        if (buffer == null) {
+            return false;
+        }
+        synchronized (buffer) {
+            System.arraycopy(buffer, 0, destination, 0, 6);
+        }
+        return true;
+    }
+
+    /**
+     * Polls and consumes the latest coalesced transform for a ship.
+     *
+     * @param shipId the unique physics ship identifier
+     * @return the double array [x, y, z, yaw, pitch, roll], or null if absent
+     */
+    public double[] pollCoalescedTransform(long shipId) {
+        return coalescedShipTransforms.remove(shipId);
+    }
+
+    /**
+     * Cleans up all state and transforms associated with an unloaded or destroyed ship.
+     *
+     * @param shipId the unique physics ship identifier
+     */
+    public void removeShip(long shipId) {
+        sleepingShips.remove(shipId);
+        coalescedShipTransforms.remove(shipId);
     }
 }

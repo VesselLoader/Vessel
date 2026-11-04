@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * {@code EntityManaBurst} trajectories into zero-entity mathematical transfers and indexing
  * Corporea Spark inventories in an {@code O(1)} hash table.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class ManaBurstAndCorporeaNetworkCoalescer {
 
@@ -99,5 +99,35 @@ public final class ManaBurstAndCorporeaNetworkCoalescer {
         Objects.requireNonNull(itemId, "itemId must not be null");
         AtomicInteger total = corporeaNetworkTotals.get(sparkNetworkId + "|" + itemId);
         return total != null ? Math.max(0, total.get()) : 0;
+    }
+
+    /**
+     * Polls and delivers virtual mana transferred from spreader to pool if flight time has elapsed.
+     *
+     * @param spreaderPos   the packed 64-bit Mana Spreader block position
+     * @param targetPoolPos the packed 64-bit target Mana Pool block position
+     * @param currentTick   the current monotonic server tick
+     * @return the delivered mana amount, or 0 if still in flight
+     */
+    public int pollDeliveredMana(long spreaderPos, long targetPoolPos, long currentTick) {
+        String linkKey = spreaderPos + "->" + targetPoolPos;
+        Long arrivalTick = scheduledVirtualTransfers.get(linkKey);
+        if (arrivalTick != null && currentTick >= arrivalTick) {
+            scheduledVirtualTransfers.remove(linkKey);
+            Integer mana = scheduledManaAmounts.remove(linkKey);
+            return mana != null ? mana : 0;
+        }
+        return 0;
+    }
+
+    /**
+     * Clears all indexed inventory data for a Corporea Spark network.
+     *
+     * @param sparkNetworkId the Corporea network identifier
+     */
+    public void clearCorporeaNetwork(long sparkNetworkId) {
+        String prefix = sparkNetworkId + "|";
+        corporeaContainerCounts.keySet().removeIf(k -> k.startsWith(prefix));
+        corporeaNetworkTotals.keySet().removeIf(k -> k.startsWith(prefix));
     }
 }

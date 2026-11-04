@@ -2,6 +2,7 @@ package net.neoforged.fml;
 
 import java.util.Objects;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.VesselNeoEventBus;
 
 /**
  * NeoForge FML mod container ({@code net.neoforged.fml.ModContainer}) injectable into
@@ -9,7 +10,7 @@ import net.neoforged.bus.api.IEventBus;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class ModContainer {
 
@@ -23,7 +24,7 @@ public final class ModContainer {
      * @param modId mod identifier
      */
     public ModContainer(String modId) {
-        this(modId, new IEventBus());
+        this(modId, new VesselNeoEventBus());
     }
 
     /**

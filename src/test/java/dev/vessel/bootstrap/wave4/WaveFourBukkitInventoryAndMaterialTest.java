@@ -10,6 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.VesselWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -63,7 +64,7 @@ final class WaveFourBukkitInventoryAndMaterialTest {
         assertEquals(List.of("Tier 5"), readBack.getLore());
         assertEquals(42, readBack.getCustomModelData());
 
-        World world = new World("world");
+        World world = new VesselWorld("world");
         Player player = new Player("Arthur", new Location(world, 0.0, 64.0, 0.0));
         PlayerInventory inv = player.getInventory();
         assertNotNull(inv);

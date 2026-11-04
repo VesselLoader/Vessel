@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Biomes O' Plenty Redwood, Twilight Forest Giant Oak) at a capped per-tick budget,
  * and pre-coalesces all canopy loot drops into a single item batch before entity spawning.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class TreeCanopyDecayAndVeinBreakScheduler {
 
@@ -32,6 +32,12 @@ public final class TreeCanopyDecayAndVeinBreakScheduler {
      * Identifies all canopy leaf positions whose Manhattan distance to every remaining
      * trunk position exceeds {@code maxDistance}, returning the array of unsupported
      * decaying leaf positions.
+     * <p>
+     * Employs 3D spatial cell partitioning with cell dimension {@code maxDistance + 1}.
+     * Rather than scanning all trunk positions against all leaves (O(N * M)), candidate
+     * leaves query only their containing cell and 26 adjacent neighbor cells, reducing
+     * complexity to O(N + M).
+     * </p>
      *
      * @param trunkPositions      packed 64-bit block positions of remaining log/trunk blocks
      * @param canopyLeafPositions packed 64-bit block positions of candidate leaf blocks
@@ -48,21 +54,52 @@ public final class TreeCanopyDecayAndVeinBreakScheduler {
         if (trunkPositions.length == 0) {
             return Arrays.copyOf(canopyLeafPositions, canopyLeafPositions.length);
         }
+
+        int cellDim = Math.max(1, maxDistance + 1);
+        Map<Long, java.util.List<Long>> trunksByCell = new java.util.HashMap<>(trunkPositions.length);
+        for (long trunkPos : trunkPositions) {
+            int tx = unpackX(trunkPos);
+            int ty = unpackY(trunkPos);
+            int tz = unpackZ(trunkPos);
+            int cx = Math.floorDiv(tx, cellDim);
+            int cy = Math.floorDiv(ty, cellDim);
+            int cz = Math.floorDiv(tz, cellDim);
+            long cellKey = packCellKey(cx, cy, cz);
+            trunksByCell.computeIfAbsent(cellKey, k -> new java.util.ArrayList<>()).add(trunkPos);
+        }
+
         long[] unsupported = new long[canopyLeafPositions.length];
         int count = 0;
         for (long leafPos : canopyLeafPositions) {
             int lx = unpackX(leafPos);
             int ly = unpackY(leafPos);
             int lz = unpackZ(leafPos);
+            int lcx = Math.floorDiv(lx, cellDim);
+            int lcy = Math.floorDiv(ly, cellDim);
+            int lcz = Math.floorDiv(lz, cellDim);
+
             boolean supported = false;
-            for (long trunkPos : trunkPositions) {
-                int tx = unpackX(trunkPos);
-                int ty = unpackY(trunkPos);
-                int tz = unpackZ(trunkPos);
-                int manhattan = Math.abs(lx - tx) + Math.abs(ly - ty) + Math.abs(lz - tz);
-                if (manhattan <= maxDistance) {
-                    supported = true;
-                    break;
+            outerSearch:
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        long neighborKey = packCellKey(lcx + dx, lcy + dy, lcz + dz);
+                        java.util.List<Long> cellTrunks = trunksByCell.get(neighborKey);
+                        if (cellTrunks != null) {
+                            int size = cellTrunks.size();
+                            for (int i = 0; i < size; i++) {
+                                long trunkPos = cellTrunks.get(i);
+                                int tx = unpackX(trunkPos);
+                                int ty = unpackY(trunkPos);
+                                int tz = unpackZ(trunkPos);
+                                int manhattan = Math.abs(lx - tx) + Math.abs(ly - ty) + Math.abs(lz - tz);
+                                if (manhattan <= maxDistance) {
+                                    supported = true;
+                                    break outerSearch;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             if (!supported) {
@@ -156,5 +193,9 @@ public final class TreeCanopyDecayAndVeinBreakScheduler {
 
     private static int unpackZ(long packedPos) {
         return (int) ((packedPos << 26) >> 38);
+    }
+
+    private static long packCellKey(int cx, int cy, int cz) {
+        return (((long) (cx & 0x3FFFFFF)) << 38) | (((long) (cz & 0x3FFFFFF)) << 12) | ((long) (cy & 0xFFF));
     }
 }

@@ -20,7 +20,7 @@ import net.neoforged.bus.api.IEventBus;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @param <T> base registry type
  */
 public final class DeferredRegister<T> {
@@ -79,17 +79,28 @@ public final class DeferredRegister<T> {
 
     /**
      * Resolves and binds all queued {@link DeferredHolder} entries into the underlying VESSEL
-     * {@link DeferredRegisterBridge}.
+     * {@link DeferredRegisterBridge} and {@link dev.vessel.kernel.registry.VesselModRegistryHolder}.
      *
      * @return number of resolved entries
      */
     public int resolveAllEntries() {
         int count = 0;
+        boolean isItem = registryName.toLowerCase(Locale.ROOT).contains("item");
         for (DeferredHolder<T, ? extends T> holder : entries) {
-            holder.resolveNow();
+            T resolved = holder.resolveNow();
             String id = holder.getId();
             String entryPath = id.substring(id.indexOf(':') + 1);
-            underlyingBridge.registerBlockEntry(modid, entryPath, 1);
+            if (isItem) {
+                underlyingBridge.registerItemEntry(modid, entryPath, Collections.emptyMap());
+                if (resolved != null) {
+                    dev.vessel.kernel.registry.VesselModRegistryHolder.registerModItem(id, resolved);
+                }
+            } else {
+                underlyingBridge.registerBlockEntry(modid, entryPath, 1);
+                if (resolved != null) {
+                    dev.vessel.kernel.registry.VesselModRegistryHolder.registerModBlock(id, resolved);
+                }
+            }
             count++;
         }
         return count;

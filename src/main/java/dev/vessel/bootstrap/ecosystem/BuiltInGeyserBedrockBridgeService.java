@@ -14,15 +14,28 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.3
  */
 public final class BuiltInGeyserBedrockBridgeService {
 
     public static final int DEFAULT_BEDROCK_UDP_PORT = 19132;
+    public static final int DEFAULT_JAVA_PORT = 25565;
 
     private volatile Process activeGeyserProcess;
-    private volatile int activeBedrockUdpPort = DEFAULT_BEDROCK_UDP_PORT;
-    private volatile int activeJavaTargetPort = 25565;
+    private volatile int activeBedrockUdpPort = resolveInitialBedrockPort();
+    private volatile int activeJavaTargetPort = resolveInitialJavaPort();
+
+    private static int resolveInitialBedrockPort() {
+        int configured = dev.vessel.bootstrap.target.VesselServerConfig.getActiveConfig().getInt(
+                "proxy-integration.bedrock-port", DEFAULT_BEDROCK_UDP_PORT);
+        return (configured > 0 && configured <= 65535) ? configured : DEFAULT_BEDROCK_UDP_PORT;
+    }
+
+    private static int resolveInitialJavaPort() {
+        int configured = dev.vessel.bootstrap.target.VesselServerConfig.getActiveConfig().getInt(
+                "network-and-security.server-port", DEFAULT_JAVA_PORT);
+        return (configured > 0 && configured <= 65535) ? configured : DEFAULT_JAVA_PORT;
+    }
 
     /**
      * Scaffolds Geyser's {@code config.yml} inside {@code serverRoot/cache/ecosystem/geyser-runtime/}
@@ -36,8 +49,14 @@ public final class BuiltInGeyserBedrockBridgeService {
      */
     public Path scaffoldGeyserRuntimeConfig(Path serverRoot, int javaServerPort, int bedrockUdpPort) {
         Objects.requireNonNull(serverRoot, "serverRoot must not be null");
-        this.activeJavaTargetPort = javaServerPort > 0 ? javaServerPort : 25565;
-        this.activeBedrockUdpPort = bedrockUdpPort > 0 ? bedrockUdpPort : DEFAULT_BEDROCK_UDP_PORT;
+        int targetJavaPort = javaServerPort > 0
+                ? javaServerPort
+                : dev.vessel.bootstrap.target.VesselServerConfig.getActiveConfig().getInt("network-and-security.server-port", DEFAULT_JAVA_PORT);
+        int targetBedrockPort = bedrockUdpPort > 0
+                ? bedrockUdpPort
+                : dev.vessel.bootstrap.target.VesselServerConfig.getActiveConfig().getInt("proxy-integration.bedrock-port", DEFAULT_BEDROCK_UDP_PORT);
+        this.activeJavaTargetPort = targetJavaPort > 0 ? targetJavaPort : DEFAULT_JAVA_PORT;
+        this.activeBedrockUdpPort = targetBedrockPort > 0 ? targetBedrockPort : DEFAULT_BEDROCK_UDP_PORT;
 
         Path runtimeDir = serverRoot.resolve("cache").resolve("ecosystem").resolve("geyser-runtime");
         Path configPath = runtimeDir.resolve("config.yml");

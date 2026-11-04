@@ -10,7 +10,7 @@ import java.util.Objects;
  * open/closed tables to eliminate array clearing between consecutive search queries.
  * </p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class FlatArrayMinHeapPathfinder {
@@ -109,6 +109,35 @@ public final class FlatArrayMinHeapPathfinder {
      * @return PathResult containing path trajectory and execution status
      */
     public synchronized PathResult findPath(
+            int startX, int startY, int startZ,
+            int goalX, int goalY, int goalZ,
+            PathPassabilityPredicate passability
+    ) {
+        return executeSearch(startX, startY, startZ, goalX, goalY, goalZ, passability);
+    }
+
+    /**
+     * Computes the shortest path without monitor synchronization.
+     * Safe ONLY when invoked on a thread-confined instance obtained via {@link ThreadLocalPathfinderPool#getThreadLocalPathfinder()}.
+     *
+     * @param startX starting world X
+     * @param startY starting world Y
+     * @param startZ starting world Z
+     * @param goalX target destination X
+     * @param goalY target destination Y
+     * @param goalZ target destination Z
+     * @param passability predicate determining traversable blocks
+     * @return PathResult containing path trajectory and execution status
+     */
+    public PathResult findPathThreadConfined(
+            int startX, int startY, int startZ,
+            int goalX, int goalY, int goalZ,
+            PathPassabilityPredicate passability
+    ) {
+        return executeSearch(startX, startY, startZ, goalX, goalY, goalZ, passability);
+    }
+
+    private PathResult executeSearch(
             int startX, int startY, int startZ,
             int goalX, int goalY, int goalZ,
             PathPassabilityPredicate passability

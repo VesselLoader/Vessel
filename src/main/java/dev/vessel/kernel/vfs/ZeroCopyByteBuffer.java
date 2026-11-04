@@ -12,7 +12,7 @@ import java.util.Objects;
  * by providing safe, read-only window views over byte sequences.
  * </p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-5)
  */
 public final class ZeroCopyByteBuffer {
@@ -96,6 +96,17 @@ public final class ZeroCopyByteBuffer {
      */
     public InputStream asInputStream() {
         return new ByteArrayInputStream(array, offset, length);
+    }
+
+    /**
+     * Copies the content of this buffer directly into the target byte array without intermediate allocations.
+     *
+     * @param target destination byte array
+     * @param destOffset destination starting index
+     */
+    public void copyTo(byte[] target, int destOffset) {
+        Objects.requireNonNull(target, "target cannot be null");
+        System.arraycopy(array, offset, target, destOffset, length);
     }
 
     /**

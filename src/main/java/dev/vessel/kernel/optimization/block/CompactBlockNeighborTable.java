@@ -11,8 +11,13 @@ import java.util.Arrays;
  * DOWN (0), UP (1), NORTH (2), SOUTH (3), WEST (4), EAST (5).
  * This table stores all neighbor transitions in a single flat contiguous primitive {@code int[]} array,
  * indexed by {@code (sourceStateId * 6) + direction}, eliminating pointer chasing and GC overhead.
+ * </p>
+ * <p>
+ * Features lock-free volatile snapshot memory barriers for concurrent state querying across threads.
+ * </p>
  *
- * @version 1.0.0
+ * @version 1.0.2
+ * @author VESSEL Engine Team
  */
 public final class CompactBlockNeighborTable {
 
@@ -24,8 +29,8 @@ public final class CompactBlockNeighborTable {
     public static final int DIR_EAST = 5;
     public static final int DIRECTIONS_COUNT = 6;
 
-    private int[] table;
-    private int maxStateId;
+    private volatile int[] table;
+    private volatile int maxStateId;
 
     /**
      * Constructs a neighbor transition table with an initial capacity of block states.
@@ -36,13 +41,14 @@ public final class CompactBlockNeighborTable {
         if (initialCapacity <= 0) {
             throw new IllegalArgumentException("initialCapacity must be positive: " + initialCapacity);
         }
-        this.table = new int[initialCapacity * DIRECTIONS_COUNT];
-        Arrays.fill(this.table, -1); // -1 indicates default/no transition
+        int[] initialTable = new int[initialCapacity * DIRECTIONS_COUNT];
+        Arrays.fill(initialTable, -1); // -1 indicates default/no transition
+        this.table = initialTable;
         this.maxStateId = initialCapacity - 1;
     }
 
     /**
-     * Registers a neighbor state transition.
+     * Registers a neighbor state transition thread-safely.
      *
      * @param sourceStateId the ID of the block state being updated
      * @param direction     direction index (0 to 5)
@@ -61,6 +67,7 @@ public final class CompactBlockNeighborTable {
 
     /**
      * Retrieves the resulting state ID when a neighbor updates in the given direction.
+     * Guaranteed lock-free and thread-safe via volatile array reference snapshotting.
      *
      * @param sourceStateId source block state ID
      * @param direction     direction index (0 to 5)
@@ -71,11 +78,12 @@ public final class CompactBlockNeighborTable {
         if (sourceStateId < 0 || sourceStateId > maxStateId) {
             return -1;
         }
+        int[] currentTable = this.table;
         int index = sourceStateId * DIRECTIONS_COUNT + direction;
-        if (index >= table.length) {
+        if (index >= currentTable.length) {
             return -1;
         }
-        return table[index];
+        return currentTable[index];
     }
 
     private void ensureCapacity(int requiredStateId) {

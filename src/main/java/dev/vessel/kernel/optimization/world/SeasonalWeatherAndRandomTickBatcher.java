@@ -1,10 +1,8 @@
 package dev.vessel.kernel.optimization.world;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -13,11 +11,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * section into a single multi-block section packet while suppressing purely visual
  * neighbor block updates.
  *
- * @version 1.0.0
+ * <p>Employs {@link SectionBlockChangeBatch} primitive storage to eliminate boxing churn.</p>
+ * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
+ *
+ * @version 1.0.1
+ * @author VESSEL Engine Team
  */
 public final class SeasonalWeatherAndRandomTickBatcher {
 
-    private final Map<Long, Map<Short, Integer>> sectionBatches = new ConcurrentHashMap<>();
+    private final Map<Long, SectionBlockChangeBatch> sectionBatches = new ConcurrentHashMap<>();
 
     /**
      * Creates a new seasonal weather and randomTick batcher.
@@ -43,16 +45,10 @@ public final class SeasonalWeatherAndRandomTickBatcher {
         if (maxBatchPerTick <= 0) {
             return false;
         }
-        Map<Short, Integer> batch =
+        SectionBlockChangeBatch batch =
                 sectionBatches.computeIfAbsent(
-                        chunkSectionKey, k -> new ConcurrentHashMap<>());
-        synchronized (batch) {
-            if (!batch.containsKey(packedLocalPos) && batch.size() >= maxBatchPerTick) {
-                return false;
-            }
-            batch.put(packedLocalPos, newBlockStateId);
-            return true;
-        }
+                        chunkSectionKey, k -> new SectionBlockChangeBatch(maxBatchPerTick));
+        return batch.addOrUpdate(packedLocalPos, newBlockStateId, maxBatchPerTick);
     }
 
     /**
@@ -63,30 +59,38 @@ public final class SeasonalWeatherAndRandomTickBatcher {
      * @return unmodifiable map of section-local positions to new block state IDs
      */
     public Map<Short, Integer> flushSectionMultiBlockPacket(long chunkSectionKey) {
-        Map<Short, Integer> removed = sectionBatches.remove(chunkSectionKey);
-        if (removed == null || removed.isEmpty()) {
+        SectionBlockChangeBatch batch = sectionBatches.remove(chunkSectionKey);
+        if (batch == null || batch.isEmpty()) {
             return Collections.emptyMap();
         }
-        synchronized (removed) {
-            return Collections.unmodifiableMap(new LinkedHashMap<>(removed));
-        }
+        return batch.toMap();
     }
 
     /**
-     * Determines whether 6-way neighbor block updates should be suppressed because the
-     * block state transition is purely cosmetic/seasonal (snow layer melt, ice thaw,
-     * leaf color shift, moss weathering).
+     * Evaluates whether a visual neighbor block update should be suppressed to protect
+     * TPS during massive season/snow/ice state changes.
      *
-     * @param blockChangeReason descriptor of the block state change reason
-     * @return {@code true} if neighbor updates should be skipped
+     * @param blockUpdateCause reason identifier for the neighbor update
+     * @return {@code true} if the neighbor update should be suppressed
      */
-    public boolean shouldSuppressVisualNeighborUpdate(String blockChangeReason) {
-        Objects.requireNonNull(blockChangeReason, "blockChangeReason must not be null");
-        String normalized = blockChangeReason.trim().toLowerCase(Locale.ROOT);
-        return normalized.contains("seasonal")
-                || normalized.contains("snow")
-                || normalized.contains("thaw")
-                || normalized.contains("weathering")
-                || normalized.contains("foliage_tint");
+    public boolean shouldSuppressVisualNeighborUpdate(String blockUpdateCause) {
+        if (blockUpdateCause == null) {
+            return false;
+        }
+        String lower = blockUpdateCause.trim().toLowerCase(Locale.ROOT);
+        return lower.contains("snow_melt")
+                || lower.contains("ice_melt")
+                || lower.contains("leaf_decay")
+                || lower.contains("foliage_tint")
+                || lower.contains("weathering");
+    }
+
+    /**
+     * Returns the total count of chunk sections with pending multi-block update batches.
+     *
+     * @return pending section batch count
+     */
+    public int getPendingSectionBatchCount() {
+        return sectionBatches.size();
     }
 }

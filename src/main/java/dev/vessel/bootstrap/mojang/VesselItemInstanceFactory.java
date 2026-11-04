@@ -13,9 +13,11 @@ import java.util.Objects;
  *   <li>Legacy 1.7.10 – 1.12.2: {@code new Item()} with {@code setRegistryName}</li>
  * </ul>
  *
+ * <p>Supports instantiating concrete mod-defined {@code Item} subclasses as well as vanilla fallbacks.</p>
+ *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes, and zero lambdas.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselItemInstanceFactory {
 
@@ -67,7 +69,7 @@ public final class VesselItemInstanceFactory {
     }
 
     /**
-     * Creates an {@code Item} instance for the specified identifier.
+     * Creates an {@code Item} instance for the specified identifier using vanilla {@code Item} fallback.
      *
      * @param classLoader active game classloader
      * @param idObj       the identifier or resource location object
@@ -75,12 +77,34 @@ public final class VesselItemInstanceFactory {
      * @return a new {@code Item} instance, or {@code null} if creation failed
      */
     public Object createItemInstance(ClassLoader classLoader, Object idObj, String itemStr) {
+        return createItemInstance(classLoader, idObj, itemStr, null);
+    }
+
+    /**
+     * Creates an {@code Item} instance, attempting to instantiate {@code targetItemClass} if non-null,
+     * or falling back to the vanilla {@code Item} class.
+     *
+     * @param classLoader     active game classloader
+     * @param idObj           the identifier or resource location object
+     * @param itemStr         the namespaced string representation
+     * @param targetItemClass specific mod {@code Item} subclass to construct, or {@code null} for vanilla
+     * @return a new {@code Item} instance, or {@code null} if creation failed
+     */
+    public Object createItemInstance(
+            ClassLoader classLoader,
+            Object idObj,
+            String itemStr,
+            Class<?> targetItemClass) {
         Objects.requireNonNull(classLoader, "classLoader must not be null");
 
         Class<?> itemClass = resolveItemClass(classLoader);
         if (itemClass == null) {
             return null;
         }
+
+        Class<?> effectiveClass = (targetItemClass != null && itemClass.isAssignableFrom(targetItemClass))
+                ? targetItemClass
+                : itemClass;
 
         Class<?> propsClass = resolveItemPropertiesClass(classLoader);
         if (propsClass != null) {
@@ -92,27 +116,41 @@ public final class VesselItemInstanceFactory {
                 // Check for modern 1.20.5+ / 26.3 props.setId(ResourceKey)
                 configureResourceKeyIfSupported(classLoader, props, idObj);
 
-                Constructor<?> itemCtor = itemClass.getDeclaredConstructor(propsClass);
-                itemCtor.setAccessible(true);
-                return itemCtor.newInstance(props);
+                // 1. Try constructor taking Properties on target class
+                try {
+                    Constructor<?> targetCtor = effectiveClass.getDeclaredConstructor(propsClass);
+                    targetCtor.setAccessible(true);
+                    return targetCtor.newInstance(props);
+                } catch (Exception ignored) {
+                }
+
+                // 2. If target class failed, try vanilla Item constructor
+                if (effectiveClass != itemClass) {
+                    try {
+                        Constructor<?> vanillaCtor = itemClass.getDeclaredConstructor(propsClass);
+                        vanillaCtor.setAccessible(true);
+                        return vanillaCtor.newInstance(props);
+                    } catch (Exception ignored) {
+                    }
+                }
             } catch (Exception ignored) {
             }
         }
 
-        // Fallback for pre-1.13: try no-argument constructor
+        // Fallback for pre-1.13 or zero-arg constructors
         try {
-            Constructor<?> noArgCtor = itemClass.getDeclaredConstructor();
+            Constructor<?> noArgCtor = effectiveClass.getDeclaredConstructor();
             noArgCtor.setAccessible(true);
             Object itemInstance = noArgCtor.newInstance();
 
             // Set registry name if supported (1.9 – 1.12.2)
             if (idObj != null) {
                 try {
-                    Method setRegMethod = itemClass.getMethod("setRegistryName", idObj.getClass());
+                    Method setRegMethod = effectiveClass.getMethod("setRegistryName", idObj.getClass());
                     setRegMethod.invoke(itemInstance, idObj);
                 } catch (Exception e1) {
                     try {
-                        Method setRegString = itemClass.getMethod("setRegistryName", String.class);
+                        Method setRegString = effectiveClass.getMethod("setRegistryName", String.class);
                         setRegString.invoke(itemInstance, itemStr);
                     } catch (Exception ignored) {
                     }
@@ -121,13 +159,23 @@ public final class VesselItemInstanceFactory {
 
             // Set unlocalized name if supported (1.7.10 – 1.12.2)
             try {
-                Method setUnlocalizedMethod = itemClass.getMethod("setUnlocalizedName", String.class);
+                Method setUnlocalizedMethod = effectiveClass.getMethod("setUnlocalizedName", String.class);
                 setUnlocalizedMethod.invoke(itemInstance, itemStr);
             } catch (Exception ignored) {
             }
 
             return itemInstance;
         } catch (Exception ignored) {
+        }
+
+        // Fallback to vanilla no-arg if custom failed
+        if (effectiveClass != itemClass) {
+            try {
+                Constructor<?> vanillaNoArg = itemClass.getDeclaredConstructor();
+                vanillaNoArg.setAccessible(true);
+                return vanillaNoArg.newInstance();
+            } catch (Exception ignored) {
+            }
         }
 
         return null;

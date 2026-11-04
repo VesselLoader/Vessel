@@ -102,7 +102,7 @@ public class LiveModLoaderApiSurfaceTest {
         assertEquals("vessel_neoforge_probe", neoForgeModAnnotation.value());
 
         net.minecraftforge.eventbus.api.IEventBus forgeBus =
-                new net.minecraftforge.eventbus.api.IEventBus();
+                new net.minecraftforge.eventbus.api.VesselEventBus();
         AtomicReference<String> forgeFunctionalRef = new AtomicReference<>();
         forgeBus.addListener(String.class, forgeFunctionalRef::set);
         forgeBus.register(this);
@@ -111,7 +111,7 @@ public class LiveModLoaderApiSurfaceTest {
         assertEquals("FMLCommonSetupEvent", this.lastReceivedForgePayload);
 
         net.neoforged.bus.api.IEventBus neoForgeBus =
-                new net.neoforged.bus.api.IEventBus();
+                new net.neoforged.bus.api.VesselNeoEventBus();
         AtomicReference<String> neoForgeFunctionalRef = new AtomicReference<>();
         neoForgeBus.addListener(String.class, neoForgeFunctionalRef::set);
         neoForgeBus.register(this);

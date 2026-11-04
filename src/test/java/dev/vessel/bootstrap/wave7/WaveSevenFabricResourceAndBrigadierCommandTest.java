@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 final class WaveSevenFabricResourceAndBrigadierCommandTest
         implements IdentifiableResourceReloadListener {
@@ -59,7 +59,7 @@ final class WaveSevenFabricResourceAndBrigadierCommandTest
     }
 
     @Test
-    void testFabricCommandRegistrationResourceManagerHelperAndBrigadierDispatcher() {
+    void testFabricCommandRegistrationResourceManagerHelperAndBrigadierDispatcher() throws Exception {
         CommandDispatcher<String> dispatcher = new CommandDispatcher<>();
         dispatcher.register(
                 LiteralArgumentBuilder.<String>literal("vessel")

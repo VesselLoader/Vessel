@@ -1,6 +1,7 @@
 package dev.vessel.kernel.optimization.supermod;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,7 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Debounces rapid Applied Energistics 2 and Refined Storage grid topology rebuild requests caused
  * by cable placement or chunk boundary loading into a single deferred rebuild per quiet window.
  *
- * @version 1.0.0
+ * <p>Optimized with early-exit zero-allocation fast-paths on idle ticks.</p>
+ *
+ * @version 1.0.2
  */
 public final class StorageNetworkDebounceCoordinator {
 
@@ -40,21 +43,55 @@ public final class StorageNetworkDebounceCoordinator {
      * @return the number of storage grid rebuilds executed
      */
     public int flushDebouncedGridRebuilds(long currentTimestampMs, long debounceWindowMs) {
+        if (lastScheduledTimestampMs.isEmpty()) {
+            return 0;
+        }
+
         int executed = 0;
-        Iterator<Map.Entry<Long, Long>> iterator = lastScheduledTimestampMs.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Long, Long> entry = iterator.next();
-            long gridId = entry.getKey();
-            long scheduledAt = entry.getValue();
-            if (currentTimestampMs - scheduledAt >= debounceWindowMs) {
-                iterator.remove();
+        List<Long> expiredGridIds = null;
+        for (Long gridId : lastScheduledTimestampMs.keySet()) {
+            Long scheduledAt = lastScheduledTimestampMs.get(gridId);
+            if (scheduledAt != null && currentTimestampMs - scheduledAt.longValue() >= debounceWindowMs) {
+                if (expiredGridIds == null) {
+                    expiredGridIds = new ArrayList<>();
+                }
+                expiredGridIds.add(gridId);
+            }
+        }
+
+        if (expiredGridIds != null) {
+            int count = expiredGridIds.size();
+            for (int i = 0; i < count; i++) {
+                Long gridId = expiredGridIds.get(i);
+                lastScheduledTimestampMs.remove(gridId);
                 Runnable task = pendingRebuildTasks.remove(gridId);
                 if (task != null) {
-                    task.run();
+                    try {
+                        task.run();
+                    } catch (Throwable ignored) {
+                    }
                     executed++;
                 }
             }
         }
         return executed;
+    }
+
+    /**
+     * Cancels a pending debounced rebuild task for a storage grid.
+     *
+     * @param gridId the storage network grid identifier
+     */
+    public void cancelScheduledRebuild(long gridId) {
+        lastScheduledTimestampMs.remove(gridId);
+        pendingRebuildTasks.remove(gridId);
+    }
+
+    /**
+     * Clears all pending debounced rebuild tasks.
+     */
+    public void clear() {
+        lastScheduledTimestampMs.clear();
+        pendingRebuildTasks.clear();
     }
 }

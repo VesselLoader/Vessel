@@ -1,8 +1,10 @@
 package org.bukkit.plugin;
 
-import dev.vessel.kernel.config.yaml.MemoryConfigurationSection;
+import java.io.File;
+import java.io.InputStream;
 import java.util.logging.Logger;
 import org.bukkit.Server;
+import org.bukkit.configuration.file.FileConfiguration;
 
 /**
  * Runtime contract for a Bukkit, Spigot, Paper, or Folia plugin hosted on the VESSEL Sovereign
@@ -10,7 +12,7 @@ import org.bukkit.Server;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public interface Plugin {
 
@@ -18,11 +20,17 @@ public interface Plugin {
 
     PluginDescriptionFile getDescription();
 
-    MemoryConfigurationSection getConfig();
+    FileConfiguration getConfig();
+
+    File getDataFolder();
+
+    void saveConfig();
 
     void saveDefaultConfig();
 
     void reloadConfig();
+
+    InputStream getResource(String filename);
 
     boolean isEnabled();
 

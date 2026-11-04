@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * script crashes), throttling peripheral inventory scans to once every 5 ticks, and buffering
  * virtual filesystem writes in RAM for 30-second (600-tick) write-behind disk flushes.
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class LuaCoroutineAndPeripheralQuotaGovernor {
 
@@ -109,12 +109,14 @@ public final class LuaCoroutineAndPeripheralQuotaGovernor {
     }
 
     /**
-     * Flushes dirty virtual files that have been buffered for at least 30 seconds (600 ticks).
+     * Flushes dirty virtual files that have been buffered for at least 30 seconds (600 ticks)
+     * and persists them via the provided disk writer consumer.
      *
      * @param currentTick the current monotonic server tick
+     * @param diskWriter  consumer receiving (fileKey, payloadBytes) to write to host storage, or null
      * @return the number of dirty virtual files flushed to disk
      */
-    public int flushDirtyVirtualFilesToDisk(long currentTick) {
+    public int flushDirtyVirtualFilesToDisk(long currentTick, java.util.function.BiConsumer<String, byte[]> diskWriter) {
         int flushed = 0;
         Iterator<Map.Entry<String, Long>> iterator = dirtyFileEnqueueTick.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -122,11 +124,28 @@ public final class LuaCoroutineAndPeripheralQuotaGovernor {
             if ((currentTick - entry.getValue()) >= WRITE_BEHIND_FLUSH_INTERVAL_TICKS) {
                 String fileKey = entry.getKey();
                 iterator.remove();
-                if (dirtyVirtualFiles.remove(fileKey) != null) {
+                byte[] payload = dirtyVirtualFiles.remove(fileKey);
+                if (payload != null) {
+                    if (diskWriter != null) {
+                        try {
+                            diskWriter.accept(fileKey, payload);
+                        } catch (Throwable ignored) {
+                        }
+                    }
                     flushed++;
                 }
             }
         }
         return flushed;
+    }
+
+    /**
+     * Flushes dirty virtual files that have been buffered for at least 30 seconds (600 ticks).
+     *
+     * @param currentTick the current monotonic server tick
+     * @return the number of dirty virtual files flushed to disk
+     */
+    public int flushDirtyVirtualFilesToDisk(long currentTick) {
+        return flushDirtyVirtualFilesToDisk(currentTick, null);
     }
 }

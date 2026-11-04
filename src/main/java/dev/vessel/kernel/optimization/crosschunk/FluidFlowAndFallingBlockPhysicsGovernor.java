@@ -1,5 +1,6 @@
 package dev.vessel.kernel.optimization.crosschunk;
 
+import dev.vessel.kernel.gpu.GpuComputeDispatcher;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -11,14 +12,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * collapses large contiguous columns of falling sand/gravel ($> 32$ blocks) directly
  * inside the chunk palette with zero {@code FallingBlockEntity} spawns, and coalesces
  * bulk fluid pump block updates (Create Hose Pulley, Mekanism Fluidic Plenisher, RFTools).
+ * <p>
+ * Employs primitive 64-bit packed slope hashing to eliminate string allocation on hot
+ * fluid tick paths and routes heavy bulk fluid spreading to the sovereign hardware accelerator.
+ * </p>
  *
- * @version 1.0.0
+ * @version 1.0.1
+ * @author VESSEL Engine Team
  */
 public final class FluidFlowAndFallingBlockPhysicsGovernor {
 
     private static final int INSTANT_COLLAPSE_THRESHOLD = 32;
 
-    private final Map<String, Byte> slopeFlowCache = new ConcurrentHashMap<>();
+    private final Map<Long, Byte> slopeFlowCache = new ConcurrentHashMap<>();
 
     /**
      * Creates a new fluid flow and falling block physics governor.
@@ -27,25 +33,41 @@ public final class FluidFlowAndFallingBlockPhysicsGovernor {
     }
 
     /**
-     * Caches the computed 4-bit cardinal slope flow direction mask at {@code (chunkPos, localPos)}.
+     * Caches the computed 4-bit cardinal slope flow direction mask at {@code (chunkPos, localPos)}
+     * using zero-allocation 64-bit composite hashing.
      *
      * @param chunkPos    64-bit packed chunk coordinate
      * @param localPos    packed section-local coordinate
      * @param flowDirMask 4-bit cardinal flow direction mask
      */
     public void cacheSlopeFlowDirection(long chunkPos, int localPos, byte flowDirMask) {
-        slopeFlowCache.put(chunkPos + ":" + localPos, flowDirMask);
+        slopeFlowCache.put(packSlopeKey(chunkPos, localPos), flowDirMask);
     }
 
     /**
-     * Looks up the cached cardinal slope flow direction mask at {@code (chunkPos, localPos)}.
+     * Looks up the cached cardinal slope flow direction mask at {@code (chunkPos, localPos)}
+     * without string allocations.
      *
      * @param chunkPos 64-bit packed chunk coordinate
      * @param localPos packed section-local coordinate
      * @return cached flow direction mask, or {@code (byte) 0} if not cached
      */
     public byte lookupCachedFlowDirection(long chunkPos, int localPos) {
-        return slopeFlowCache.getOrDefault(chunkPos + ":" + localPos, (byte) 0);
+        return slopeFlowCache.getOrDefault(packSlopeKey(chunkPos, localPos), (byte) 0);
+    }
+
+    /**
+     * Dispatches heavy bulk fluid cellular automata propagation to the sovereign hardware accelerator
+     * (iGPU UMA, dGPU, or CPU SIMD).
+     *
+     * @param initialGrid input 1D grid representation of fluid depths
+     * @param width       grid width
+     * @param height      grid height
+     * @param iterations  simulation steps
+     * @return updated fluid spread buffer
+     */
+    public byte[] simulateFluidSpreadBatchAccelerated(byte[] initialGrid, int width, int height, int iterations) {
+        return GpuComputeDispatcher.getActiveDispatcher().dispatchFluidSpread(initialGrid, width, height, iterations);
     }
 
     /**
@@ -112,5 +134,9 @@ public final class FluidFlowAndFallingBlockPhysicsGovernor {
             uniquePositions.add(pos);
         }
         return uniquePositions.size();
+    }
+
+    private static long packSlopeKey(long chunkPos, int localPos) {
+        return (chunkPos * 31L) ^ ((long) localPos & 0xFFFFL);
     }
 }

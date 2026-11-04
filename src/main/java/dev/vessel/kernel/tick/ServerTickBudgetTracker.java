@@ -1,38 +1,47 @@
 package dev.vessel.kernel.tick;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
- * Allocation-free rolling MSPT (Milliseconds Per Tick) and TPS monitor.
+ * Allocation-free, lock-free rolling MSPT (Milliseconds Per Tick) and TPS monitor.
  * <p>
- * Employs a fixed circular ring buffer of 100 tick measurements to compute rolling averages,
- * peak spikes, and dynamic TPS estimates with zero heap allocations during gameplay.
+ * Employs a power-of-two circular ring buffer of 128 tick measurements using bitwise index masking
+ * and {@link AtomicLongArray} to compute rolling averages, peak spikes, and dynamic TPS estimates
+ * with zero lock contention across concurrent regional Folia worker threads.
  * </p>
  *
- * @version 1.0.1
+ * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
+ *
+ * @version 1.0.2
  * @since 1.0.0 (Pass K-6)
  */
-public class ServerTickBudgetTracker {
+public final class ServerTickBudgetTracker {
 
-    private static final int RING_SIZE = 100;
+    private static final int RING_SIZE = 128;
+    private static final int RING_MASK = RING_SIZE - 1; // 127
     private static final double TARGET_TPS = 20.0;
     private static final double TARGET_MSPT = 50.0;
 
-    private final long[] ring = new long[RING_SIZE];
+    private final AtomicLongArray ring = new AtomicLongArray(RING_SIZE);
     private final AtomicInteger writeIndex = new AtomicInteger(0);
     private final AtomicInteger count = new AtomicInteger(0);
 
     /**
-     * Records elapsed duration of a finished game tick in nanoseconds.
+     * Constructs a lock-free rolling server tick budget tracker.
+     */
+    public ServerTickBudgetTracker() {
+    }
+
+    /**
+     * Records elapsed duration of a finished game tick in nanoseconds without blocking or monitor locking.
      *
      * @param durationNanos execution time of the tick in nanoseconds
      */
-    public synchronized void recordTick(long durationNanos) {
-        int idx = writeIndex.getAndIncrement() % RING_SIZE;
-        ring[idx] = Math.max(0L, durationNanos);
-        if (count.get() < RING_SIZE) {
-            count.incrementAndGet();
-        }
+    public void recordTick(long durationNanos) {
+        int idx = (writeIndex.getAndIncrement() & RING_MASK);
+        ring.set(idx, Math.max(0L, durationNanos));
+        count.getAndUpdate(c -> (c < RING_SIZE) ? c + 1 : RING_SIZE);
     }
 
     /**
@@ -40,14 +49,14 @@ public class ServerTickBudgetTracker {
      *
      * @return average milliseconds per tick
      */
-    public synchronized double getAverageMspt() {
+    public double getAverageMspt() {
         int samples = count.get();
         if (samples == 0) {
             return 0.0;
         }
         long sum = 0L;
         for (int i = 0; i < samples; i++) {
-            sum += ring[i];
+            sum += ring.get(i);
         }
         return (sum / (double) samples) / 1_000_000.0;
     }
@@ -57,15 +66,16 @@ public class ServerTickBudgetTracker {
      *
      * @return peak MSPT in milliseconds
      */
-    public synchronized double getMaxMspt() {
+    public double getMaxMspt() {
         int samples = count.get();
         if (samples == 0) {
             return 0.0;
         }
         long max = 0L;
         for (int i = 0; i < samples; i++) {
-            if (ring[i] > max) {
-                max = ring[i];
+            long val = ring.get(i);
+            if (val > max) {
+                max = val;
             }
         }
         return max / 1_000_000.0;
@@ -76,15 +86,16 @@ public class ServerTickBudgetTracker {
      *
      * @return minimum MSPT in milliseconds
      */
-    public synchronized double getMinMspt() {
+    public double getMinMspt() {
         int samples = count.get();
         if (samples == 0) {
             return 0.0;
         }
         long min = Long.MAX_VALUE;
         for (int i = 0; i < samples; i++) {
-            if (ring[i] < min) {
-                min = ring[i];
+            long val = ring.get(i);
+            if (val < min) {
+                min = val;
             }
         }
         return min / 1_000_000.0;
@@ -95,23 +106,31 @@ public class ServerTickBudgetTracker {
      *
      * @return current TPS (capped at 20.0)
      */
-    public synchronized double getCalculatedTps() {
+    public double getCalculatedTps() {
         double avgMspt = getAverageMspt();
-        if (avgMspt <= 0.0) {
-            return TARGET_TPS;
-        }
-        if (avgMspt <= TARGET_MSPT) {
+        if (avgMspt <= 0.0 || avgMspt <= TARGET_MSPT) {
             return TARGET_TPS;
         }
         return Math.min(TARGET_TPS, 1000.0 / avgMspt);
     }
 
-    public synchronized int getSampleCount() {
+    /**
+     * Returns the number of recorded tick samples currently stored in the rolling buffer.
+     *
+     * @return active sample count (0..128)
+     */
+    public int getSampleCount() {
         return count.get();
     }
 
-    public synchronized void reset() {
+    /**
+     * Resets the rolling buffer and index counters.
+     */
+    public void reset() {
         writeIndex.set(0);
         count.set(0);
+        for (int i = 0; i < RING_SIZE; i++) {
+            ring.set(i, 0L);
+        }
     }
 }

@@ -17,7 +17,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
  * @param <T> base registry type
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class DeferredRegister<T> {
 
@@ -76,18 +76,29 @@ public final class DeferredRegister<T> {
 
     /**
      * Resolves all queued {@link RegistryObject} entries and records them in VESSEL's
-     * {@link DeferredRegisterBridge}.
+     * {@link DeferredRegisterBridge} and {@link dev.vessel.kernel.registry.VesselModRegistryHolder}.
      *
      * @return the number of entries resolved
      */
     public int resolveAllEntries() {
         int resolvedCount = 0;
+        boolean isItem = registryName.toLowerCase(Locale.ROOT).contains("item");
         for (RegistryObject<T> entry : entries) {
-            entry.resolveNow();
+            T resolved = entry.resolveNow();
             String id = entry.getId();
             int colonIndex = id.indexOf(':');
             String path = colonIndex >= 0 ? id.substring(colonIndex + 1) : id;
-            underlyingBridge.registerBlockEntry(modid, path, 1);
+            if (isItem) {
+                underlyingBridge.registerItemEntry(modid, path, Collections.emptyMap());
+                if (resolved != null) {
+                    dev.vessel.kernel.registry.VesselModRegistryHolder.registerModItem(id, resolved);
+                }
+            } else {
+                underlyingBridge.registerBlockEntry(modid, path, 1);
+                if (resolved != null) {
+                    dev.vessel.kernel.registry.VesselModRegistryHolder.registerModBlock(id, resolved);
+                }
+            }
             resolvedCount++;
         }
         return resolvedCount;

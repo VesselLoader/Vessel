@@ -25,13 +25,13 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 class LiveBukkitApiSurfaceTest {
 
     @Test
     void testBukkitSingletonJavaPluginLifecycleAndConfigSurface() {
-        Server customServer = new Server("VESSEL-Paper", "1.21.4-R0.1", "1.21.4-R0.1");
+        Server customServer = new VesselServer("VESSEL-Paper", "1.21.4-R0.1", "1.21.4-R0.1");
         Bukkit.setServer(customServer);
         assertEquals("VESSEL-Paper", Bukkit.getName());
         assertEquals("1.21.4-R0.1", Bukkit.getVersion());

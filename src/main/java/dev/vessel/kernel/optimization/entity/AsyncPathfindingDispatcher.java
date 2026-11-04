@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * the previous search completes, the stale calculation is instantly cancelled, eliminating 70%+ of redundant CPU work.
  * </p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @author VESSEL Engine Team
  */
 public final class AsyncPathfindingDispatcher {
@@ -101,11 +101,9 @@ public final class AsyncPathfindingDispatcher {
             long currentVersion = entityRequestVersions.getOrDefault(entityId, 0L);
             if (currentVersion != requestVersion) {
                 // Stale request cancelled before starting
-                PathfindingCallback cb = activeEntityCallbacks.remove(entityId);
-                if (cb != null) {
-                    totalCancelled.incrementAndGet();
-                    cb.onPathResult(PathfindingResult.cancelled(entityId));
-                }
+                activeEntityCallbacks.remove(entityId, callback);
+                totalCancelled.incrementAndGet();
+                callback.onPathResult(PathfindingResult.cancelled(entityId));
                 return;
             }
 
@@ -114,12 +112,11 @@ public final class AsyncPathfindingDispatcher {
             // Check version again after computation
             currentVersion = entityRequestVersions.getOrDefault(entityId, 0L);
             if (currentVersion != requestVersion) {
-                PathfindingCallback cb = activeEntityCallbacks.remove(entityId);
-                if (cb != null) {
-                    totalCancelled.incrementAndGet();
-                    cb.onPathResult(PathfindingResult.cancelled(entityId));
-                }
+                activeEntityCallbacks.remove(entityId, callback);
+                totalCancelled.incrementAndGet();
+                callback.onPathResult(PathfindingResult.cancelled(entityId));
             } else {
+                activeEntityCallbacks.remove(entityId, callback);
                 totalCompleted.incrementAndGet();
                 callback.onPathResult(result);
             }

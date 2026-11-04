@@ -19,7 +19,7 @@ import java.util.function.IntSupplier;
  * dead entity listeners from the {@code EventBus}, and pools {@code FakePlayer} UUIDs
  * per dimension and machine profile (Create Deployers, Modular Routers, Integrated Tunnels).
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class DirectByteBufAndEventBusLeakGuard {
 
@@ -119,5 +119,36 @@ public final class DirectByteBufAndEventBusLeakGuard {
         return pooledFakePlayers.computeIfAbsent(
                 compositeKey,
                 k -> UUID.nameUUIDFromBytes(("VESSEL_FAKEPLAYER:" + k).getBytes(StandardCharsets.UTF_8)));
+    }
+
+    /**
+     * Returns the current number of registered weak entity event listeners.
+     *
+     * @return count of listeners
+     */
+    public synchronized int getRegisteredListenerCount() {
+        return weakListenerOwners.size();
+    }
+
+    /**
+     * Triggers all active registered event hooks.
+     */
+    public synchronized void triggerAllListeners() {
+        for (Runnable hook : listenerHooks) {
+            try {
+                hook.run();
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    /**
+     * Clears all registered listeners and pooled fake player references.
+     */
+    public synchronized void clearAll() {
+        weakListenerOwners.clear();
+        listenerRemovedPredicates.clear();
+        listenerHooks.clear();
+        pooledFakePlayers.clear();
     }
 }

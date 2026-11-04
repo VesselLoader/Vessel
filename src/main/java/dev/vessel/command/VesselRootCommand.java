@@ -3,6 +3,15 @@ package dev.vessel.command;
 import dev.vessel.bootstrap.ecosystem.BuiltInGeyserAndSparkProvisioner;
 import dev.vessel.kernel.identity.SourceLoaderKind;
 import dev.vessel.kernel.identity.VesselModuleIdentifier;
+import dev.vessel.kernel.metrics.VesselChunkMetricsAuditor;
+import dev.vessel.kernel.metrics.VesselDiagnosticDumpExporter;
+import dev.vessel.kernel.metrics.VesselEngineStateAuditor;
+import dev.vessel.kernel.metrics.VesselEntityMetricsAuditor;
+import dev.vessel.kernel.metrics.VesselHeapMemoryInspector;
+import dev.vessel.kernel.metrics.VesselLiveConfigurationReloader;
+import dev.vessel.kernel.metrics.VesselLiveTickMetricsProvider;
+import dev.vessel.kernel.metrics.VesselProfileMetricsProvider;
+import dev.vessel.kernel.testmatrix.TpsProfileSnapshot;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,7 +27,7 @@ import java.util.Objects;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.4
+ * @version 1.0.5
  */
 public final class VesselRootCommand {
 
@@ -38,6 +47,47 @@ public final class VesselRootCommand {
             "dump",
             "restart");
 
+    private final VesselLiveTickMetricsProvider tickMetricsProvider = new VesselLiveTickMetricsProvider();
+    private final VesselEngineStateAuditor engineAuditor = new VesselEngineStateAuditor();
+    private final VesselLiveConfigurationReloader configReloader = new VesselLiveConfigurationReloader();
+    private final VesselHeapMemoryInspector heapInspector = new VesselHeapMemoryInspector();
+    private final VesselProfileMetricsProvider profileProvider = new VesselProfileMetricsProvider();
+    private final VesselChunkMetricsAuditor chunkAuditor = new VesselChunkMetricsAuditor();
+    private final VesselEntityMetricsAuditor entityAuditor = new VesselEntityMetricsAuditor();
+    private final VesselDiagnosticDumpExporter dumpExporter = new VesselDiagnosticDumpExporter();
+
+    public VesselLiveTickMetricsProvider getTickMetricsProvider() {
+        return tickMetricsProvider;
+    }
+
+    public VesselEngineStateAuditor getEngineAuditor() {
+        return engineAuditor;
+    }
+
+    public VesselLiveConfigurationReloader getConfigReloader() {
+        return configReloader;
+    }
+
+    public VesselHeapMemoryInspector getHeapInspector() {
+        return heapInspector;
+    }
+
+    public VesselProfileMetricsProvider getProfileProvider() {
+        return profileProvider;
+    }
+
+    public VesselChunkMetricsAuditor getChunkAuditor() {
+        return chunkAuditor;
+    }
+
+    public VesselEntityMetricsAuditor getEntityAuditor() {
+        return entityAuditor;
+    }
+
+    public VesselDiagnosticDumpExporter getDumpExporter() {
+        return dumpExporter;
+    }
+
     /**
      * Executes the {@code /vessel} command with the given arguments and returns the formatted
      * administrative response string.
@@ -54,24 +104,18 @@ public final class VesselRootCommand {
             case "version" -> "[VESSEL] Sovereign Microkernel v2.3.0 (MC "
                     + System.getProperty("vessel.active.mc.version", "26.3")
                     + " / Java " + Runtime.version().feature() + " / Folia Regionized)";
-            case "tps" -> "[VESSEL] TPS (1m/5m/15m): 20.00, 20.00, 20.00 | MSPT: 4.12ms | Active Regions: 4";
+            case "tps" -> tickMetricsProvider.formatSingleLineTps();
             case "mods" -> "[VESSEL] Loaded Mods (Fabric/Quilt/Forge/NeoForge): 100% isolated in Tier-4 ModuleClassLoaders";
             case "plugins" -> "[VESSEL] Loaded Plugins (Bukkit/Spigot/Paper/Folia): Active on Unified Event Dispatcher";
             case "top" -> "[VESSEL] Top Consumers by ModuleIdentity: no modules exceeding 1.00ms/tick budget";
-            case "profile" -> "[VESSEL] Built-in Spark-style Sampler Profiler: session ready (use /vessel profile start|stop)";
-            case "heap" -> {
-                Runtime rt = Runtime.getRuntime();
-                long usedMb = (rt.totalMemory() - rt.freeMemory()) / (1024L * 1024L);
-                long maxMb = rt.maxMemory() / (1024L * 1024L);
-                yield "[VESSEL] JVM Heap & ZGC Status: " + usedMb + " MB / " + maxMb
-                        + " MB used | DirectByteBuf guard active, 0 retained dead worlds";
-            }
-            case "chunks" -> "[VESSEL] Chunk Tickets & Cross-Chunk Firewall: 64-bit EdgeSignalLatch active";
-            case "entities" -> "[VESSEL] Entity AI LOD & Spatial Merge: 0 NaN health entities, Villager lobotomizer active";
+            case "profile" -> profileProvider.handleSingleLineCommand(args);
+            case "heap" -> heapInspector.formatSingleLineHeap();
+            case "chunks" -> chunkAuditor.formatSingleLineChunks();
+            case "entities" -> entityAuditor.formatSingleLineEntities();
             case "pregen" -> "[VESSEL] Parallel Chunk Pregenerator: concentric ring pregenerator standing by";
-            case "status" -> "[VESSEL] All 40 Super-Mod & Cross-Chunk Optimization Engines: ONLINE";
-            case "reload" -> "[VESSEL] Reloaded 34 canonical sections from vessel-config/vessel.yml";
-            case "dump" -> "[VESSEL] Exported full diagnostic thread, region strand, and registry dump";
+            case "status" -> engineAuditor.formatSingleLineStatus(false);
+            case "reload" -> configReloader.formatSingleLineReload(configReloader.reloadConfiguration(null, null));
+            case "dump" -> dumpExporter.formatSingleLineDump();
             case "help" -> "[VESSEL] Available subcommands: " + String.join(", ", SUBCOMMANDS);
             default -> "[VESSEL] Unknown subcommand '" + sub + "'. Available: " + String.join(", ", SUBCOMMANDS);
         };
@@ -128,60 +172,29 @@ public final class VesselRootCommand {
                             + " & spark v" + System.getProperty("vessel.active.spark.version",
                             BuiltInGeyserAndSparkProvisioner.DEFAULT_LATEST_SPARK_VERSION),
                     "------------------------------------------------------------------------");
-            case "status" -> List.of(
-                    "------------------------------------------------------------------------",
-                    " VESSEL Sovereign Engine Status : ONLINE",
-                    "   Optimization Suite : " + (ultraOptimize ? "ULTRA-OPTIMIZE (40/40 Engines Active)" : "STANDARD"),
-                    "   Diagnostic Mode    : " + (deepDebug ? "DEEP-DEBUG Enabled" : "Concise Production Logs"),
-                    "   Active Modules     : " + safeModules.size() + " module(s), "
-                            + activatedEntrypoints + " entrypoint(s) + 3 built-in (GeyserMC, Floodgate & spark)",
-                    "   Bedrock Crossplay  : UDP 0.0.0.0:19132 -> TCP 127.0.0.1:25565 (Geyser + Floodgate Ready)",
-                    "   Hourly Auto-Update : ACTIVE (Zero-Lag background poller, 60-min interval)",
-                    "------------------------------------------------------------------------");
-            case "tps" -> List.of(
-                    "[VESSEL/TPS] TPS (1m / 5m / 15m): 20.00, 20.00, 20.00 | Target: 20.00 TPS (50.0ms budget)",
-                    "[VESSEL/TPS] Tick Time (MSPT)   : 1.85ms avg / 3.40ms p95 | Region Actor Strands: ONLINE ("
-                            + Runtime.getRuntime().availableProcessors() + " hardware threads)");
+            case "status" -> engineAuditor.formatConsoleStatusReport(
+                    ultraOptimize,
+                    deepDebug,
+                    safeModules.size(),
+                    activatedEntrypoints);
+            case "tps" -> tickMetricsProvider.formatConsoleTpsReport(
+                    Runtime.getRuntime().availableProcessors());
             case "mods" -> buildModsListLines(safeModules);
             case "plugins" -> buildPluginsListLines(safeModules);
             case "top" -> buildTopConsumersLines(safeModules);
-            case "profile" -> {
-                String action = (args.length > 1 && args[1] != null) ? args[1].trim().toLowerCase(Locale.ROOT) : "status";
-                yield List.of(
-                        "[VESSEL/PROFILER] Built-in spark-style Sampler Profiler ("
-                                + BuiltInGeyserAndSparkProvisioner.DEFAULT_LATEST_SPARK_VERSION + ") - Mode: " + action.toUpperCase(Locale.ROOT),
-                        "[VESSEL/PROFILER] CPU Tick Budget Usage: 3.7% | GC Pause Overhead: 0.0% | Lock Contention: 0.0%");
-            }
-            case "heap" -> {
-                Runtime rt = Runtime.getRuntime();
-                long totalMb = rt.totalMemory() / (1024L * 1024L);
-                long freeMb = rt.freeMemory() / (1024L * 1024L);
-                long usedMb = totalMb - freeMb;
-                long maxMb = rt.maxMemory() / (1024L * 1024L);
-                yield List.of(
-                        "[VESSEL/HEAP] JVM Memory : " + usedMb + " MB used / " + totalMb
-                                + " MB allocated (Max: " + maxMb + " MB)",
-                        "[VESSEL/HEAP] Guards     : DirectByteBuf Leak Guard ACTIVE | Zstd VFS RAM Cache ACTIVE | 0 leaked worlds");
-            }
-            case "chunks" -> List.of(
-                    "[VESSEL/CHUNKS] Cross-Chunk Firewall : 64-bit EdgeSignalLatch ACTIVE | Async Chunk I/O Pipeline READY",
-                    "[VESSEL/CHUNKS] ChunkLoader Governor : Offline ticket hibernation enabled | Zero chunk deadlocks");
-            case "entities" -> List.of(
-                    "[VESSEL/ENTITIES] Spatial Entity Hash Grid : O(1) cell lookup | SIMD 8-Lane AABB Collision ACTIVE",
-                    "[VESSEL/ENTITIES] Entity AI LOD Governor  : Distance throttling ACTIVE | 0 NaN-health corrupted entities");
+            case "profile" -> profileProvider.handleConsoleCommand(args, tickMetricsProvider);
+            case "heap" -> heapInspector.formatConsoleHeapReport();
+            case "chunks" -> chunkAuditor.formatConsoleChunksReport();
+            case "entities" -> entityAuditor.formatConsoleEntitiesReport();
             case "pregen" -> {
                 String radius = (args.length > 1 && args[1] != null) ? args[1].trim() : "ring-1";
                 yield List.of(
                         "[VESSEL/PREGEN] Parallel Concentric-Ring Chunk Pregenerator (" + radius + "): Standing by",
                         "[VESSEL/PREGEN] Usage: vessel pregen <radius> - generates chunks off-thread across worker strands");
             }
-            case "reload" -> List.of(
-                    "[VESSEL/RELOAD] Hot-reloaded 34 enterprise configuration sections from vessel-config/vessel.yml",
-                    "[VESSEL/RELOAD] Re-synchronized CrossLoaderConfigBridge (Forge NightConfig <-> Fabric <-> Bukkit YAML)");
-            case "dump" -> List.of(
-                    "[VESSEL/DUMP] Snapshot complete: Java " + Runtime.version().feature()
-                            + " | MC " + mcVer + " | " + Thread.activeCount() + " active JVM threads",
-                    "[VESSEL/DUMP] Region Strands: HEALTHY | VFS Mounts: HEALTHY | Event Dispatcher: 0 stalled listeners");
+            case "reload" -> configReloader.formatConsoleReloadReport(
+                    configReloader.reloadConfiguration(null, null));
+            case "dump" -> dumpExporter.formatConsoleDumpReport(mcVer);
             default -> List.of(
                     "Unknown VESSEL subcommand '" + args[0] + "'. Type 'vessel help' for the full command list.",
                     "Available: " + String.join(", ", SUBCOMMANDS));
@@ -369,20 +382,40 @@ public final class VesselRootCommand {
         String sub = (args == null || args.length == 0 || args[0] == null || args[0].isBlank())
                 ? "help"
                 : args[0].trim().toLowerCase(Locale.ROOT);
-        Runtime rt = Runtime.getRuntime();
-        long usedMb = (rt.totalMemory() - rt.freeMemory()) / (1024L * 1024L);
-        long maxMb = rt.maxMemory() / (1024L * 1024L);
         return switch (sub) {
-            case "tps" -> List.of(
-                    "[spark/VESSEL] TPS from last 5s, 10s, 1m, 5m, 15m: 20.0, 20.0, 20.0, 20.0, 20.0",
-                    "[spark/VESSEL] Tick durations (min/med/95%ile/max MSPT): 0.8ms / 1.8ms / 3.4ms / 6.1ms");
-            case "health", "healthreport" -> List.of(
-                    "[spark/VESSEL] Server Health Report (spark v" + sparkVersion + " on MC " + mcVersion + "):",
-                    "  - TPS: 20.00 | MSPT: 1.85ms | CPU Process: 2.4% | Memory: " + usedMb + " MB / " + maxMb + " MB");
+            case "tps" -> {
+                if (!tickMetricsProvider.hasTickSamples()) {
+                    yield List.of(
+                            "[spark/VESSEL] TPS: " + VesselLiveTickMetricsProvider.WARMING_UP_LABEL,
+                            "[spark/VESSEL] Tick durations: " + VesselLiveTickMetricsProvider.WARMING_UP_LABEL);
+                }
+                TpsProfileSnapshot snap = tickMetricsProvider.captureSnapshot();
+                yield List.of(
+                        String.format(Locale.ROOT, "[spark/VESSEL] Current calculated TPS: %.2f (Budget: 50.0ms)", snap.currentTps()),
+                        String.format(Locale.ROOT, "[spark/VESSEL] Tick durations (mean/p95/p99/max MSPT): %.2fms / %.2fms / %.2fms / %.2fms",
+                                snap.meanTickDurationMs(), snap.p95LatencyMs(), snap.p99LatencyMs(), snap.maxTickLatencyMs()));
+            }
+            case "health", "healthreport" -> {
+                long used = heapInspector.getUsedMemoryMb();
+                long max = heapInspector.getMaxMemoryMb();
+                String tpsStr = tickMetricsProvider.hasTickSamples()
+                        ? String.format(Locale.ROOT, "%.2f", tickMetricsProvider.captureSnapshot().currentTps())
+                        : VesselLiveTickMetricsProvider.WARMING_UP_LABEL;
+                String msptStr = tickMetricsProvider.hasTickSamples()
+                        ? String.format(Locale.ROOT, "%.2fms", tickMetricsProvider.captureSnapshot().meanTickDurationMs())
+                        : VesselLiveTickMetricsProvider.WARMING_UP_LABEL;
+                yield List.of(
+                        "[spark/VESSEL] Server Health Report (spark v" + sparkVersion + " on MC " + mcVersion + "):",
+                        "  - TPS: " + tpsStr + " | MSPT: " + msptStr + " | Memory: " + used + " MB / " + max + " MB");
+            }
             case "profiler", "sampler" -> List.of(
                     "[spark/VESSEL] Async CPU Sampler (spark v" + sparkVersion + "): Active and monitoring all server threads.");
-            case "heapsummary", "memory", "gc" -> List.of(
-                    "[spark/VESSEL] Heap Summary: " + usedMb + " MB used / " + maxMb + " MB max | 0 GC stalls detected.");
+            case "heapsummary", "memory", "gc" -> {
+                long used = heapInspector.getUsedMemoryMb();
+                long max = heapInspector.getMaxMemoryMb();
+                yield List.of(
+                        "[spark/VESSEL] Heap Summary: " + used + " MB used / " + max + " MB max | JVM memory healthy.");
+            }
             default -> List.of(
                     "------------------------------------------------------------------------",
                     " spark Performance Profiler (v" + sparkVersion + " - Integrated in VESSEL)",
