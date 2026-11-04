@@ -1,4 +1,4 @@
-# @version 1.0.2
+# @version 1.0.3
 name: VESSEL Ecosystem Sync, Build & GitHub Pages Deploy
 
 on:
@@ -16,10 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  sync-build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout VESSEL Repository
@@ -63,6 +60,16 @@ jobs:
         with:
           path: 'docs/'
 
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
