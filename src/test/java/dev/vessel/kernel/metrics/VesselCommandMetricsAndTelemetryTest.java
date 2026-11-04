@@ -23,12 +23,13 @@ import org.junit.jupiter.api.io.TempDir;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 class VesselCommandMetricsAndTelemetryTest {
 
     @Test
     void testLiveTickMetricsCalculationsAndWarmingUpState() {
+        VesselLiveTickMetricsProvider.resetSamples();
         VesselLiveTickMetricsProvider provider = new VesselLiveTickMetricsProvider();
 
         // If no samples recorded yet or when samples are recorded

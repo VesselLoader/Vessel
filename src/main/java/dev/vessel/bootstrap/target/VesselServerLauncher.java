@@ -64,7 +64,7 @@ import java.util.jar.JarFile;
  *
  * <p>Strictly adheres to Rule 17 with zero inner or nested classes.</p>
  *
- * @version 1.0.33
+ * @version 1.0.34
  * @since 1.0.0 (Pass K-29)
  */
 public final class VesselServerLauncher {
@@ -86,6 +86,7 @@ public final class VesselServerLauncher {
     private volatile boolean stagedPatchAppliedOnBoot;
     private volatile boolean jvmVersionMismatchHalted;
     private volatile URLClassLoader activeTierOneClassLoader;
+    private volatile SinglePassModAndPluginLiveActivator activeModActivator;
     private volatile VesselStartupConsoleLogger activeConsoleLogger;
     private volatile VesselCustomFlagsProfile activeCustomFlags;
     private volatile BuiltInGeyserBedrockBridgeService activeGeyserBridgeService;
@@ -453,6 +454,7 @@ public final class VesselServerLauncher {
 
         bootPhaseCoordinator.transitionToPhase(BootPhaseLifecycleCoordinator.PHASE_PRE_MAIN_MOD_INIT);
         SinglePassModAndPluginLiveActivator liveActivator = new SinglePassModAndPluginLiveActivator();
+        this.activeModActivator = liveActivator;
         activatedEntrypointsCount = liveActivator.activateAllDiscoveredModsAndPlugins(
                 serverRoot,
                 resolvedActiveMcVersion,
@@ -754,7 +756,7 @@ public final class VesselServerLauncher {
     }
 
     /**
-     * Closes the active Tier-1 classloader to release file locks on Windows if needed.
+     * Closes the active Tier-1 and Tier-2 classloaders to release open file locks on Windows if needed.
      */
     public void close() {
         if (activeTierOneClassLoader != null) {
@@ -762,6 +764,14 @@ public final class VesselServerLauncher {
                 activeTierOneClassLoader.close();
             } catch (Exception ignored) {
             }
+            activeTierOneClassLoader = null;
+        }
+        if (activeModActivator != null) {
+            try {
+                activeModActivator.close();
+            } catch (Exception ignored) {
+            }
+            activeModActivator = null;
         }
     }
 

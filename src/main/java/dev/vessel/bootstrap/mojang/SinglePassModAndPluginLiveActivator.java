@@ -40,7 +40,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.15
+ * @version 1.0.16
  */
 public final class SinglePassModAndPluginLiveActivator {
 
@@ -447,5 +447,18 @@ public final class SinglePassModAndPluginLiveActivator {
         Constructor<?> defaultCtor = clazz.getDeclaredConstructor();
         defaultCtor.setAccessible(true);
         return defaultCtor.newInstance();
+    }
+
+    /**
+     * Closes the active transforming classloader to release open JAR file handles on Windows.
+     */
+    public void close() {
+        if (activeTransformingClassLoader != null) {
+            try {
+                activeTransformingClassLoader.close();
+            } catch (Exception ignored) {
+            }
+            activeTransformingClassLoader = null;
+        }
     }
 }

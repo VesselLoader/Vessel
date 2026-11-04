@@ -11,7 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.5
+ * @version 1.0.6
  */
 public final class VesselServerBridgeRegistry {
 
@@ -22,6 +22,17 @@ public final class VesselServerBridgeRegistry {
     private static final List<VesselServerReadyCallback> READY_CALLBACKS = new CopyOnWriteArrayList<>();
 
     private VesselServerBridgeRegistry() {
+    }
+
+    /**
+     * Resets all cached server references, commands, classloaders and callbacks for test isolation.
+     */
+    public static void reset() {
+        activeMinecraftServer = null;
+        activeCommands = null;
+        activeLegacyCommandManager = null;
+        activeModClassLoader = null;
+        READY_CALLBACKS.clear();
     }
 
     /**

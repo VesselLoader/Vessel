@@ -1,6 +1,7 @@
 package dev.vessel.bootstrap.target;
 
 import dev.vessel.command.TestEchoPluginCommand;
+import dev.vessel.command.VesselServerBridgeRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.VesselServer;
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.3
  */
 public class VesselConsoleCommandRouteResolverTest {
 
@@ -25,6 +26,7 @@ public class VesselConsoleCommandRouteResolverTest {
 
     @BeforeEach
     void setUp() {
+        VesselServerBridgeRegistry.reset();
         resolver = new VesselConsoleCommandRouteResolver();
         server = new VesselServer("VESSEL-RouteTest", "1.21.4", "1.21.4");
         Bukkit.setServer(server);

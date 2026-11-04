@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 final class WaveSevenFabricResourceAndBrigadierCommandTest
         implements IdentifiableResourceReloadListener {
@@ -64,7 +64,7 @@ final class WaveSevenFabricResourceAndBrigadierCommandTest
         dispatcher.register(
                 LiteralArgumentBuilder.<String>literal("vessel")
                         .executes(this::executeVesselCommand));
-        assertEquals(1, dispatcher.execute("/vessel", "ServerConsole"));
+        assertEquals(1, dispatcher.execute("vessel", "ServerConsole"));
 
         CommandRegistrationCallback.EVENT.clearListeners();
         CommandRegistrationCallback.EVENT.register(this::registerCommandsOnCallback);

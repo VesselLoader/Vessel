@@ -14,7 +14,7 @@ import org.bukkit.command.SimpleCommandMap;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.2
+ * @version 1.0.3
  */
 public final class VesselConsoleCommandRouteResolver {
 
@@ -57,11 +57,6 @@ public final class VesselConsoleCommandRouteResolver {
 
         // 3. Check registered Bukkit root registry
         if (VesselCommandRootRegistry.isBukkitRoot(rootCmd)) {
-            return true;
-        }
-
-        // 4. When the MinecraftServer is active, intercept all console commands for sovereign execution
-        if (VesselServerBridgeRegistry.getActiveMinecraftServer() != null) {
             return true;
         }
 

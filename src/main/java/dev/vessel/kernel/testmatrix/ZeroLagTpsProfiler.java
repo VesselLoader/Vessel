@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p>Remediates ERR-78 and OPT-JIT-0001..0400 through zero-allocation circular latency sampling.</p>
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class ZeroLagTpsProfiler {
@@ -33,6 +33,15 @@ public final class ZeroLagTpsProfiler {
 
     public ZeroLagTpsProfiler(int windowSize) {
         this.ringBuffer = new TickLatencyRingBuffer(windowSize);
+    }
+
+    /**
+     * Resets the profiler state, clearing all recorded samples.
+     */
+    public void reset() {
+        this.ringBuffer.reset();
+        this.totalRecordedTicks.set(0);
+        this.currentTickStartNanos = 0L;
     }
 
     /**

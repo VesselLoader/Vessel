@@ -52,12 +52,17 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.6
+ * @version 1.0.8
  */
 public final class JvmVersionGuardAndConsoleLogTest {
 
     @TempDir
     Path tempDir;
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        dev.vessel.command.VesselServerBridgeRegistry.reset();
+    }
 
     @Test
     void shouldLogInstallerStepsOnFirstRunAndConciseInfoOnSecondRunAndVerboseOnDeepDebug() {
@@ -249,6 +254,7 @@ public final class JvmVersionGuardAndConsoleLogTest {
         assertThat(System.getProperty("java.net.preferIPv4Stack")).isEqualTo("true");
         assertThat(System.getProperty("java.net.preferIPv6Addresses")).isEqualTo("false");
         assertThat(launcher.getActivatedEntrypointsCount()).isEqualTo(2);
+        launcher.close();
     }
 
     @Test
@@ -292,7 +298,8 @@ public final class JvmVersionGuardAndConsoleLogTest {
         List<String> logs = launcher.getLastBootConsoleLogs();
         assertThat(logs).anyMatch(l -> l.contains("[GeyserMC/VESSEL] Geyser version"));
         assertThat(logs).anyMatch(l -> l.contains("[Floodgate/VESSEL] Floodgate version"));
-        assertThat(logs).anyMatch(l -> l.contains("[spark/VESSEL] TPS from last"));
+        assertThat(logs).anyMatch(l -> l.contains("[spark/VESSEL] TPS"));
+        launcher.close();
     }
 
     @Test

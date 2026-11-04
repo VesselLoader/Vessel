@@ -7,7 +7,7 @@ import java.util.Arrays;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public final class TickLatencyRingBuffer {
@@ -23,6 +23,15 @@ public final class TickLatencyRingBuffer {
         }
         this.capacity = capacity;
         this.ring = new long[capacity];
+    }
+
+    /**
+     * Resets the ring buffer samples and counters.
+     */
+    public synchronized void reset() {
+        this.writeIndex = 0;
+        this.count = 0;
+        Arrays.fill(this.ring, 0L);
     }
 
     /**

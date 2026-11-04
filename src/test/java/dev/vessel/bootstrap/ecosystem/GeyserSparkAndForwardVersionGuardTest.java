@@ -32,7 +32,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.3
+ * @version 1.0.4
  */
 class GeyserSparkAndForwardVersionGuardTest {
 
@@ -98,6 +98,7 @@ class GeyserSparkAndForwardVersionGuardTest {
         assertTrue(activator.getRejectedForwardVersionModules().containsKey("futuremod"));
         assertTrue(activator.getRejectedForwardVersionModules().get("futuremod")
                 .contains("requires Minecraft 1.21.4"));
+        activator.close();
     }
 
     @Test

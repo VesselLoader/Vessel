@@ -14,7 +14,7 @@ import java.util.Locale;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.0
+ * @version 1.0.1
  */
 public final class VesselLiveTickMetricsProvider {
 
@@ -37,7 +37,7 @@ public final class VesselLiveTickMetricsProvider {
      * Resets the global profiler samples (used primarily for isolation in unit tests).
      */
     public static void resetSamples() {
-        // ZeroLagTpsProfiler doesn't have direct reset, so we recreate via new instance if needed
+        GLOBAL_PROFILER.reset();
     }
 
     /**
