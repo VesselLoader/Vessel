@@ -8,6 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * the previous search completes, the stale calculation is instantly cancelled, eliminating 70%+ of redundant CPU work.
  * </p>
  *
- * @version 1.0.2
+ * @version 1.0.5
  * @author VESSEL Engine Team
  */
 public final class AsyncPathfindingDispatcher {
@@ -93,7 +94,19 @@ public final class AsyncPathfindingDispatcher {
         Objects.requireNonNull(callback, "callback cannot be null");
 
         int entityId = goal.entityId();
-        activeEntityCallbacks.put(entityId, callback);
+        AtomicBoolean completed = new AtomicBoolean(false);
+        PathfindingCallback safeCallback = res -> {
+            if (completed.compareAndSet(false, true)) {
+                if (res.isCancelled()) {
+                    totalCancelled.incrementAndGet();
+                } else if (res.isSuccessful()) {
+                    totalCompleted.incrementAndGet();
+                }
+                callback.onPathResult(res);
+            }
+        };
+
+        activeEntityCallbacks.put(entityId, safeCallback);
         long requestVersion = entityRequestVersions.compute(entityId, (k, oldVer) -> (oldVer == null) ? 1L : oldVer + 1L);
         totalSubmitted.incrementAndGet();
 
@@ -101,9 +114,8 @@ public final class AsyncPathfindingDispatcher {
             long currentVersion = entityRequestVersions.getOrDefault(entityId, 0L);
             if (currentVersion != requestVersion) {
                 // Stale request cancelled before starting
-                activeEntityCallbacks.remove(entityId, callback);
-                totalCancelled.incrementAndGet();
-                callback.onPathResult(PathfindingResult.cancelled(entityId));
+                activeEntityCallbacks.remove(entityId, safeCallback);
+                safeCallback.onPathResult(PathfindingResult.cancelled(entityId));
                 return;
             }
 
@@ -112,13 +124,11 @@ public final class AsyncPathfindingDispatcher {
             // Check version again after computation
             currentVersion = entityRequestVersions.getOrDefault(entityId, 0L);
             if (currentVersion != requestVersion) {
-                activeEntityCallbacks.remove(entityId, callback);
-                totalCancelled.incrementAndGet();
-                callback.onPathResult(PathfindingResult.cancelled(entityId));
+                activeEntityCallbacks.remove(entityId, safeCallback);
+                safeCallback.onPathResult(PathfindingResult.cancelled(entityId));
             } else {
-                activeEntityCallbacks.remove(entityId, callback);
-                totalCompleted.incrementAndGet();
-                callback.onPathResult(result);
+                activeEntityCallbacks.remove(entityId, safeCallback);
+                safeCallback.onPathResult(result);
             }
         });
 
@@ -149,7 +159,6 @@ public final class AsyncPathfindingDispatcher {
         entityRequestVersions.compute(entityId, (k, oldVer) -> (oldVer == null) ? 1L : oldVer + 1L);
         PathfindingCallback cb = activeEntityCallbacks.remove(entityId);
         if (cb != null) {
-            totalCancelled.incrementAndGet();
             cb.onPathResult(PathfindingResult.cancelled(entityId));
         }
     }

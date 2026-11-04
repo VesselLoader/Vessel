@@ -377,6 +377,35 @@ public void onWorldTick(Object tickEvent) {
 }
 ```
 
+##### 🛠️ Modder Project Setup (Gradle Kotlin DSL) & IDE IntelliSense Guide
+Add the Clean-Room Universal Super-API to your mod project's `build.gradle.kts`:
+```kotlin
+plugins {
+    java
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Universal Super-API (VUSA) — Zero NMS, Zero Loader Boilerplate
+    compileOnly("dev.vessel:vessel-api:1.1.0")
+    testImplementation("dev.vessel:vessel-api:1.1.0")
+}
+
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+    options.release.set(21)
+    // Preserves method parameter names in bytecode for pristine IDE auto-completion hints:
+    options.compilerArgs.addAll(listOf("-parameters"))
+}
+```
+
+> [!TIP]
+> **IDE Auto-Suggestion (IntelliSense) Setup:**
+> When using IntelliJ IDEA, Eclipse, or VS Code, enable **Download Sources** and **Download Documentation** for Gradle dependencies. `vessel-api` is published with bundled `sourcesJar` and `javadocJar`, enabling immediate parameter hints, inline documentation tooltips, and type inference without external plugin installations.
+
 ---
 
 ## 7. Third-Party Open-Source Credits & Attributions

@@ -1,11 +1,11 @@
 // ==============================================================================
 // EXAMPLE VESSEL MOD — Build Gradle (Kotlin DSL)
-// Resolves 100% directly from remote Maven Central.
+// Demonstrates pure VESSEL Universal Modding Super-API (VUSA) 1.1.0
+// Runs natively across Fabric, Forge, NeoForge, Quilt, Paper, Spigot, Folia.
 // ==============================================================================
 
 plugins {
     java
-    id("io.github.vesselloader.vessel-gradle") version "1.0.0"
 }
 
 group = "com.example.mod"
@@ -18,21 +18,18 @@ java {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
-    // 1. Declare Minecraft vanilla version
-    minecraft("1.21.1")
-
-    // 2. Resolve VSTM binary transmutation matrix from Maven Central
-    mappings(vessel.vstm("1.21.1"))
-
-    // 3. Clean-Room API
-    compileOnly("io.github.vesselloader:vstm-api:1.0.0")
+    // Clean-Room Universal Modding Super-API (VUSA)
+    compileOnly("dev.vessel:vessel-api:1.1.0")
+    testImplementation("dev.vessel:vessel-api:1.1.0")
 }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.release.set(21)
+    options.compilerArgs.addAll(listOf("-parameters"))
 }

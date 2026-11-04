@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "vesselmod:block/quantum_battery"
+    }
+  }
+}

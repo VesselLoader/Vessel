@@ -29,7 +29,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.3
+ * @version 1.0.4
  */
 public class JavaPlugin implements Plugin, CommandExecutor, TabCompleter {
 
@@ -105,7 +105,19 @@ public class JavaPlugin implements Plugin, CommandExecutor, TabCompleter {
     public void saveDefaultConfig() {
         File configFile = new File(getDataFolder(), "config.yml");
         if (!configFile.exists()) {
-            saveResource("config.yml", false);
+            if (getResource("config.yml") != null) {
+                saveResource("config.yml", false);
+            } else {
+                try {
+                    File parent = configFile.getParentFile();
+                    if (parent != null && !parent.exists()) {
+                        parent.mkdirs();
+                    }
+                    getConfig().set("plugin.initialized", true);
+                    saveConfig();
+                } catch (Exception ignored) {
+                }
+            }
         }
     }
 

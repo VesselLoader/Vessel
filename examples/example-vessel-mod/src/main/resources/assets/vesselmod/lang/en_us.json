@@ -1,0 +1,5 @@
+{
+  "item.vesselmod.plasma_blade": "Plasma Blade",
+  "block.vesselmod.quantum_battery": "Quantum Energy Battery",
+  "command.vesselmod.online": "§a[VESSEL] Pure Mod Subsystem Online."
+}

@@ -31,14 +31,33 @@ import java.util.zip.ZipOutputStream;
  * Computes identical SHA-1 hashes across server restarts for client handshake verification.
  * </p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  * @author VESSEL Engine Team
  * <!-- Changelog:
  *   1.0.0: Initial implementation of deterministic zip packaging.
  *   1.0.1: Fixed JVM TimeZone dependency via setTimeLocal and deduplicated colliding paths via TreeMap.
+ *   1.0.2: Enforced bit-identical timezone independence via fixed DOS/UTC FileTime offsets and deterministic content deduplication.
  * -->
  */
 public final class VesselDeterministicZipPacker {
+
+    private static final sun.misc.Unsafe THE_UNSAFE;
+    private static final long OFFSET_XDOSTIME;
+    private static final long OFFSET_MTIME;
+
+    static {
+        try {
+            java.lang.reflect.Field f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            THE_UNSAFE = (sun.misc.Unsafe) f.get(null);
+            java.lang.reflect.Field fx = ZipEntry.class.getDeclaredField("xdostime");
+            OFFSET_XDOSTIME = THE_UNSAFE.objectFieldOffset(fx);
+            java.lang.reflect.Field fm = ZipEntry.class.getDeclaredField("mtime");
+            OFFSET_MTIME = THE_UNSAFE.objectFieldOffset(fm);
+        } catch (Throwable t) {
+            throw new ExceptionInInitializerError(t);
+        }
+    }
 
     /** DOS Epoch timestamp (1980-01-01 00:00:00 UTC) in milliseconds. */
     public static final long DETERMINISTIC_TIMESTAMP_MILLIS = 315532800000L;
@@ -118,7 +137,10 @@ public final class VesselDeterministicZipPacker {
         java.util.Map<String, VesselDeterministicZipEntry> sortedMap = new java.util.TreeMap<>();
         for (VesselDeterministicZipEntry entry : entries) {
             if (entry != null) {
-                sortedMap.put(entry.path(), entry);
+                sortedMap.merge(entry.path(), entry, (oldEntry, newEntry) -> {
+                    int cmp = java.util.Arrays.compare(oldEntry.data(), newEntry.data());
+                    return cmp >= 0 ? oldEntry : newEntry;
+                });
             }
         }
 
@@ -131,8 +153,8 @@ public final class VesselDeterministicZipPacker {
                 ZipEntry zipEntry = new ZipEntry(item.path());
 
                 // Enforce strictly timezone-independent DOS epoch timestamp (1980-01-01 00:00:00)
-                zipEntry.setTimeLocal(DETERMINISTIC_LOCAL_DATETIME);
-                zipEntry.setExtra(null); // Clear extended OS-specific fields
+                THE_UNSAFE.putLong(zipEntry, OFFSET_XDOSTIME, 0x00210000L);
+                THE_UNSAFE.putObject(zipEntry, OFFSET_MTIME, FileTime.from(java.time.Instant.ofEpochSecond(315532800L)));
                 zipEntry.setSize(payload.length);
 
                 CRC32 crc = new CRC32();

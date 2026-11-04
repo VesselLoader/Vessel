@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * End-to-end unit verification suite for {@link VesselUniversalResourcePackCompiler}.
  *
- * @version 1.0.0
+ * @version 1.0.2
  * @author VESSEL Engine Team
  */
 public class VesselUniversalResourcePackCompilerTest {
@@ -137,7 +137,7 @@ public class VesselUniversalResourcePackCompilerTest {
                 prevName = name;
 
                 // Verify deterministic timestamp (DOS epoch 1980-01-01 00:00:00 UTC)
-                assertThat(entry.getTime()).isEqualTo(315532800000L);
+                assertThat(entry.getLastModifiedTime().toInstant().getEpochSecond()).isEqualTo(315532800L);
             }
 
             // Verify shader safety: core shader stripped

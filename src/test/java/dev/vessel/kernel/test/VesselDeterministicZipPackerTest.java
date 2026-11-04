@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Verification test suite for {@link VesselDeterministicZipPacker}.
  *
- * @version 1.0.0
+ * @version 1.0.1
  * @author VESSEL Engine Team
  */
 public class VesselDeterministicZipPackerTest {
@@ -133,8 +133,8 @@ public class VesselDeterministicZipPackerTest {
             int count = 0;
             while ((entry = zis.getNextEntry()) != null) {
                 count++;
-                // Verify entry time is set to DOS epoch 1980-01-01 00:00:00
-                assertThat(entry.getTimeLocal()).isEqualTo(VesselDeterministicZipPacker.DETERMINISTIC_LOCAL_DATETIME);
+                // Verify entry time is set to DOS epoch 1980-01-01 00:00:00 UTC
+                assertThat(entry.getLastModifiedTime().toInstant().getEpochSecond()).isEqualTo(315532800L);
                 zis.closeEntry();
             }
             assertThat(count).isEqualTo(2);

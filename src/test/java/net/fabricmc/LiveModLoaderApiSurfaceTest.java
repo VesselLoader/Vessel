@@ -34,7 +34,7 @@ import org.objectweb.asm.Opcodes;
  *
  * <p>Strictly adheres to Rule 17 with zero inner, nested, or anonymous classes.</p>
  *
- * @version 1.0.1
+ * @version 1.0.2
  */
 @net.minecraftforge.fml.common.Mod("vessel_forge_probe")
 @net.neoforged.fml.common.Mod("vessel_neoforge_probe")
@@ -48,6 +48,7 @@ public class LiveModLoaderApiSurfaceTest {
      *
      * @param payload event string payload
      */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
     public void onStringEvent(String payload) {
         this.lastReceivedForgePayload = payload;
         this.lastReceivedNeoForgePayload = payload;

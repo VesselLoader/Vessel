@@ -70,6 +70,8 @@ release-distribution/
 /cache/
 /libraries/
 /logs/
+/plugins/
+/mods/
 /world/
 /world_nether/
 /world_the_end/
